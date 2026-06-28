@@ -222,158 +222,188 @@ function renderMetricsTable(tableBodyId, withBars = false) {
 // OVERVIEW CHARTS
 // ═══════════════════════════════════════
 
-function initOverviewCharts() {
-  const modelNames = Object.keys(ML_RESULTS);
-  const accVals = modelNames.map(m => ML_RESULTS[m].Accuracy_bin);
-  const maeVals = modelNames.map(m => ML_RESULTS[m].MAE);
+// ─── Global Chart Instances ───
+let chartR2OverviewInstance = null;
+let chartMAEOverviewInstance = null;
+let chartViewsTrendInstance = null;
+let chartViewsDistInstance = null;
+let chartSalesDistInstance = null;
+let chartModelR2CompareInstance = null;
+let chartModelMAECompareInstance = null;
+let chartModelRMSECompareInstance = null;
+
+function initOverviewCharts(customResults = null) {
+  const results = customResults || ML_RESULTS;
+  const modelNames = Object.keys(results);
+  const accVals = modelNames.map(m => results[m].Accuracy_bin);
+  const maeVals = modelNames.map(m => results[m].MAE);
 
   const ctxR2 = document.getElementById('chartR2Overview');
-  if (ctxR2) new Chart(ctxR2, {
-    type: 'bar',
-    data: {
-      labels: modelNames,
-      datasets: [{
-        label: 'Akurasi Binary (%)',
-        data: accVals,
-        backgroundColor: Object.values(MODEL_BG),
-        borderColor: Object.values(MODEL_COLORS),
-        borderWidth: 2,
-        borderRadius: 10
-      }]
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } },
-      scales: {
-        ...CHART_DEFAULTS.scales,
-        y: {
-          ...CHART_DEFAULTS.scales.y,
-          min: 50, max: 70,
-          ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => v + '%' }
+  if (ctxR2) {
+    if (chartR2OverviewInstance) chartR2OverviewInstance.destroy();
+    chartR2OverviewInstance = new Chart(ctxR2, {
+      type: 'bar',
+      data: {
+        labels: modelNames,
+        datasets: [{
+          label: 'Akurasi Binary (%)',
+          data: accVals,
+          backgroundColor: Object.values(MODEL_BG),
+          borderColor: Object.values(MODEL_COLORS),
+          borderWidth: 2,
+          borderRadius: 10
+        }]
+      },
+      options: {
+        ...CHART_DEFAULTS,
+        plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } },
+        scales: {
+          ...CHART_DEFAULTS.scales,
+          y: {
+            ...CHART_DEFAULTS.scales.y,
+            min: Math.max(0, Math.floor(Math.min(...accVals) - 5)),
+            max: Math.min(100, Math.ceil(Math.max(...accVals) + 5)),
+            ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => v.toFixed(0) + '%' }
+          }
         }
       }
-    }
-  });
+    });
+  }
 
   const ctxMAE = document.getElementById('chartMAEOverview');
-  if (ctxMAE) new Chart(ctxMAE, {
-    type: 'bar',
-    data: {
-      labels: modelNames,
-      datasets: [{
-        label: 'MAE',
-        data: maeVals,
-        backgroundColor: Object.values(MODEL_BG),
-        borderColor: Object.values(MODEL_COLORS),
-        borderWidth: 2,
-        borderRadius: 10
-      }]
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } },
-      scales: {
-        ...CHART_DEFAULTS.scales,
-        y: { ...CHART_DEFAULTS.scales.y, min: 0.9, max: 1.0 }
+  if (ctxMAE) {
+    if (chartMAEOverviewInstance) chartMAEOverviewInstance.destroy();
+    chartMAEOverviewInstance = new Chart(ctxMAE, {
+      type: 'bar',
+      data: {
+        labels: modelNames,
+        datasets: [{
+          label: 'MAE',
+          data: maeVals,
+          backgroundColor: Object.values(MODEL_BG),
+          borderColor: Object.values(MODEL_COLORS),
+          borderWidth: 2,
+          borderRadius: 10
+        }]
+      },
+      options: {
+        ...CHART_DEFAULTS,
+        plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } },
+        scales: {
+          ...CHART_DEFAULTS.scales,
+          y: { ...CHART_DEFAULTS.scales.y, min: Math.max(0, Math.min(...maeVals) - 0.05), max: Math.max(...maeVals) + 0.05 }
+        }
       }
-    }
-  });
+    });
+  }
 }
 
 // ═══════════════════════════════════════
 // DATA SECTION CHARTS
 // ═══════════════════════════════════════
 
-function initDataCharts() {
+function initDataCharts(customFB = null, customIG = null, customTT = null, customSalesCounts = null) {
+  const fbData = customFB || MONTHLY_VIEWS.facebook;
+  const igData = customIG || MONTHLY_VIEWS.instagram;
+  const ttData = customTT || MONTHLY_VIEWS.tiktok;
+  const sCounts = customSalesCounts || [186, 183, 188, 174];
+
   const ctxViews = document.getElementById('chartViewsTrend');
-  if (ctxViews) new Chart(ctxViews, {
-    type: 'line',
-    data: {
-      labels: MONTHLY_VIEWS.labels,
-      datasets: [
-        {
-          label: 'Facebook',
-          data: MONTHLY_VIEWS.facebook,
-          borderColor: '#1877F2',
-          backgroundColor: 'rgba(24,119,242,0.07)',
-          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#1877F2'
-        },
-        {
-          label: 'Instagram',
-          data: MONTHLY_VIEWS.instagram,
-          borderColor: '#E1306C',
-          backgroundColor: 'rgba(225,48,108,0.07)',
-          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#E1306C'
-        },
-        {
-          label: 'TikTok',
-          data: MONTHLY_VIEWS.tiktok,
-          borderColor: '#FF0050',
-          backgroundColor: 'rgba(255,0,80,0.07)',
-          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#FF0050'
-        }
-      ]
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      scales: {
-        ...CHART_DEFAULTS.scales,
-        y: {
-          ...CHART_DEFAULTS.scales.y,
-          ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => (v/1000).toFixed(0) + 'K' }
+  if (ctxViews) {
+    if (chartViewsTrendInstance) chartViewsTrendInstance.destroy();
+    chartViewsTrendInstance = new Chart(ctxViews, {
+      type: 'line',
+      data: {
+        labels: MONTHLY_VIEWS.labels,
+        datasets: [
+          {
+            label: 'Facebook',
+            data: fbData,
+            borderColor: '#1877F2',
+            backgroundColor: 'rgba(24,119,242,0.07)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#1877F2'
+          },
+          {
+            label: 'Instagram',
+            data: igData,
+            borderColor: '#E1306C',
+            backgroundColor: 'rgba(225,48,108,0.07)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#E1306C'
+          },
+          {
+            label: 'TikTok',
+            data: ttData,
+            borderColor: '#FF0050',
+            backgroundColor: 'rgba(255,0,80,0.07)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#FF0050'
+          }
+        ]
+      },
+      options: {
+        ...CHART_DEFAULTS,
+        scales: {
+          ...CHART_DEFAULTS.scales,
+          y: {
+            ...CHART_DEFAULTS.scales.y,
+            ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => (v/1000).toFixed(0) + 'K' }
+          }
         }
       }
-    }
-  });
+    });
+  }
 
   const ctxDist = document.getElementById('chartViewsDist');
-  const avgFB = MONTHLY_VIEWS.facebook.reduce((a,b)=>a+b,0)/12;
-  const avgIG = MONTHLY_VIEWS.instagram.reduce((a,b)=>a+b,0)/12;
-  const avgTT = MONTHLY_VIEWS.tiktok.reduce((a,b)=>a+b,0)/12;
+  const avgFB = fbData.reduce((a,b)=>a+b,0)/12;
+  const avgIG = igData.reduce((a,b)=>a+b,0)/12;
+  const avgTT = ttData.reduce((a,b)=>a+b,0)/12;
 
-  if (ctxDist) new Chart(ctxDist, {
-    type: 'doughnut',
-    data: {
-      labels: ['Facebook', 'Instagram', 'TikTok'],
-      datasets: [{
-        data: [avgFB.toFixed(0), avgIG.toFixed(0), avgTT.toFixed(0)],
-        backgroundColor: ['rgba(24,119,242,0.8)', 'rgba(225,48,108,0.8)', 'rgba(255,0,80,0.8)'],
-        borderColor: '#1A1A1A', borderWidth: 3
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom', labels: { color: '#A0A0A0', padding: 16 } },
-        tooltip: CHART_DEFAULTS.plugins.tooltip
+  if (ctxDist) {
+    if (chartViewsDistInstance) chartViewsDistInstance.destroy();
+    chartViewsDistInstance = new Chart(ctxDist, {
+      type: 'doughnut',
+      data: {
+        labels: ['Facebook', 'Instagram', 'TikTok'],
+        datasets: [{
+          data: [avgFB.toFixed(0), avgIG.toFixed(0), avgTT.toFixed(0)],
+          backgroundColor: ['rgba(24,119,242,0.8)', 'rgba(225,48,108,0.8)', 'rgba(255,0,80,0.8)'],
+          borderColor: '#1A1A1A', borderWidth: 3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#A0A0A0', padding: 16 } },
+          tooltip: CHART_DEFAULTS.plugins.tooltip
+        }
       }
-    }
-  });
+    });
+  }
 
-  const salesDist = [0, 1, 2, 3];
-  const salesCounts = [186, 183, 188, 174];
   const ctxSales = document.getElementById('chartSalesDist');
-  if (ctxSales) new Chart(ctxSales, {
-    type: 'bar',
-    data: {
-      labels: salesDist.map(v => `${v} unit`),
-      datasets: [{
-        label: 'Frekuensi Hari',
-        data: salesCounts,
-        backgroundColor: [
-          'rgba(160,160,160,0.7)',
-          'rgba(255,184,0,0.7)',
-          'rgba(204,0,0,0.7)',
-          'rgba(255,68,68,0.7)'
-        ],
-        borderRadius: 8
-      }]
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } }
-    }
-  });
+  if (ctxSales) {
+    if (chartSalesDistInstance) chartSalesDistInstance.destroy();
+    chartSalesDistInstance = new Chart(ctxSales, {
+      type: 'bar',
+      data: {
+        labels: [0, 1, 2, 3].map(v => `${v} unit`),
+        datasets: [{
+          label: 'Frekuensi Hari',
+          data: sCounts,
+          backgroundColor: [
+            'rgba(160,160,160,0.7)',
+            'rgba(255,184,0,0.7)',
+            'rgba(204,0,0,0.7)',
+            'rgba(255,68,68,0.7)'
+          ],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        ...CHART_DEFAULTS,
+        plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } }
+      }
+    });
+  }
 
   const corrGrid = document.getElementById('corrGrid');
   if (corrGrid) {
@@ -395,16 +425,22 @@ function initDataCharts() {
 // MODEL COMPARISON CHARTS
 // ═══════════════════════════════════════
 
-function initModelCharts() {
-  const modelNames = Object.keys(ML_RESULTS);
-  const accVals  = modelNames.map(m => ML_RESULTS[m].Accuracy_bin);
-  const maeVals  = modelNames.map(m => ML_RESULTS[m].MAE);
-  const rmseVals = modelNames.map(m => ML_RESULTS[m].RMSE);
+function initModelCharts(customResults = null) {
+  const results = customResults || ML_RESULTS;
+  const modelNames = Object.keys(results);
+  const accVals  = modelNames.map(m => results[m].Accuracy_bin);
+  const maeVals  = modelNames.map(m => results[m].MAE);
+  const rmseVals = modelNames.map(m => results[m].RMSE);
 
-  function barChart(id, label, vals, minY, maxY) {
+  function barChart(id, label, vals, minY, maxY, instanceKey) {
     const ctx = document.getElementById(id);
     if (!ctx) return;
-    new Chart(ctx, {
+
+    if (instanceKey === 'r2' && chartModelR2CompareInstance) chartModelR2CompareInstance.destroy();
+    if (instanceKey === 'mae' && chartModelMAECompareInstance) chartModelMAECompareInstance.destroy();
+    if (instanceKey === 'rmse' && chartModelRMSECompareInstance) chartModelRMSECompareInstance.destroy();
+
+    const chartObj = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: modelNames,
@@ -426,11 +462,15 @@ function initModelCharts() {
         }
       }
     });
+
+    if (instanceKey === 'r2') chartModelR2CompareInstance = chartObj;
+    if (instanceKey === 'mae') chartModelMAECompareInstance = chartObj;
+    if (instanceKey === 'rmse') chartModelRMSECompareInstance = chartObj;
   }
 
-  barChart('chartR2Compare', 'Akurasi Binary (%)', accVals, 50, 70);
-  barChart('chartMAECompare', 'MAE', maeVals, 0.90, 1.0);
-  barChart('chartRMSECompare', 'RMSE', rmseVals, 1.07, 1.12);
+  barChart('chartR2Compare', 'Akurasi Binary (%)', accVals, Math.max(0, Math.floor(Math.min(...accVals) - 5)), Math.min(100, Math.ceil(Math.max(...accVals) + 5)), 'r2');
+  barChart('chartMAECompare', 'MAE', maeVals, Math.max(0, Math.min(...maeVals) - 0.05), Math.max(...maeVals) + 0.05, 'mae');
+  barChart('chartRMSECompare', 'RMSE', rmseVals, Math.max(0, Math.min(...rmseVals) - 0.05), Math.max(...rmseVals) + 0.05, 'rmse');
 }
 
 // ═══════════════════════════════════════
@@ -592,10 +632,10 @@ function processCSVFile(file) {
 
     renderPreviewTable(uploadedData);
     showPreviewSection(file.name, uploadedData.length);
-    showUIFeedback(`✅ Berhasil mengunggah ${file.name} (${rows.length} baris data). Silakan periksa preview di bawah.`, 'success');
+    showUIFeedback(`✅ Berhasil mengunggah ${file.name} (${rows.length} baris data). Memproses prediksi otomatis...`, 'success');
     
-    // Alihkan halaman aktif ke Overview
-    showSection('overview');
+    // Jalankan prediksi batch secara otomatis
+    runBatchPrediction();
   };
 
   const handleFailure = (errMessage) => {
@@ -854,6 +894,9 @@ function runBatchPrediction() {
     // Jalankan proyeksi & prediksi 3 bulan ke depan (2026) secara otomatis
     run3MonthForecast();
 
+    // Perbarui seluruh halaman (Overview, Eksplorasi Data, Perbandingan Model) secara dinamis!
+    updateDashboardChartsAndMetrics(uploadedData, predictionResults);
+
     const resultsSection = document.getElementById('resultsSection');
     if (resultsSection) resultsSection.classList.add('visible');
 
@@ -861,7 +904,223 @@ function runBatchPrediction() {
     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     if (btn) { btn.textContent = '🚀 Prediksi Semua Baris'; btn.disabled = false; }
+    
+    // Alihkan halaman aktif ke Overview secara otomatis agar seamless!
+    showSection('overview');
   }, 100);
+}
+
+function calculateMetricsOnUploadedData(predictedData) {
+  // Filter rows where penjualan is not null
+  const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
+  if (validRows.length === 0) {
+    // Jika tidak ada data penjualan aktual, gunakan baseline default
+    return ML_RESULTS;
+  }
+
+  const actualSales = validRows.map(r => r.penjualan);
+  const meanActual = actualSales.reduce((s, v) => s + v, 0) / validRows.length;
+  const ssTot = actualSales.reduce((s, v) => s + Math.pow(v - meanActual, 2), 0) || 1;
+
+  const calculateForModel = (modelKey) => {
+    let sumAbsErr = 0;
+    let sumSqErr = 0;
+    let correctBin = 0;
+
+    validRows.forEach(r => {
+      const actualVal = r.penjualan;
+      const predVal = r.result[modelKey].value;
+
+      sumAbsErr += Math.abs(predVal - actualVal);
+      sumSqErr += Math.pow(predVal - actualVal, 2);
+
+      const actualIsTinggi = actualVal >= 2 ? 1 : 0;
+      const predIsTinggi = predVal >= 2 ? 1 : 0;
+      if (actualIsTinggi === predIsTinggi) {
+        correctBin++;
+      }
+    });
+
+    const mae = sumAbsErr / validRows.length;
+    const rmse = Math.sqrt(sumSqErr / validRows.length);
+    const r2 = 1 - (sumSqErr / ssTot);
+    const accBin = (correctBin / validRows.length) * 100;
+
+    let status = 'Cukup';
+    if (accBin >= 65) status = 'Sangat Baik';
+    else if (accBin >= 58) status = 'Baik';
+
+    return {
+      MAE: mae,
+      RMSE: rmse,
+      R2: r2,
+      R2_pct: r2 * 100,
+      Accuracy_bin: accBin,
+      Status: status
+    };
+  };
+
+  return {
+    'Linear Regression': calculateForModel('lr'),
+    'Random Forest': calculateForModel('rf'),
+    'XGBoost': calculateForModel('xgb')
+  };
+}
+
+function updateDashboardChartsAndMetrics(rows, predictedData) {
+  // 1. Hitung metrik model dinamis pada data yang diunggah
+  const dynamicResults = calculateMetricsOnUploadedData(predictedData);
+
+  // 2. Tentukan model terbaik berdasarkan akurasi tertinggi
+  let bestModelName = 'XGBoost';
+  let bestAcc = 0;
+  let bestMAE = Infinity;
+  Object.entries(dynamicResults).forEach(([name, res]) => {
+    if (res.Accuracy_bin > bestAcc) {
+      bestAcc = res.Accuracy_bin;
+      bestModelName = name;
+      bestMAE = res.MAE;
+    }
+  });
+
+  // 3. Perbarui KPI Cards di halaman Overview
+  const elTotalDays = document.getElementById('kpi-total-days');
+  if (elTotalDays) elTotalDays.textContent = rows.length;
+
+  const elDateRange = document.getElementById('kpi-date-range');
+  const elSidebarRange = document.getElementById('meta-date-range');
+  if (elDateRange && elSidebarRange) elDateRange.textContent = elSidebarRange.textContent;
+
+  const elBestModel = document.getElementById('kpi-bestmodel');
+  if (elBestModel) elBestModel.textContent = bestModelName;
+
+  const elBestVal = document.getElementById('kpi-bestval');
+  if (elBestVal) elBestVal.textContent = `Akurasi Binary: ${bestAcc.toFixed(1)}%`;
+
+  const elAccVal = document.getElementById('kpi-acc');
+  if (elAccVal) elAccVal.textContent = `${bestAcc.toFixed(1)}%`;
+
+  const elAccLabelEl = document.getElementById('kpi-acc') ? document.getElementById('kpi-acc').nextElementSibling : null;
+  if (elAccLabelEl) elAccLabelEl.textContent = `Akurasi ${bestModelName}`;
+
+  const elMaeVal = document.getElementById('kpi-mae');
+  if (elMaeVal) elMaeVal.textContent = bestMAE.toFixed(4);
+
+  // 4. Perbarui Tabel Evaluasi Semua Model
+  renderMetricsTableDynamic(dynamicResults);
+
+  // 5. Perbarui Chart Overview (Akurasi & MAE)
+  initOverviewCharts(dynamicResults);
+
+  // 6. Perbarui Chart Eksplorasi Data (Trend Bulanan & Distribusi Doughnut)
+  updateDataChartsDynamic(rows);
+
+  // 7. Perbarui Chart Perbandingan Model di Section 3
+  initModelCharts(dynamicResults);
+}
+
+function renderMetricsTableDynamic(results) {
+  const tbody = document.getElementById('metricsTableBody');
+  const tbodyDetail = document.getElementById('metricsTableDetail');
+  
+  const updateTable = (el, isDetail) => {
+    if (!el) return;
+    const models = Object.entries(results);
+    const bestAcc = Math.max(...models.map(([,r]) => r.Accuracy_bin));
+    const bestMAE = Math.min(...models.map(([,r]) => r.MAE));
+
+    el.innerHTML = '';
+    models.forEach(([name, res]) => {
+      const isBest = (res.Accuracy_bin === bestAcc && res.MAE === bestMAE) || (name === 'XGBoost' && bestAcc === res.Accuracy_bin);
+      const tr = document.createElement('tr');
+      if (isBest) tr.className = 'metric-best';
+
+      const color = MODEL_COLORS[name];
+
+      // Kolom Akurasi Binary
+      let accCell = `<strong style="color:${isBest ? '#FFBB00' : 'inherit'}">${res.Accuracy_bin.toFixed(1)}%</strong>`;
+
+      if (isDetail) {
+        // Tabel detail - 4 kolom: Model | MAE | RMSE | R² Score
+        const r2Visual = `
+          <div class="r2-bar-container">
+            <span class="r2-val">${res.R2.toFixed(4)}</span>
+            <div class="r2-bar-bg">
+              <div class="r2-bar-fill" style="width:${Math.min(100, Math.max(0, res.R2_pct * 8)) || 0}%;background:${color}"></div>
+            </div>
+          </div>
+        `;
+        tr.innerHTML = `
+          <td>
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};margin-right:8px"></span>
+            <strong>${name}</strong>
+          </td>
+          <td>${res.MAE.toFixed(4)}</td>
+          <td>${res.RMSE.toFixed(4)}</td>
+          <td style="min-width:160px">${r2Visual}</td>
+        `;
+      } else {
+        // Tabel ringkas - 6 kolom
+        const r2Visual = `
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:36px;font-size:11px">${res.R2.toFixed(4)}</span>
+            <div style="flex:1;height:6px;background:rgba(46,46,46,0.5);border-radius:3px;overflow:hidden">
+              <div style="width:${Math.min(100, Math.max(0, res.R2_pct * 8)) || 0}%;height:100%;background:${color}"></div>
+            </div>
+          </div>
+        `;
+        tr.innerHTML = `
+          <td>
+            <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${color};margin-right:8px;vertical-align:middle"></span>
+            ${name}${isBest ? ' 🏆' : ''}
+          </td>
+          <td style="color:${res.MAE === bestMAE ? '#00C853' : 'inherit'}">${res.MAE.toFixed(4)}</td>
+          <td>${res.RMSE.toFixed(4)}</td>
+          <td style="color:${color};font-weight:600">${r2Visual}</td>
+          <td>${accCell}</td>
+          <td><span class="badge ${isBest ? 'badge-red' : 'badge-gray'}">${isBest ? '🏆 Terbaik' : 'Baik'}</span></td>
+        `;
+      }
+      el.appendChild(tr);
+    });
+  };
+
+  updateTable(tbody, false);
+  updateTable(tbodyDetail, true);
+}
+
+function updateDataChartsDynamic(rows) {
+  const fbMonthly = Array(12).fill(0);
+  const igMonthly = Array(12).fill(0);
+  const ttMonthly = Array(12).fill(0);
+  const monthCounts = Array(12).fill(0);
+  
+  rows.forEach(r => {
+    const date = parseTanggalString(r.tanggal);
+    const m = date.getMonth(); // 0-11
+    if (!isNaN(m)) {
+      fbMonthly[m] += r.fb;
+      igMonthly[m] += r.ig;
+      ttMonthly[m] += r.tt;
+      monthCounts[m]++;
+    }
+  });
+  
+  const fbAvgMonthly = fbMonthly.map((v, i) => monthCounts[i] ? Math.round(v / monthCounts[i]) : 0);
+  const igAvgMonthly = igMonthly.map((v, i) => monthCounts[i] ? Math.round(v / monthCounts[i]) : 0);
+  const ttAvgMonthly = ttMonthly.map((v, i) => monthCounts[i] ? Math.round(v / monthCounts[i]) : 0);
+
+  // Hitung distribusi penjualan jika ada kolom penjualan
+  const salesCounts = [0, 0, 0, 0];
+  let hasActualSales = false;
+  rows.forEach(r => {
+    if (r.penjualan !== null && !isNaN(r.penjualan) && r.penjualan >= 0 && r.penjualan <= 3) {
+      salesCounts[Math.round(r.penjualan)]++;
+      hasActualSales = true;
+    }
+  });
+
+  initDataCharts(fbAvgMonthly, igAvgMonthly, ttAvgMonthly, hasActualSales ? salesCounts : null);
 }
 
 /** Extract bulan (1-12) from tanggal string like "01 Jan 2024" or "2024-01-15" */
@@ -1060,6 +1319,33 @@ function resetUpload() {
 
   const elPlatforms = document.getElementById('meta-platforms');
   if (elPlatforms) elPlatforms.textContent = '-';
+
+  // Reset metrik dashboard ke baseline awal (731 data historis)
+  const elTotalDays = document.getElementById('kpi-total-days');
+  if (elTotalDays) elTotalDays.textContent = '731';
+
+  const elDateRange = document.getElementById('kpi-date-range');
+  if (elDateRange) elDateRange.textContent = 'Jan 2024 – Des 2025';
+
+  const elBestModel = document.getElementById('kpi-bestmodel');
+  if (elBestModel) elBestModel.textContent = 'XGBoost';
+
+  const elBestVal = document.getElementById('kpi-bestval');
+  if (elBestVal) elBestVal.textContent = 'Akurasi Binary: 62.3%';
+
+  const elAccVal = document.getElementById('kpi-acc');
+  if (elAccVal) elAccVal.textContent = '62.3%';
+
+  const elAccLabelEl = document.getElementById('kpi-acc') ? document.getElementById('kpi-acc').nextElementSibling : null;
+  if (elAccLabelEl) elAccLabelEl.textContent = 'Akurasi XGBoost';
+
+  const elMaeVal = document.getElementById('kpi-mae');
+  if (elMaeVal) elMaeVal.textContent = '0.9261';
+
+  renderMetricsTableDynamic(ML_RESULTS);
+  initOverviewCharts(ML_RESULTS);
+  initDataCharts();
+  initModelCharts(ML_RESULTS);
 
   // Pindahkan kembali tampilan aktif ke section Upload
   showSection('upload');
