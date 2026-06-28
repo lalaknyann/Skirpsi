@@ -1044,6 +1044,62 @@ function resetUpload() {
 
   const forecastSection = document.getElementById('forecastSection');
   if (forecastSection) forecastSection.classList.remove('visible');
+
+  // Sembunyikan kembali menu navigasi
+  ['nav-overview', 'nav-data', 'nav-models'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // Reset metrik sidebar ke default
+  const elRange = document.getElementById('meta-date-range');
+  if (elRange) elRange.textContent = 'Belum ada';
+
+  const elCount = document.getElementById('meta-row-count');
+  if (elCount) elCount.textContent = '0 baris';
+
+  const elPlatforms = document.getElementById('meta-platforms');
+  if (elPlatforms) elPlatforms.textContent = '-';
+
+  // Pindahkan kembali tampilan aktif ke section Upload
+  showSection('upload');
+}
+
+function updateSidebarMetrics(rows) {
+  if (!rows || rows.length === 0) return;
+
+  // 1. Tentukan rentang tanggal
+  let minDateStr = '';
+  let maxDateStr = '';
+  const parsedDates = rows.map(r => parseTanggalString(r.tanggal).getTime()).filter(t => !isNaN(t));
+  if (parsedDates.length > 0) {
+    const minTime = Math.min(...parsedDates);
+    const maxTime = Math.max(...parsedDates);
+    
+    const monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const formatDate = (time) => {
+      const d = new Date(time);
+      return `${monthNamesShort[d.getMonth()]} ${d.getFullYear()}`;
+    };
+    
+    minDateStr = formatDate(minTime);
+    maxDateStr = formatDate(maxTime);
+  }
+
+  const rangeText = (minDateStr && maxDateStr) ? `${minDateStr} – ${maxDateStr}` : 'Unknown';
+
+  // 2. Update DOM
+  const elRange = document.getElementById('meta-date-range');
+  if (elRange) elRange.textContent = rangeText;
+
+  const elCount = document.getElementById('meta-row-count');
+  if (elCount) elCount.textContent = `${rows.length} baris`;
+
+  const elPlatforms = document.getElementById('meta-platforms');
+  if (elPlatforms) elPlatforms.textContent = 'FB · IG · TikTok';
+
+  const elBestModel = document.getElementById('meta-best-model');
+  if (elBestModel) elBestModel.textContent = 'XGBoost';
 }
 
 // ─── FORECASTING ENGINE FOR 2026 (BARU) ───
