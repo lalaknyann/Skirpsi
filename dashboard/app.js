@@ -152,56 +152,22 @@ function showSection(sectionId) {
   if (sectionId === 'models' && typeof predictionResults !== 'undefined' && predictionResults && predictionResults.length > 0) {
     console.log("[showSection] Models section active. Triggering charts redraw with 150ms reflow delay. Data size:", predictionResults.length);
     setTimeout(() => {
-      initModelCharts(ML_RESULTS); // Redraw the top 3 comparison bar charts
+      initModelCharts(ML_RESULTS);
       initActualVsPredictedChart(predictionResults);
       initResidualsChart(predictionResults);
       initFeatureImportanceChart(predictionResults);
       initTimeSeriesCompareChart(predictionResults);
-
-      // DIAGNOSTIC LOG FOR CANVAS SIZES
-      const c1 = document.getElementById('chartActualVsPredicted');
-      const c2 = document.getElementById('chartResiduals');
-      const details = {
-        chartActualVsPredicted: {
-          rect: c1 ? c1.getBoundingClientRect() : null,
-          width: c1 ? c1.width : null,
-          height: c1 ? c1.height : null,
-          display: c1 ? c1.style.display : null,
-          styleWidth: c1 ? c1.style.width : null,
-          styleHeight: c1 ? c1.style.height : null,
-          offsetParent: c1 && c1.offsetParent ? {
-            id: c1.offsetParent.id,
-            className: c1.offsetParent.className,
-            rect: c1.offsetParent.getBoundingClientRect()
-          } : null
-        },
-        chartResiduals: {
-          rect: c2 ? c2.getBoundingClientRect() : null,
-          width: c2 ? c2.width : null,
-          height: c2 ? c2.height : null,
-          display: c2 ? c2.style.display : null,
-          styleWidth: c2 ? c2.style.width : null,
-          styleHeight: c2 ? c2.style.height : null,
-          offsetParent: c2 && c2.offsetParent ? {
-            id: c2.offsetParent.id,
-            className: c2.offsetParent.className,
-            rect: c2.offsetParent.getBoundingClientRect()
-          } : null
-        }
-      };
-      console.log('DIAGNOSTIC_OUTPUT:' + JSON.stringify(details));
-    }, 150);
+    }, 500);
   }
   if (sectionId === 'data' && typeof predictionResults !== 'undefined' && predictionResults && predictionResults.length > 0) {
     console.log("[showSection] Data section active. Triggering trend chart redraw with 150ms reflow delay. Data size:", predictionResults.length);
     setTimeout(() => {
       initMonthlyTrendDynamic(predictionResults);
-    }, 150);
+    }, 500);
   }
 
   // Force Chart.js to recalculate container dimensions by dispatching window resize events
-  setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100);
-  setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 300);
+  setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 200);
   setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 600);
 
   if (window.event) window.event.preventDefault();
@@ -1288,16 +1254,6 @@ function initActualVsPredictedChart(predictedData) {
           grid: { color: 'rgba(255,255,255,0.05)' }
         }
   });
-
-  // Draw a diagnostic red rectangle!
-  try {
-    const debugCtx = ctx.getContext('2d');
-    debugCtx.fillStyle = '#FF0000';
-    debugCtx.fillRect(10, 10, 150, 150);
-    console.log("[DEBUG] Successfully drew debug red square on chartActualVsPredicted canvas");
-  } catch (e) {
-    console.error("[DEBUG] Error drawing on canvas:", e);
-  }
 }
 
 let chartResidualsInstance = null;
