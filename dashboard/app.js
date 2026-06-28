@@ -120,6 +120,7 @@ const CHART_DEFAULTS = {
 let uploadedData = [];
 let predictionResults = [];
 let uploadedFileName = '';
+let forecastResults = [];
 
 // ═══════════════════════════════════════
 // NAVIGATION
@@ -884,6 +885,9 @@ function runBatchPrediction() {
     renderResultsTable(predictionResults);
     renderResultsSummary(predictionResults);
 
+    // Jalankan proyeksi & prediksi 3 bulan ke depan (2026) secara otomatis
+    run3MonthForecast();
+
     const resultsSection = document.getElementById('resultsSection');
     if (resultsSection) resultsSection.classList.add('visible');
 
@@ -1062,6 +1066,7 @@ function resetUpload() {
   uploadedData      = [];
   predictionResults = [];
   uploadedFileName  = '';
+  forecastResults   = [];
 
   document.getElementById('csvFileInput').value = '';
 
@@ -1070,6 +1075,378 @@ function resetUpload() {
 
   const resultsSection = document.getElementById('resultsSection');
   if (resultsSection) resultsSection.classList.remove('visible');
+
+  const forecastSection = document.getElementById('forecastSection');
+  if (forecastSection) forecastSection.classList.remove('visible');
+}
+
+// ─── FORECASTING ENGINE FOR 2026 (BARU) ───
+function parseTanggalString(tglStr) {
+  if (!tglStr) return new Date();
+  const MONTHS_ID = { jan:0, feb:1, mar:2, apr:3, mei:4, jun:5, jul:6, agu:7, sep:8, okt:9, nov:10, des:11 };
+  const MONTHS_EN = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
+
+  const str = tglStr.toLowerCase().trim();
+  
+  // Format YYYY-MM-DD
+  const dateMatch = str.match(/(\d{4})[/-](\d{2})[/-](\d{2})/);
+  if (dateMatch) return new Date(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
+
+  // Format DD/MM/YYYY
+  const dmyMatch = str.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+  if (dmyMatch) return new Date(parseInt(dmyMatch[3]), parseInt(dmyMatch[2]) - 1, parseInt(dmyMatch[1]));
+
+  // Format "DD Month YYYY" (contoh: "10 Des 2025")
+  const parts = str.split(/\s+/);
+  if (parts.length >= 3) {
+    const dd = parseInt(parts[0]) || 1;
+    const yyyy = parseInt(parts[2]) || new Date().getFullYear();
+    const monthWord = parts[1];
+    
+    let mm = 5; // default June
+    for (const [key, val] of Object.entries(MONTHS_ID)) {
+      if (monthWord.startsWith(key)) { mm = val; break; }
+    }
+    for (const [key, val] of Object.entries(MONTHS_EN)) {
+      if (monthWord.startsWith(key)) { mm = val; break; }
+    }
+    return new Date(yyyy, mm, dd);
+  }
+  
+  return new Date();
+}
+
+function run3MonthForecast() {
+  if (!uploadedData.length) return;
+  logToTerminal("[Forecast] Memulai perhitungan proyeksi 3 bulan ke depan (2026).");
+
+  try {
+    // 1. Dapatkan tanggal terakhir dari data unggahan
+    let lastDate = new Date();
+    const dates = uploadedData.map(d => parseTanggalString(d.tanggal).getTime()).filter(t => !isNaN(t));
+    if (dates.length > 0) {
+      lastDate = new Date(Math.max(...dates));
+    }
+    logToTerminal(`[Forecast] Tanggal akhir dataset: ${lastDate.toDateString()}`);
+
+    // 2. Hitung rata-rata dasar views FB, IG, dan TikTok
+    const totalFB = uploadedData.reduce((s, r) => s + r.fb, 0);
+    const totalIG = uploadedData.reduce((s, r) => s + r.ig, 0);
+    const totalTT = uploadedData.reduce((s, r) => s + r.tt, 0);
+    const count = uploadedData.length || 1;
+    
+    const avgFB = totalFB / count;
+    const avgIG = totalIG / count;
+    const avgTT = totalTT / count;
+
+    // 3. Hitung faktor hari dalam pekan (Day of Week)
+    const dowCounts = Array(7).fill(0);
+    const dowFB = Array(7).fill(0);
+    const dowIG = Array(7).fill(0);
+    const dowTT = Array(7).fill(0);
+
+    uploadedData.forEach(row => {
+      const date = parseTanggalString(row.tanggal);
+      const day = date.getDay(); // 0 = Minggu, 1 = Senin, ...
+      const dayOfWeek = (day === 0) ? 6 : day - 1; // Konversi ke 0=Senin, 6=Minggu
+      
+      dowCounts[dayOfWeek]++;
+      dowFB[dayOfWeek] += row.fb;
+      dowIG[dayOfWeek] += row.ig;
+      dowTT[dayOfWeek] += row.tt;
+    });
+
+    const fbFactor = dowFB.map((v, i) => dowCounts[i] ? (v / dowCounts[i]) / (avgFB || 1) : 1.0);
+    const igFactor = dowIG.map((v, i) => dowCounts[i] ? (v / dowCounts[i]) / (avgIG || 1) : 1.0);
+    const ttFactor = dowTT.map((v, i) => dowCounts[i] ? (v / dowCounts[i]) / (avgTT || 1) : 1.0);
+
+    // 4. Hitung faktor musiman bulanan (Monthly Seasonality)
+    const monthCounts = Array(12).fill(0);
+    const monthFB = Array(12).fill(0);
+    const monthIG = Array(12).fill(0);
+    const monthTT = Array(12).fill(0);
+
+    uploadedData.forEach(row => {
+      const date = parseTanggalString(row.tanggal);
+      const month = date.getMonth(); // 0 = Jan, 11 = Des
+      
+      monthCounts[month]++;
+      monthFB[month] += row.fb;
+      monthIG[month] += row.ig;
+      monthTT[month] += row.tt;
+    });
+
+    const mFBFactor = monthFB.map((v, i) => monthCounts[i] ? (v / monthCounts[i]) / (avgFB || 1) : 1.0);
+    const mIGFactor = monthIG.map((v, i) => monthCounts[i] ? (v / monthCounts[i]) / (avgIG || 1) : 1.0);
+    const mTTFactor = monthTT.map((v, i) => monthCounts[i] ? (v / monthCounts[i]) / (avgTT || 1) : 1.0);
+
+    // 5. Hitung rata-rata pertumbuhan/tren jangka pendek (30 hari terakhir vs 30 hari pertama)
+    let trendFB = 0;
+    let trendIG = 0;
+    let trendTT = 0;
+    if (uploadedData.length >= 60) {
+      const first30 = uploadedData.slice(0, 30);
+      const last30 = uploadedData.slice(-30);
+      
+      const f30FB = first30.reduce((s, r) => s + r.fb, 0) / 30;
+      const l30FB = last30.reduce((s, r) => s + r.fb, 0) / 30;
+      const f30IG = first30.reduce((s, r) => s + r.ig, 0) / 30;
+      const l30IG = last30.reduce((s, r) => s + r.ig, 0) / 30;
+      const f30TT = first30.reduce((s, r) => s + r.tt, 0) / 30;
+      const l30TT = last30.reduce((s, r) => s + r.tt, 0) / 30;
+
+      const daysDiff = uploadedData.length - 30;
+      
+      if (f30FB > 0) trendFB = (l30FB - f30FB) / f30FB / daysDiff;
+      if (f30IG > 0) trendIG = (l30IG - f30IG) / f30IG / daysDiff;
+      if (f30TT > 0) trendTT = (l30TT - f30TT) / f30TT / daysDiff;
+    }
+    
+    // Batasi trend pertumbuhan harian agar logis (+/- 0.08% per hari)
+    trendFB = Math.max(-0.0008, Math.min(0.0008, trendFB));
+    trendIG = Math.max(-0.0008, Math.min(0.0008, trendIG));
+    trendTT = Math.max(-0.0008, Math.min(0.0008, trendTT));
+
+    // 6. Proyeksikan 90 hari ke depan
+    forecastResults = [];
+    const monthNamesID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+    for (let i = 1; i <= 90; i++) {
+      const fDate = new Date(lastDate.getTime() + i * 24 * 60 * 60 * 1000);
+      const day = fDate.getDay();
+      const dayOfWeek = (day === 0) ? 6 : day - 1; // 0=Senin, 6=Minggu
+      const month = fDate.getMonth(); // 0 = Jan, 11 = Des
+      
+      const tFB = 1 + trendFB * i;
+      const tIG = 1 + trendIG * i;
+      const tTT = 1 + trendTT * i;
+
+      let fb = Math.round(avgFB * fbFactor[dayOfWeek] * mFBFactor[month] * tFB);
+      let ig = Math.round(avgIG * igFactor[dayOfWeek] * mIGFactor[month] * tIG);
+      let tt = Math.round(avgTT * ttFactor[dayOfWeek] * mTTFactor[month] * tTT);
+
+      fb = Math.max(0, fb);
+      ig = Math.max(0, ig);
+      tt = Math.max(0, tt);
+
+      const dateStr = `${String(fDate.getDate()).padStart(2, '0')} ${monthNamesID[month]} ${fDate.getFullYear()}`;
+      
+      // Prediksi menggunakan model Machine Learning (predictOne)
+      const result = predictOne({ fb, ig, tt, bulan: month + 1, hariPekan: dayOfWeek, sentiment: 0.65 });
+
+      forecastResults.push({
+        id: i,
+        tanggal: dateStr,
+        fb,
+        ig,
+        tt,
+        result
+      });
+    }
+
+    logToTerminal(`[Forecast] Sukses memproyeksikan ${forecastResults.length} hari ke depan untuk tahun 2026.`);
+    renderForecastTable(forecastResults);
+    renderForecastSummary(forecastResults);
+    initForecastChart(forecastResults);
+    
+    const fSec = document.getElementById('forecastSection');
+    if (fSec) fSec.classList.add('visible');
+
+  } catch(err) {
+    logToTerminal(`[Forecast] GAGAL: ${err.message}`);
+    console.error(err);
+  }
+}
+
+function renderForecastTable(results) {
+  const tbody = document.getElementById('forecastTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  results.forEach((row, i) => {
+    const r     = row.result;
+    const avg   = r.avg.toFixed(2);
+    const isTinggi = r.xgb.class === 'Tinggi';
+    const levelClass = isTinggi ? 'level-tinggi' : 'level-rendah';
+    const levelText  = isTinggi ? '🔴 Tinggi' : '⚫ Rendah';
+    const totalViews = row.fb + row.ig + row.tt;
+
+    const rowStyle = isTinggi ? 'background:rgba(204,0,0,0.04)' : '';
+
+    const tr = document.createElement('tr');
+    tr.setAttribute('style', rowStyle);
+    tr.innerHTML = `
+      <td style="color:var(--text-muted)">${i + 1}</td>
+      <td>${row.tanggal}</td>
+      <td>${row.fb.toLocaleString('id-ID')}</td>
+      <td>${row.ig.toLocaleString('id-ID')}</td>
+      <td>${row.tt.toLocaleString('id-ID')}</td>
+      <td><strong>${totalViews.toLocaleString('id-ID')}</strong></td>
+      <td style="color:#A0A0A0">${r.lr.value.toFixed(2)}</td>
+      <td style="color:#FFB800">${r.rf.value.toFixed(2)}</td>
+      <td style="color:${isTinggi ? '#FF4444' : '#A0A0A0'};font-weight:600">${r.xgb.value.toFixed(2)}</td>
+      <td><span class="level-badge ${levelClass}">${levelText}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderForecastSummary(results) {
+  const total = results.length;
+  const tinggi = results.filter(r => r.result.xgb.class === 'Tinggi').length;
+  const rendah = total - tinggi;
+  const avgPred = results.reduce((s,r) => s + r.result.avg, 0) / total;
+  const maxPred = Math.max(...results.map(r => r.result.xgb.value));
+
+  const summaryEl = document.getElementById('forecastSummary');
+  if (!summaryEl) return;
+
+  summaryEl.innerHTML = `
+    <div class="sum-card">
+      <div class="sum-value gray">${total} hari</div>
+      <div class="sum-label">Proyeksi Depan (2026)</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-value red">${tinggi} hari</div>
+      <div class="sum-label">Proyeksi TINGGI (≥2)</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-value gray">${rendah} hari</div>
+      <div class="sum-label">Proyeksi RENDAH (<2)</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-value gold">${avgPred.toFixed(2)}</div>
+      <div class="sum-label">Rata-rata Prediksi Sales</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-value red">${((tinggi/total)*100).toFixed(1)}%</div>
+      <div class="sum-label">Proporsi Hari Tinggi</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-value gold">${maxPred.toFixed(2)}</div>
+      <div class="sum-label">Prediksi Tertinggi (XGB)</div>
+    </div>
+  `;
+}
+
+let forecastChartInstance = null;
+function initForecastChart(results) {
+  const ctx = document.getElementById('chartForecast2026');
+  if (!ctx) return;
+
+  if (forecastChartInstance) {
+    forecastChartInstance.destroy();
+  }
+
+  const fbData = results.map(r => r.fb);
+  const igData = results.map(r => r.ig);
+  const ttData = results.map(r => r.tt);
+  const salesXGB = results.map(r => r.result.xgb.value);
+
+  forecastChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: results.map(r => r.tanggal.split(' ')[0] + ' ' + r.tanggal.split(' ')[1]),
+      datasets: [
+        {
+          label: 'FB Views (Kiri)',
+          data: fbData,
+          borderColor: 'rgba(24,119,242,0.8)',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          yAxisID: 'yViews',
+          pointRadius: 0
+        },
+        {
+          label: 'IG Views (Kiri)',
+          data: igData,
+          borderColor: 'rgba(225,48,108,0.8)',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          yAxisID: 'yViews',
+          pointRadius: 0
+        },
+        {
+          label: 'TikTok Views (Kiri)',
+          data: ttData,
+          borderColor: 'rgba(255,0,80,0.8)',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          yAxisID: 'yViews',
+          pointRadius: 0
+        },
+        {
+          label: 'Prediksi Penjualan (XGB - Kanan)',
+          data: salesXGB,
+          borderColor: '#FF4444',
+          backgroundColor: 'rgba(204,0,0,0.05)',
+          borderWidth: 3,
+          fill: true,
+          yAxisID: 'ySales',
+          pointRadius: 1,
+          pointBackgroundColor: '#FF4444'
+        }
+      ]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      scales: {
+        x: CHART_DEFAULTS.scales.x,
+        yViews: {
+          type: 'linear',
+          position: 'left',
+          ticks: { color: '#A0A0A0', callback: v => (v/1000).toFixed(0) + 'K' },
+          grid: { color: 'rgba(46,46,46,0.3)' },
+          title: { display: true, text: 'Views Proyeksi', color: '#A0A0A0' }
+        },
+        ySales: {
+          type: 'linear',
+          position: 'right',
+          min: 0,
+          max: 3.5,
+          ticks: { color: '#FF8888' },
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: 'Prediksi Penjualan (unit)', color: '#FF8888' }
+        }
+      }
+    }
+  });
+}
+
+function downloadForecastCSV() {
+  if (!forecastResults.length) return;
+
+  const headers = ['No','Tanggal','Facebook_Proyeksi','Instagram_Proyeksi','TikTok_Proyeksi','Total_Views_Proyeksi',
+                   'LR_Pred','RF_Pred','XGB_Pred','Avg_Pred','Kategori_XGB'];
+
+  const rows = forecastResults.map((row, i) => {
+    const r = row.result;
+    const totalViews = row.fb + row.ig + row.tt;
+    return [
+      i + 1,
+      row.tanggal,
+      row.fb,
+      row.ig,
+      row.tt,
+      totalViews,
+      r.lr.value.toFixed(2),
+      r.rf.value.toFixed(2),
+      r.xgb.value.toFixed(2),
+      r.avg.toFixed(2),
+      r.xgb.class
+    ].join(',');
+  });
+
+  const csvContent = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `proyeksi_prediksi_indibiz_3bulan_2026.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 /** Show UI feedback message (success/error/info) */

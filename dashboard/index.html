@@ -636,8 +636,60 @@
               </table>
             </div>
             <div style="font-size:11px;color:var(--text-muted);margin-top:10px">
-              Kategori: <strong style="color:#FF4444">Tinggi</strong> = prediksi â?¥2 unit | 
+              Kategori: <strong style="color:#FF4444">Tinggi</strong> = prediksi ⪰2 unit | 
               <strong style="color:#A0A0A0">Rendah</strong> = prediksi &lt;2 unit
+            </div>
+          </div>
+        </div>
+
+        <!-- Forecast Section (BARU) -->
+        <div class="results-section" id="forecastSection" style="margin-top:24px;">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">&#x1F52E; Proyeksi &amp; Prediksi 3 Bulan Pertama 2026 (Jan - Mar)</span>
+              <div style="display:flex;gap:10px">
+                <button class="btn-primary" onclick="downloadForecastCSV()" style="font-size:12px;padding:8px 16px">
+                  &#x2B07;&#xFE0F; Export Proyeksi CSV
+                </button>
+              </div>
+            </div>
+            
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+              Berdasarkan tren historis bulanan dan pola harian dari data yang Anda unggah, model memproyeksikan views media sosial dan memprediksi penjualan harian Indibiz untuk 3 bulan pertama tahun 2026.
+            </p>
+
+            <!-- Forecast Summary Stats -->
+            <div class="results-summary" id="forecastSummary"></div>
+
+            <div class="divider" style="margin:20px 0;height:1px;background:var(--border);"></div>
+
+            <!-- Chart of Forecast -->
+            <div class="chart-container" style="min-height:300px;margin-bottom:20px;">
+              <canvas id="chartForecast2026"></canvas>
+            </div>
+
+            <!-- Forecast Table -->
+            <div class="results-table-wrap">
+              <table class="results-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Tanggal</th>
+                    <th>FB Views (Proyeksi)</th>
+                    <th>IG Views (Proyeksi)</th>
+                    <th>TT Views (Proyeksi)</th>
+                    <th>Total Views</th>
+                    <th>LR Pred</th>
+                    <th>RF Pred</th>
+                    <th>XGB Pred (Utama)</th>
+                    <th>Kategori</th>
+                  </tr>
+                </thead>
+                <tbody id="forecastTableBody"></tbody>
+              </table>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:10px">
+              * Menampilkan hasil prediksi harian lengkap selama 3 bulan pertama tahun 2026 (90 hari).
             </div>
           </div>
         </div>
