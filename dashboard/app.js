@@ -1287,9 +1287,17 @@ function initActualVsPredictedChart(predictedData) {
           ticks: { color: '#A0A0A0' },
           grid: { color: 'rgba(255,255,255,0.05)' }
         }
-      }
-    }
   });
+
+  // Draw a diagnostic red rectangle!
+  try {
+    const debugCtx = ctx.getContext('2d');
+    debugCtx.fillStyle = '#FF0000';
+    debugCtx.fillRect(10, 10, 150, 150);
+    console.log("[DEBUG] Successfully drew debug red square on chartActualVsPredicted canvas");
+  } catch (e) {
+    console.error("[DEBUG] Error drawing on canvas:", e);
+  }
 }
 
 let chartResidualsInstance = null;
