@@ -148,6 +148,17 @@ function showSection(sectionId) {
   document.getElementById('topbarTitle').textContent = title;
   document.getElementById('topbarSub').textContent = sub;
 
+  // Render/Update charts lazily when sections become visible to prevent 0-size canvas blank rendering
+  if (sectionId === 'models' && typeof predictionResults !== 'undefined' && predictionResults && predictionResults.length > 0) {
+    initActualVsPredictedChart(predictionResults);
+    initResidualsChart(predictionResults);
+    initFeatureImportanceChart(predictionResults);
+    initTimeSeriesCompareChart(predictionResults);
+  }
+  if (sectionId === 'data' && typeof predictionResults !== 'undefined' && predictionResults && predictionResults.length > 0) {
+    initMonthlyTrendDynamic(predictionResults);
+  }
+
   if (window.event) window.event.preventDefault();
 }
 
