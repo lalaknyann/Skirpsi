@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Indibiz ML Dashboard &ndash; Prediksi Penjualan via Media Sosial | Telkom Indonesia</title>
+  <meta name="description" content="Dashboard Machine Learning Indibiz untuk prediksi penjualan paket internet berdasarkan views media sosial Instagram, TikTok, dan Facebook. Powered by XGBoost, Random Forest, dan Linear Regression." />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+
+<!-- &#x2600;&#xFE0F; LOADING SCREEN &#x2600;&#xFE0F; -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loader-container">
+    <div class="loader-logo" style="position:relative">
+      <!-- Indibiz Icon Logo -->
+      <img src="indibiz_icon.png" alt="Indibiz" style="width:60px;height:60px;object-fit:contain;display:block;" />
+      <div class="loader-ring"></div>
+    </div>
+    <div>
+      <div class="loading-text">Machine <span>Learning Dashboard</span></div>
+      <div class="loading-sub" style="text-align:center;margin-top:4px">Prediksi Penjualan via Media Sosial</div>
+    </div>
+    <div class="loading-dots">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <!-- Indibiz Logo in Sidebar -->
+      <div class="sidebar-brand">
+        <img src="indibiz_logo.png" alt="Indibiz" class="sidebar-logo-img" />
+        <div class="sidebar-brand-sub">ML Dashboard</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">Menu Utama</div>
+
+      <a class="nav-item active" id="nav-overview" onclick="showSection('overview')">
+        <span class="nav-icon">&#x1F3E0;</span> Overview
+      </a>
+      <a class="nav-item" id="nav-data" onclick="showSection('data')">
+        <span class="nav-icon">&#x1F4C8;</span> Eksplorasi Data
+      </a>
+      <a class="nav-item" id="nav-models" onclick="showSection('models')">
+        <span class="nav-icon">&#x1F916;</span> Perbandingan Model
+      </a>
+      <a class="nav-item" id="nav-predict" onclick="showSection('predict')">
+        <span class="nav-icon">&#x1F3AF;</span> Prediksi Manual
+      </a>
+      <a class="nav-item" id="nav-upload" onclick="showSection('upload')">
+        <span class="nav-icon">&#x1F4C2;</span> Upload CSV
+        <span style="margin-left:auto;font-size:10px;background:rgba(204,0,0,0.2);color:#FF4444;padding:2px 8px;border-radius:99px;border:1px solid rgba(204,0,0,0.35)">BARU</span>
+      </a>
+
+      <div class="nav-section" style="margin-top:8px">Penelitian</div>
+
+      <a class="nav-item" id="nav-rq" onclick="showSection('rq')">
+        <span class="nav-icon">&#x1F52C;</span> Pertanyaan Penelitian
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      Data: <span>Jan 2024 &ndash; Des 2025</span><br>
+      Dataset: <span>731 baris</span><br>
+      Platform: <span>IG &middot; TikTok &middot; FB</span><br>
+      Model terbaik: <span>XGBoost</span>
+    </div>
+  </aside>
+
+  <!-- &#x2600;&#xFE0F; MAIN &#x2600;&#xFE0F; -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <!-- Judul halaman -->
+      <div class="topbar-title">
+        <h2 id="topbarTitle">Overview</h2>
+        <p id="topbarSub">Ringkasan sistem prediksi penjualan Indibiz</p>
+      </div>
+
+      <!-- Kanan: theme toggle -->
+      <div class="topbar-right">
+        <div class="topbar-badges">
+          <span class="badge badge-gray">LR</span>
+          <span class="badge badge-gold">RF</span>
+          <span class="badge badge-red">XGBoost &#x1F3C6;</span>
+        </div>
+        <!-- Theme Toggle Widget -->
+        <div class="theme-widget" id="themeWidget" onclick="toggleTheme()" title="Ganti Tema">
+          <span class="theme-widget-icon">&#x2600;&#xFE0F;</span>
+          <div class="theme-widget-track">
+            <div class="theme-widget-thumb" id="themeThumb"></div>
+          </div>
+          <span class="theme-widget-icon">&#x1F319;</span>
+          <span class="theme-widget-label" id="themeLabel">Light</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- &#x2600;&#xFE0F;
+           SECTION 1: OVERVIEW
+      &#x2600;&#xFE0F; -->
+      <section class="section active" id="section-overview">
+        <div class="section-header">
+          <h3>&#x1F3E0; Overview Dashboard</h3>
+          <p>Ringkasan lengkap dataset, model ML, dan hasil prediksi penjualan paket internet Indibiz</p>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card red">
+            <div class="kpi-icon">&#x1F4C5;</div>
+            <div class="kpi-value">731</div>
+            <div class="kpi-label">Total Data Harian</div>
+            <div class="kpi-sub">Jan 2024 &ndash; Des 2025</div>
+          </div>
+          <div class="kpi-card gray">
+            <div class="kpi-icon">&#x1F916;</div>
+            <div class="kpi-value">3</div>
+            <div class="kpi-label">Model ML Diuji</div>
+            <div class="kpi-sub">LR &middot; RF &middot; XGBoost</div>
+          </div>
+          <div class="kpi-card red">
+            <div class="kpi-icon">&#x1F3C6;</div>
+            <div class="kpi-value" id="kpi-bestmodel">XGBoost</div>
+            <div class="kpi-label">Model Terbaik</div>
+            <div class="kpi-sub" id="kpi-bestval">Akurasi Binary: 62.3%</div>
+          </div>
+          <div class="kpi-card gold">
+            <div class="kpi-icon">&#x1F3AF;</div>
+            <div class="kpi-value" id="kpi-acc">62.3%</div>
+            <div class="kpi-label">Akurasi XGBoost</div>
+            <div class="kpi-sub">Binary Classification</div>
+          </div>
+          <div class="kpi-card gray">
+            <div class="kpi-icon">&#x1F4CA;</div>
+            <div class="kpi-value" id="kpi-mae">0.9261</div>
+            <div class="kpi-label">MAE Terbaik</div>
+            <div class="kpi-sub">Mean Absolute Error</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-icon">&#x1F4F1;</div>
+            <div class="kpi-value">3</div>
+            <div class="kpi-label">Platform Sosial Media</div>
+            <div class="kpi-sub">Facebook &middot; IG &middot; TikTok</div>
+          </div>
+        </div>
+
+
+
+        <!-- Model Results Overview -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">&#x1F4CB; Hasil Evaluasi Semua Model</span>
+            <span class="card-tag">MAE + R&sup2; + Akurasi Binary</span>
+          </div>
+          <div class="metrics-table-wrap">
+            <table class="metrics-table" id="metricsTable">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>MAE &#x2193;</th>
+                  <th>RMSE &#x2193;</th>
+                  <th>R&sup2; Score &#x2193;</th>
+                  <th>Akurasi Binary &#x2193;</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="metricsTableBody">
+                <!-- diisi oleh JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="chart-row col-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">&#x1F4CA; Perbandingan Akurasi Binary</span>
+              <span class="card-tag">Tinggi vs Rendah</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="chartR2Overview"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">&#x1F4C9; Perbandingan MAE</span>
+              <span class="card-tag">Error</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="chartMAEOverview"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- &#x2600;&#xFE0F;
+           SECTION 2: DATA EXPLORATION
+      &#x2600;&#xFE0F; -->
+      <section class="section" id="section-data">
+        <div class="section-header">
+          <h3>&#x1F4C8; Eksplorasi Dataset</h3>
+          <p>Analisis distribusi dan tren views harian di Facebook, Instagram, dan TikTok</p>
+        </div>
+
+        <!-- Correlation Cards -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <span class="card-title">&#x1F50D; Korelasi Views vs Penjualan (Pearson)</span>
+            <span class="card-tag">Correlation</span>
+          </div>
+          <div class="corr-grid" id="corrGrid">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- Views trend chart -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">&#x1F4CA; Tren Views Bulanan per Platform</span>
+            <span class="card-tag">Time Series</span>
+          </div>
+          <div class="chart-container" style="min-height:320px">
+            <canvas id="chartViewsTrend"></canvas>
+          </div>
+        </div>
+
+        <!-- Dist Charts -->
+        <div class="chart-row col-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">&#x1F4CA; Distribusi Views per Platform</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="chartViewsDist"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">&#x1F4CA; Distribusi Penjualan Harian</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="chartSalesDist"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Images from Python -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">&#x1F5BC;&#xFE0F; Grafik Tren Bulanan (Python Output)</span>
+            <span class="card-tag">Generated</span>
+          </div>
+          <img src="figures/monthly_trend.png" alt="Monthly Trend" class="rq-img" loading="lazy"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+          <p style="display:none;color:var(--text-muted);font-size:12px;margin-top:8px">
+            âš &#xFE0F; Grafik belum tersedia. Jalankan: <code>python ml_indibiz/main.py</code>
+          </p>
+        </div>
+      </section>
+
+      <!-- &#x2600;&#xFE0F;
+           SECTION 3: MODEL COMPARISON
+      &#x2600;&#xFE0F; -->
+      <section class="section" id="section-models">
+        <div class="section-header">
+          <h3>&#x1F916; Perbandingan Model ML</h3>
+          <p>Evaluasi lengkap Linear Regression, Random Forest, dan XGBoost &mdash; Binary Classification & Regresi</p>
+        </div>
+
+        <!-- Metrics Detail Table -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">&#x1F4CB; Tabel Evaluasi Lengkap</span>
+            <span class="card-tag">MAE &middot; RMSE &middot; R&sup2; &middot; Akurasi</span>
+          </div>
+          <div class="metrics-table-wrap">
+            <table class="metrics-table">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>MAE &#x2193;</th>
+                  <th>RMSE &#x2193;</th>
+                  <th>R&sup2; Score &#x2193;</th>
+                  <th>Akurasi Binary &#x2193;</th>
+                  <th>R&sup2; Visual</th>
+                </tr>
+              </thead>
+              <tbody id="metricsTableDetail">
+                <!-- filled by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3 metric charts -->
+        <div class="chart-row col-3">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Akurasi Binary</span>
+              <span class="card-tag">&#x2B06; Lebih Baik</span>
+            </div>
+            <div class="chart-container" style="min-height:220px">
+              <canvas id="chartR2Compare"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">MAE</span>
+              <span class="card-tag">&#x2B06; Lebih Baik</span>
+            </div>
+            <div class="chart-container" style="min-height:220px">
+              <canvas id="chartMAECompare"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">RMSE</span>
+              <span class="card-tag">&#x2B06; Lebih Baik</span>
+            </div>
+            <div class="chart-container" style="min-height:220px">
+              <canvas id="chartRMSECompare"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Python output images -->
+        <div class="chart-row col-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Actual vs Predicted</span>
+            </div>
+            <img src="figures/actual_vs_predicted.png" alt="Actual vs Predicted" class="rq-img" loading="lazy"
+                 onerror="this.style.display='none'"/>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Residual Plot</span>
+            </div>
+            <img src="figures/residuals.png" alt="Residuals" class="rq-img" loading="lazy"
+                 onerror="this.style.display='none'"/>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Feature Importance &rarr; RF & XGBoost</span>
+          </div>
+          <img src="figures/feature_importance.png" alt="Feature Importance" class="rq-img" loading="lazy"
+               onerror="this.style.display='none'"/>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Time Series Prediksi vs Aktual</span>
+          </div>
+          <img src="figures/time_series_prediction.png" alt="Time Series" class="rq-img" loading="lazy"
+               onerror="this.style.display='none'"/>
+        </div>
+      </section>
+
+      <!-- &#x2600;&#xFE0F;
+           SECTION 4: PREDICTION MANUAL
+      &#x2600;&#xFE0F; -->
+      <section class="section" id="section-predict">
+        <div class="section-header">
+          <h3>&#x1F3AF; Prediksi Penjualan Manual</h3>
+          <p>Masukkan data views media sosial untuk memprediksi estimasi penjualan harian Indibiz</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">&#x1F4DD; Input Data Views Harian</span>
+            <span class="card-tag">Real-time Prediksi</span>
+          </div>
+
+          <!-- Row 1: Social Media Views -->
+          <div style="margin-bottom:8px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px">
+            Data Views Media Sosial
+          </div>
+          <div class="predict-form predict-form-views">
+            <div class="form-group">
+              <label class="form-label" for="input-fb">
+                <span class="platform-dot dot-fb"></span>Facebook Views
+              </label>
+              <input class="form-input" id="input-fb" type="number" value="20000" min="0" placeholder="contoh: 20000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-ig">
+                <span class="platform-dot dot-ig"></span>Instagram Views
+              </label>
+              <input class="form-input" id="input-ig" type="number" value="6500" min="0" placeholder="contoh: 6500" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-tt">
+                <span class="platform-dot dot-tt"></span>TikTok Views
+              </label>
+              <input class="form-input" id="input-tt" type="number" value="500" min="0" placeholder="contoh: 500" />
+            </div>
+          </div>
+
+          <!-- Row 2: Context Parameters -->
+          <div style="margin-top:16px;margin-bottom:8px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px">
+            Parameter Konteks
+          </div>
+          <div class="predict-form predict-form-params">
+            <div class="form-group">
+              <label class="form-label" for="input-bulan">&#x1F4C5; Bulan</label>
+              <input class="form-input" id="input-bulan" type="number" value="6" min="1" max="12" placeholder="1–12" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-hari-pekan">&#x1F4C6; Hari Pekan</label>
+              <input class="form-input" id="input-hari-pekan" type="number" value="1" min="0" max="6" placeholder="0=Sen, 6=Min" />
+              <span style="font-size:10px;color:var(--text-muted);margin-top:2px">0=Senin &middot; 6=Minggu</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-sentiment">&#x1F4AC; Sentiment Score</label>
+              <input class="form-input" id="input-sentiment" type="number" value="0.65" min="0" max="1" step="0.01" placeholder="0.0 – 1.0" />
+              <span style="font-size:10px;color:var(--text-muted);margin-top:2px">0 = negatif &middot; 1 = positif</span>
+            </div>
+          </div>
+
+          <button class="predict-btn" id="predictBtn" onclick="runPrediction()">
+            <span>&#x1F3AF;</span> Prediksi Sekarang
+          </button>
+
+          <div class="prediction-result" id="predictionResult" style="display:none">
+            <div class="pred-card lr">
+              <div class="pred-model">Linear Regression</div>
+              <div class="pred-value" id="pred-lr">&mdash;</div>
+              <div class="pred-label">unit penjualan/hari</div>
+              <div class="pred-meta" id="pred-lr-class">&mdash;</div>
+              <div class="pred-meta">MAE &plusmn;0.97 | R&sup2;: 2.56%</div>
+            </div>
+            <div class="pred-card rf">
+              <div class="pred-model">Random Forest</div>
+              <div class="pred-value" id="pred-rf">&mdash;</div>
+              <div class="pred-label">unit penjualan/hari</div>
+              <div class="pred-meta" id="pred-rf-class">&mdash;</div>
+              <div class="pred-meta">MAE &plusmn;0.97 | R&sup2;: 5.00%</div>
+            </div>
+            <div class="pred-card xgb">
+              <div class="pred-model">XGBoost</div>
+              <div class="pred-value" id="pred-xgb">&mdash;</div>
+              <div class="pred-label">unit penjualan/hari</div>
+              <div class="pred-meta" id="pred-xgb-class">&mdash;</div>
+              <div class="pred-meta">MAE &plusmn;0.93 | R&sup2;: 6.46%</div>
+            </div>
+          </div>
+
+          <!-- Interpretation -->
+          <div id="pred-interpretation" class="pred-interpretation-box" style="display:none">
+            <div class="pred-interp-title">&#x1F4CA; Interpretasi Hasil Prediksi</div>
+            <div id="pred-text" class="pred-interp-text"></div>
+          </div>
+        </div>
+
+        <!-- Sensitivity Chart -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">&#x1F4C8; Estimasi Sensitivitas Views vs Penjualan</span>
+            <span class="card-tag">Simulasi</span>
+          </div>
+          <div class="chart-container" style="min-height:300px">
+            <canvas id="chartSensitivity"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- &#x2600;&#xFE0F;
+           SECTION 5: UPLOAD CSV (BARU)
+      &#x2600;&#xFE0F; -->
+      <section class="section" id="section-upload">
+        <div class="section-header">
+          <h3>&#x1F4E4; Upload CSV &amp; Prediksi Batch</h3>
+          <p>Upload file CSV sesuai format dataset Indibiz, lalu dapatkan prediksi penjualan otomatis untuk setiap baris</p>
+        </div>
+
+        <!-- Drop Zone -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">&#x1F4C2; Upload File CSV</span>
+            <span class="card-tag">Drag &amp; Drop</span>
+          </div>
+
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('csvFileInput').click()">
+            <span class="upload-icon">&#x2601;&#xFE0F;</span>
+            <h4>Drag &amp; Drop file CSV di sini</h4>
+            <p>atau klik tombol di bawah untuk memilih file</p>
+            <small>Format yang diterima: .csv | Kolom wajib: id, tanggal, Facebook, Instagram, TikTok</small>
+            <br>
+            <button class="btn-upload-browse" onclick="event.stopPropagation();document.getElementById('csvFileInput').click()">
+              &#x1F4C1; Pilih File CSV
+            </button>
+          </div>
+          <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileUpload(event)" />
+
+          <!-- Format Info -->
+          <div class="format-info">
+            <div class="format-box">
+              <h5>&#x1F4CB; Format Kolom CSV</h5>
+              <div class="col-list">
+                <div class="col-item">
+                  <div class="col-dot"></div>
+                  <div><code>id</code> &rarr; Nomor urut baris</div>
+                </div>
+                <div class="col-item">
+                  <div class="col-dot"></div>
+                  <div><code>tanggal</code> &rarr; Format: <code>01 Jan 2024</code></div>
+                </div>
+                <div class="col-item">
+                  <div class="col-dot"></div>
+                  <div><code>Facebook</code> &rarr; Jumlah views FB</div>
+                </div>
+                <div class="col-item">
+                  <div class="col-dot"></div>
+                  <div><code>Instagram</code> &rarr; Jumlah views IG</div>
+                </div>
+                <div class="col-item">
+                  <div class="col-dot"></div>
+                  <div><code>TikTok</code> &rarr; Jumlah views TT</div>
+                </div>
+                <div class="col-item">
+                  <div class="col-dot optional"></div>
+                  <div><code>Penjualan</code> &rarr; <em>Opsional</em> (data aktual)</div>
+                </div>
+              </div>
+            </div>
+            <div class="format-box">
+              <h5>&#x1F4C4; Contoh Isi File CSV</h5>
+              <pre style="font-size:11.5px;color:#A0A0A0;line-height:1.8;font-family:'Courier New',monospace;overflow-x:auto;white-space:pre">id,tanggal,Facebook,Instagram,TikTok,Penjualan
+1,01 Jan 2024,25000,7500,600,2
+2,02 Jan 2024,18000,6200,450,1
+3,03 Jan 2024,32000,8100,720,3
+4,04 Jan 2024,12000,5400,310,0</pre>
+              <div style="margin-top:12px">
+                <button class="btn-secondary" onclick="downloadTemplateCSV()" style="font-size:12px;padding:8px 16px">
+                  &#x2B07;&#xFE0F; Download Template CSV
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="preview-section" id="previewSection">
+          <div class="card">
+            <div class="preview-header">
+              <h4>&#x1F441;&#xFE0F; Preview Data CSV</h4>
+              <div class="preview-info">
+                <span class="file-badge" id="fileBadge">&#x1F4C1; file.csv</span>
+                <span id="rowCountBadge" style="font-size:12px;color:var(--text-muted)"></span>
+              </div>
+            </div>
+            <div class="metrics-table-wrap">
+              <table class="metrics-table" id="previewTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Tanggal</th>
+                    <th>Facebook</th>
+                    <th>Instagram</th>
+                    <th>TikTok</th>
+                    <th>Total Views</th>
+                    <th>Penjualan Aktual</th>
+                  </tr>
+                </thead>
+                <tbody id="previewTableBody"></tbody>
+              </table>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:10px">
+              * Menampilkan 10 baris pertama dari data
+            </div>
+
+            <div class="upload-actions">
+              <button class="btn-primary" id="btnPredict" onclick="runBatchPrediction()">
+                &#x1F680; Prediksi Semua Baris
+              </button>
+              <button class="btn-secondary" onclick="resetUpload()">
+                &#x1F504; Upload Ulang
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">&#x1F4CA; Hasil Prediksi Batch</span>
+              <div style="display:flex;gap:10px">
+                <button class="btn-secondary" onclick="downloadResultsCSV()" style="font-size:12px;padding:8px 16px">
+                  &#x2B07;&#xFE0F; Export CSV
+                </button>
+              </div>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="results-summary" id="resultsSummary"></div>
+
+            <div class="divider"></div>
+
+            <!-- Results Table -->
+            <div class="results-table-wrap">
+              <table class="results-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Tanggal</th>
+                    <th>FB Views</th>
+                    <th>IG Views</th>
+                    <th>TT Views</th>
+                    <th>Aktual</th>
+                    <th>LR Pred</th>
+                    <th>RF Pred</th>
+                    <th>XGB Pred</th>
+                    <th>Avg Pred</th>
+                    <th>Kategori</th>
+                  </tr>
+                </thead>
+                <tbody id="resultsTableBody"></tbody>
+              </table>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:10px">
+              Kategori: <strong style="color:#FF4444">Tinggi</strong> = prediksi ⪰2 unit | 
+              <strong style="color:#A0A0A0">Rendah</strong> = prediksi &lt;2 unit
+            </div>
+          </div>
+        </div>
+
+        <!-- Forecast Section (BARU) -->
+        <div class="results-section" id="forecastSection" style="margin-top:24px;">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">&#x1F52E; Proyeksi &amp; Prediksi 3 Bulan Pertama 2026 (Jan - Mar)</span>
+              <div style="display:flex;gap:10px">
+                <button class="btn-primary" onclick="downloadForecastCSV()" style="font-size:12px;padding:8px 16px">
+                  &#x2B07;&#xFE0F; Export Proyeksi CSV
+                </button>
+              </div>
+            </div>
+            
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+              Berdasarkan tren historis bulanan dan pola harian dari data yang Anda unggah, model memproyeksikan views media sosial dan memprediksi penjualan harian Indibiz untuk 3 bulan pertama tahun 2026.
+            </p>
+
+            <!-- Forecast Summary Stats -->
+            <div class="results-summary" id="forecastSummary"></div>
+
+            <div class="divider" style="margin:20px 0;height:1px;background:var(--border);"></div>
+
+            <!-- Chart of Forecast -->
+            <div class="chart-container" style="min-height:300px;margin-bottom:20px;">
+              <canvas id="chartForecast2026"></canvas>
+            </div>
+
+            <!-- Forecast Table -->
+            <div class="results-table-wrap">
+              <table class="results-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Tanggal</th>
+                    <th>FB Views (Proyeksi)</th>
+                    <th>IG Views (Proyeksi)</th>
+                    <th>TT Views (Proyeksi)</th>
+                    <th>Total Views</th>
+                    <th>LR Pred</th>
+                    <th>RF Pred</th>
+                    <th>XGB Pred (Utama)</th>
+                    <th>Kategori</th>
+                  </tr>
+                </thead>
+                <tbody id="forecastTableBody"></tbody>
+              </table>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:10px">
+              * Menampilkan hasil prediksi harian lengkap selama 3 bulan pertama tahun 2026 (90 hari).
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- &#x2600;&#xFE0F;
+           SECTION 6: RESEARCH QUESTIONS
+      &#x2600;&#xFE0F; -->
+      <section class="section" id="section-rq">
+        <div class="section-header">
+          <h3>&#x1F52C; Pertanyaan Penelitian</h3>
+          <p>Jawaban visual atas 4 pertanyaan penelitian skripsi menggunakan analisis data dan model ML</p>
+        </div>
+
+        <!-- Q1 -->
+        <div class="rq-card">
+          <div class="rq-number">1</div>
+          <div class="rq-label">Pertanyaan Penelitian 1</div>
+          <div class="rq-question">
+            Sejauh mana pengaruh metrik views (video views dan page views) di media sosial terhadap volume penjualan online paket internet Indibiz?
+          </div>
+          <div class="rq-answer">
+            Berdasarkan analisis korelasi Pearson, views media sosial memiliki <strong>korelasi yang sangat lemah</strong>
+            terhadap penjualan harian Indibiz. Facebook (korelasi &asymp; 0.01-0.05), Instagram (&asymp; 0.01-0.04),
+            dan TikTok (&asymp; 0.01-0.03) menunjukkan bahwa volume views saja <strong>tidak secara langsung</strong>
+            mendorong penjualan dalam jangka pendek. Namun, pola views bulanan menunjukkan adanya
+            <strong>seasonal pattern</strong> yang berkaitan dengan peak sales period.
+          </div>
+          <img src="figures/q1_views_correlation.png" alt="Q1 Views Correlation" class="rq-img" loading="lazy"
+               onerror="this.style.display='none'"/>
+        </div>
+
+        <!-- Q2 -->
+        <div class="rq-card">
+          <div class="rq-number">2</div>
+          <div class="rq-label">Pertanyaan Penelitian 2</div>
+          <div class="rq-question">
+            Seberapa besar pengaruh engagement media sosial terhadap penjualan?
+          </div>
+          <div class="rq-answer">
+            Analisis menunjukkan bahwa total engagement (likes + comments dari simulasi) memiliki
+            <strong>korelasi positif lemah</strong> terhadap penjualan. Likes Instagram dan TikTok memiliki
+            pengaruh sedikit lebih besar dibandingkan Facebook. <strong>Sentiment Score</strong> yang disimulasikan
+            berdasarkan pola views juga menunjukkan korelasi positif. Hal ini mengindikasikan bahwa
+            <strong>kualitas engagement lebih penting daripada sekadar volume views</strong>.
+          </div>
+          <img src="figures/q2_engagement_effect.png" alt="Q2 Engagement Effect" class="rq-img" loading="lazy"
+               onerror="this.style.display='none'"/>
+        </div>
+
+        <!-- Q3 -->
+        <div class="rq-card">
+          <div class="rq-number">3</div>
+          <div class="rq-label">Pertanyaan Penelitian 3</div>
+          <div class="rq-question">
+            Bagaimana membangun model Machine Learning (Linear Regression, Random Forest, dan XGBoost) yang paling akurat untuk memprediksi trend penjualan?
+          </div>
+          <div class="rq-answer">
+            Berdasarkan evaluasi komprehensif dengan 80% data training dan 20% data testing:
+            <br><br>
+            &bull; <strong>XGBoost</strong> &rarr; Akurasi Binary: 62.3% | MAE: 0.9261 | R&sup2;: 6.46% &mdash; <strong>Model Terbaik</strong><br>
+            &bull; <strong>Random Forest</strong> &rarr; Akurasi Binary: 60.1% | MAE: 0.9697 | R&sup2;: 5.00%<br>
+            &bull; <strong>Linear Regression</strong> &rarr; Akurasi Binary: 57.8% | MAE: 0.9711 | R&sup2;: 2.56%<br>
+            <br>
+            XGBoost unggul karena kemampuannya menangkap pola non-linear dan interaksi antar fitur.
+            Meski R&sup2; masih rendah, ini mengonfirmasi bahwa <strong>penjualan tidak semata ditentukan oleh views</strong>.
+          </div>
+          <img src="figures/q3_model_comparison.png" alt="Q3 Model Comparison" class="rq-img" loading="lazy"
+               onerror="this.style.display='none'"/>
+        </div>
+
+        <!-- Q4 -->
+        <div class="rq-card">
+          <div class="rq-number">4</div>
+          <div class="rq-label">Pertanyaan Penelitian 4</div>
+          <div class="rq-question">
+            Sejauh mana sentimen pelanggan di media sosial dapat meningkatkan performa model prediksi penjualan Indibiz?
+          </div>
+          <div class="rq-answer">
+            Perbandingan model <strong>dengan fitur sentimen</strong> vs <strong>tanpa sentimen</strong>:
+            <br><br>
+            &bull; XGBoost <strong>dengan sentimen</strong>: MAE=0.9261, R&sup2;=6.46%, Akurasi Binary=62.3%<br>
+            &bull; XGBoost <strong>tanpa sentimen</strong>: MAE=0.9288, R&sup2;=5.73%, Akurasi Binary=61.5%<br>
+            <br>
+            Penambahan fitur sentiment score <strong>meningkatkan R&sup2; XGBoost sebesar +0.73%</strong> dan
+            menurunkan MAE. Ini membuktikan bahwa <strong>sentimen pelanggan berkontribusi positif</strong>
+            terhadap akurasi prediksi, walau pengaruhnya masih terbatas karena sentimen yang digunakan
+            merupakan simulasi berbasis pola views.
+          </div>
+          <img src="figures/q4_sentiment_impact.png" alt="Q4 Sentiment Impact" class="rq-img" loading="lazy"
+               onerror="this.style.display='none'"/>
+        </div>
+
+      </section>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /layout -->
+
+<script src="app.js"></script>
+</body>
+</html>
+
+
