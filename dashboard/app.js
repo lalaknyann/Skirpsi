@@ -140,7 +140,6 @@ function showSection(sectionId) {
     overview: ['Overview', 'Ringkasan sistem prediksi penjualan Indibiz via Media Sosial'],
     data:     ['Eksplorasi Data', 'Analisis distribusi views harian di Facebook, Instagram, TikTok'],
     models:   ['Perbandingan Model', 'Evaluasi Linear Regression, Random Forest, XGBoost'],
-    predict:  ['Prediksi Manual', 'Input data views untuk prediksi penjualan real-time'],
     upload:   ['Upload CSV', 'Upload file CSV dan dapatkan prediksi batch otomatis'],
     rq:       ['Pertanyaan Penelitian', 'Jawaban visual 4 pertanyaan penelitian skripsi']
   };
@@ -149,7 +148,7 @@ function showSection(sectionId) {
   document.getElementById('topbarTitle').textContent = title;
   document.getElementById('topbarSub').textContent = sub;
 
-  event && event.preventDefault && event.preventDefault();
+  if (window.event) window.event.preventDefault();
 }
 
 // ═══════════════════════════════════════
@@ -550,53 +549,7 @@ function predictOne({ fb = 0, ig = 0, tt = 0, bulan = 6, hariPekan = 1, sentimen
   };
 }
 
-// ─── Manual Prediction ───
-function runPrediction() {
-  const fb        = parseFloat(document.getElementById('input-fb').value)          || 0;
-  const ig        = parseFloat(document.getElementById('input-ig').value)          || 0;
-  const tt        = parseFloat(document.getElementById('input-tt').value)          || 0;
-  const bulan     = parseInt(document.getElementById('input-bulan').value)         || 6;
-  const hariPekan = parseInt(document.getElementById('input-hari-pekan').value)    || 1;
-  const sentiment = parseFloat(document.getElementById('input-sentiment').value)   || 0.65;
-
-  const result = predictOne({ fb, ig, tt, bulan, hariPekan, sentiment });
-  const totalViews = fb + ig + tt;
-
-  // Update values
-  document.getElementById('pred-lr').textContent  = result.lr.value.toFixed(2);
-  document.getElementById('pred-rf').textContent  = result.rf.value.toFixed(2);
-  document.getElementById('pred-xgb').textContent = result.xgb.value.toFixed(2);
-
-  // Class badges
-  const classBadge = (cls) =>
-    `<span class="class-badge ${cls === 'Tinggi' ? 'class-tinggi' : 'class-rendah'}">● ${cls}</span>`;
-
-  document.getElementById('pred-lr-class').innerHTML  = classBadge(result.lr.class);
-  document.getElementById('pred-rf-class').innerHTML  = classBadge(result.rf.class);
-  document.getElementById('pred-xgb-class').innerHTML = classBadge(result.xgb.class);
-
-  document.getElementById('predictionResult').style.display    = 'grid';
-  document.getElementById('pred-interpretation').style.display = 'block';
-
-  const avgPred = result.avg.toFixed(2);
-  const xgbClass  = result.xgb.class;
-  const levelColor = xgbClass === 'Tinggi' ? '#FF4444' : '#A0A0A0';
-  const bulanName  = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][bulan] || bulan;
-  const hariName   = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'][hariPekan] || hariPekan;
-
-  document.getElementById('pred-text').innerHTML = `
-    Dengan total views <strong style="color:#FF4444">${totalViews.toLocaleString('id-ID')}</strong>
-    (FB: ${fb.toLocaleString('id-ID')} | IG: ${ig.toLocaleString('id-ID')} | TT: ${tt.toLocaleString('id-ID')}),
-    bulan <strong>${bulanName}</strong>, hari <strong>${hariName}</strong>, 
-    dan sentiment score <strong>${sentiment}</strong>:<br><br>
-    ▸ Rata-rata prediksi ketiga model: <strong style="color:#FFB800">${avgPred} unit/hari</strong><br>
-    ▸ XGBoost (model terbaik): <strong style="color:${levelColor}">${result.xgb.value.toFixed(2)} unit → Kategori <span style="text-transform:uppercase">${xgbClass}</span></strong><br><br>
-    <em style="color:var(--text-muted);font-size:12px">
-      📌 Catatan: Prediksi ini menggunakan aproksimasi model yang dilatih pada 731 data historis.
-      Akurasi binary XGBoost = 62.3% (lebih baik dari random 50%). 
-    </em>
-  `;
-}
+// (Manual Prediction dihapus)
 
 // ═══════════════════════════════════════
 // CSV UPLOAD & BATCH PREDICTION
@@ -627,9 +580,22 @@ function processCSVFile(file) {
   const handleSuccess = (rows) => {
     uploadedData = rows;
     logToTerminal(`[CSV Upload] BERHASIL: Memproses ${rows.length} baris dari ${file.name}`);
+    
+    // Tampilkan menu navigasi yang disembunyikan
+    ['nav-overview', 'nav-data', 'nav-models'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+    });
+
+    // Perbarui metrik di sidebar footer secara dinamis
+    updateSidebarMetrics(rows);
+
     renderPreviewTable(uploadedData);
     showPreviewSection(file.name, uploadedData.length);
     showUIFeedback(`✅ Berhasil mengunggah ${file.name} (${rows.length} baris data). Silakan periksa preview di bawah.`, 'success');
+    
+    // Alihkan halaman aktif ke Overview
+    showSection('overview');
   };
 
   const handleFailure = (errMessage) => {
@@ -1498,12 +1464,6 @@ function showUIFeedback(msg, type = "info") {
 // ═══════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Hide loading overlay
-  setTimeout(() => {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) overlay.classList.add('hidden');
-  }, 1400);
-
   // Render metrics tables
   renderMetricsTable('metricsTableBody', false);
   renderMetricsTable('metricsTableDetail', true);
@@ -1512,7 +1472,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initOverviewCharts();
   initDataCharts();
   initModelCharts();
-  initSensitivityChart();
+
+  // Set default active section to 'upload' (ini akan menyembunyikan section lainnya secara otomatis)
+  showSection('upload');
+
+  // Hide loading overlay
+  setTimeout(() => {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.classList.add('hidden');
+  }, 1400);
 
   // Setup drag-and-drop for upload zone
   const zone = document.getElementById('uploadZone');

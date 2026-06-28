@@ -44,19 +44,16 @@
     <nav class="sidebar-nav">
       <div class="nav-section">Menu Utama</div>
 
-      <a class="nav-item active" id="nav-overview" onclick="showSection('overview')">
+      <a class="nav-item" id="nav-overview" onclick="showSection('overview')" style="display: none;">
         <span class="nav-icon">&#x1F3E0;</span> Overview
       </a>
-      <a class="nav-item" id="nav-data" onclick="showSection('data')">
+      <a class="nav-item" id="nav-data" onclick="showSection('data')" style="display: none;">
         <span class="nav-icon">&#x1F4C8;</span> Eksplorasi Data
       </a>
-      <a class="nav-item" id="nav-models" onclick="showSection('models')">
+      <a class="nav-item" id="nav-models" onclick="showSection('models')" style="display: none;">
         <span class="nav-icon">&#x1F916;</span> Perbandingan Model
       </a>
-      <a class="nav-item" id="nav-predict" onclick="showSection('predict')">
-        <span class="nav-icon">&#x1F3AF;</span> Prediksi Manual
-      </a>
-      <a class="nav-item" id="nav-upload" onclick="showSection('upload')">
+      <a class="nav-item active" id="nav-upload" onclick="showSection('upload')">
         <span class="nav-icon">&#x1F4C2;</span> Upload CSV
         <span style="margin-left:auto;font-size:10px;background:rgba(204,0,0,0.2);color:#FF4444;padding:2px 8px;border-radius:99px;border:1px solid rgba(204,0,0,0.35)">BARU</span>
       </a>
@@ -69,10 +66,10 @@
     </nav>
 
     <div class="sidebar-footer">
-      Data: <span>Jan 2024 &ndash; Des 2025</span><br>
-      Dataset: <span>731 baris</span><br>
-      Platform: <span>IG &middot; TikTok &middot; FB</span><br>
-      Model terbaik: <span>XGBoost</span>
+      Data: <span id="meta-date-range">Belum ada</span><br>
+      Dataset: <span id="meta-row-count">0 baris</span><br>
+      Platform: <span id="meta-platforms">-</span><br>
+      Model terbaik: <span id="meta-best-model">XGBoost</span>
     </div>
   </aside>
 
@@ -83,8 +80,8 @@
     <div class="topbar">
       <!-- Judul halaman -->
       <div class="topbar-title">
-        <h2 id="topbarTitle">Overview</h2>
-        <p id="topbarSub">Ringkasan sistem prediksi penjualan Indibiz</p>
+        <h2 id="topbarTitle">Upload CSV</h2>
+        <p id="topbarSub">Upload file CSV dan dapatkan prediksi batch otomatis</p>
       </div>
 
       <!-- Kanan: theme toggle -->
@@ -111,7 +108,7 @@
       <!-- &#x2600;&#xFE0F;
            SECTION 1: OVERVIEW
       &#x2600;&#xFE0F; -->
-      <section class="section active" id="section-overview">
+      <section class="section" id="section-overview">
         <div class="section-header">
           <h3>&#x1F3E0; Overview Dashboard</h3>
           <p>Ringkasan lengkap dataset, model ML, dan hasil prediksi penjualan paket internet Indibiz</p>
@@ -374,117 +371,9 @@
       </section>
 
       <!-- &#x2600;&#xFE0F;
-           SECTION 4: PREDICTION MANUAL
-      &#x2600;&#xFE0F; -->
-      <section class="section" id="section-predict">
-        <div class="section-header">
-          <h3>&#x1F3AF; Prediksi Penjualan Manual</h3>
-          <p>Masukkan data views media sosial untuk memprediksi estimasi penjualan harian Indibiz</p>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">&#x1F4DD; Input Data Views Harian</span>
-            <span class="card-tag">Real-time Prediksi</span>
-          </div>
-
-          <!-- Row 1: Social Media Views -->
-          <div style="margin-bottom:8px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px">
-            Data Views Media Sosial
-          </div>
-          <div class="predict-form predict-form-views">
-            <div class="form-group">
-              <label class="form-label" for="input-fb">
-                <span class="platform-dot dot-fb"></span>Facebook Views
-              </label>
-              <input class="form-input" id="input-fb" type="number" value="20000" min="0" placeholder="contoh: 20000" />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="input-ig">
-                <span class="platform-dot dot-ig"></span>Instagram Views
-              </label>
-              <input class="form-input" id="input-ig" type="number" value="6500" min="0" placeholder="contoh: 6500" />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="input-tt">
-                <span class="platform-dot dot-tt"></span>TikTok Views
-              </label>
-              <input class="form-input" id="input-tt" type="number" value="500" min="0" placeholder="contoh: 500" />
-            </div>
-          </div>
-
-          <!-- Row 2: Context Parameters -->
-          <div style="margin-top:16px;margin-bottom:8px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px">
-            Parameter Konteks
-          </div>
-          <div class="predict-form predict-form-params">
-            <div class="form-group">
-              <label class="form-label" for="input-bulan">&#x1F4C5; Bulan</label>
-              <input class="form-input" id="input-bulan" type="number" value="6" min="1" max="12" placeholder="1–12" />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="input-hari-pekan">&#x1F4C6; Hari Pekan</label>
-              <input class="form-input" id="input-hari-pekan" type="number" value="1" min="0" max="6" placeholder="0=Sen, 6=Min" />
-              <span style="font-size:10px;color:var(--text-muted);margin-top:2px">0=Senin &middot; 6=Minggu</span>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="input-sentiment">&#x1F4AC; Sentiment Score</label>
-              <input class="form-input" id="input-sentiment" type="number" value="0.65" min="0" max="1" step="0.01" placeholder="0.0 – 1.0" />
-              <span style="font-size:10px;color:var(--text-muted);margin-top:2px">0 = negatif &middot; 1 = positif</span>
-            </div>
-          </div>
-
-          <button class="predict-btn" id="predictBtn" onclick="runPrediction()">
-            <span>&#x1F3AF;</span> Prediksi Sekarang
-          </button>
-
-          <div class="prediction-result" id="predictionResult" style="display:none">
-            <div class="pred-card lr">
-              <div class="pred-model">Linear Regression</div>
-              <div class="pred-value" id="pred-lr">&mdash;</div>
-              <div class="pred-label">unit penjualan/hari</div>
-              <div class="pred-meta" id="pred-lr-class">&mdash;</div>
-              <div class="pred-meta">MAE &plusmn;0.97 | R&sup2;: 2.56%</div>
-            </div>
-            <div class="pred-card rf">
-              <div class="pred-model">Random Forest</div>
-              <div class="pred-value" id="pred-rf">&mdash;</div>
-              <div class="pred-label">unit penjualan/hari</div>
-              <div class="pred-meta" id="pred-rf-class">&mdash;</div>
-              <div class="pred-meta">MAE &plusmn;0.97 | R&sup2;: 5.00%</div>
-            </div>
-            <div class="pred-card xgb">
-              <div class="pred-model">XGBoost</div>
-              <div class="pred-value" id="pred-xgb">&mdash;</div>
-              <div class="pred-label">unit penjualan/hari</div>
-              <div class="pred-meta" id="pred-xgb-class">&mdash;</div>
-              <div class="pred-meta">MAE &plusmn;0.93 | R&sup2;: 6.46%</div>
-            </div>
-          </div>
-
-          <!-- Interpretation -->
-          <div id="pred-interpretation" class="pred-interpretation-box" style="display:none">
-            <div class="pred-interp-title">&#x1F4CA; Interpretasi Hasil Prediksi</div>
-            <div id="pred-text" class="pred-interp-text"></div>
-          </div>
-        </div>
-
-        <!-- Sensitivity Chart -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">&#x1F4C8; Estimasi Sensitivitas Views vs Penjualan</span>
-            <span class="card-tag">Simulasi</span>
-          </div>
-          <div class="chart-container" style="min-height:300px">
-            <canvas id="chartSensitivity"></canvas>
-          </div>
-        </div>
-      </section>
-
-      <!-- &#x2600;&#xFE0F;
            SECTION 5: UPLOAD CSV (BARU)
       &#x2600;&#xFE0F; -->
-      <section class="section" id="section-upload">
+      <section class="section active" id="section-upload">
         <div class="section-header">
           <h3>&#x1F4E4; Upload CSV &amp; Prediksi Batch</h3>
           <p>Upload file CSV sesuai format dataset Indibiz, lalu dapatkan prediksi penjualan otomatis untuk setiap baris</p>
