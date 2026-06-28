@@ -150,15 +150,20 @@ function showSection(sectionId) {
 
   // Render/Update charts lazily when sections become visible to prevent 0-size canvas blank rendering
   if (sectionId === 'models' && typeof predictionResults !== 'undefined' && predictionResults && predictionResults.length > 0) {
-    console.log("[showSection] Models section active. Triggering 4 charts redraw. Data size:", predictionResults.length);
-    initActualVsPredictedChart(predictionResults);
-    initResidualsChart(predictionResults);
-    initFeatureImportanceChart(predictionResults);
-    initTimeSeriesCompareChart(predictionResults);
+    console.log("[showSection] Models section active. Triggering charts redraw with 150ms reflow delay. Data size:", predictionResults.length);
+    setTimeout(() => {
+      initModelCharts(ML_RESULTS); // Redraw the top 3 comparison bar charts
+      initActualVsPredictedChart(predictionResults);
+      initResidualsChart(predictionResults);
+      initFeatureImportanceChart(predictionResults);
+      initTimeSeriesCompareChart(predictionResults);
+    }, 150);
   }
   if (sectionId === 'data' && typeof predictionResults !== 'undefined' && predictionResults && predictionResults.length > 0) {
-    console.log("[showSection] Data section active. Triggering trend chart redraw. Data size:", predictionResults.length);
-    initMonthlyTrendDynamic(predictionResults);
+    console.log("[showSection] Data section active. Triggering trend chart redraw with 150ms reflow delay. Data size:", predictionResults.length);
+    setTimeout(() => {
+      initMonthlyTrendDynamic(predictionResults);
+    }, 150);
   }
 
   if (window.event) window.event.preventDefault();
