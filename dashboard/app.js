@@ -157,6 +157,39 @@ function showSection(sectionId) {
       initResidualsChart(predictionResults);
       initFeatureImportanceChart(predictionResults);
       initTimeSeriesCompareChart(predictionResults);
+
+      // DIAGNOSTIC LOG FOR CANVAS SIZES
+      const c1 = document.getElementById('chartActualVsPredicted');
+      const c2 = document.getElementById('chartResiduals');
+      const details = {
+        chartActualVsPredicted: {
+          rect: c1 ? c1.getBoundingClientRect() : null,
+          width: c1 ? c1.width : null,
+          height: c1 ? c1.height : null,
+          display: c1 ? c1.style.display : null,
+          styleWidth: c1 ? c1.style.width : null,
+          styleHeight: c1 ? c1.style.height : null,
+          offsetParent: c1 && c1.offsetParent ? {
+            id: c1.offsetParent.id,
+            className: c1.offsetParent.className,
+            rect: c1.offsetParent.getBoundingClientRect()
+          } : null
+        },
+        chartResiduals: {
+          rect: c2 ? c2.getBoundingClientRect() : null,
+          width: c2 ? c2.width : null,
+          height: c2 ? c2.height : null,
+          display: c2 ? c2.style.display : null,
+          styleWidth: c2 ? c2.style.width : null,
+          styleHeight: c2 ? c2.style.height : null,
+          offsetParent: c2 && c2.offsetParent ? {
+            id: c2.offsetParent.id,
+            className: c2.offsetParent.className,
+            rect: c2.offsetParent.getBoundingClientRect()
+          } : null
+        }
+      };
+      console.log('DIAGNOSTIC_OUTPUT:' + JSON.stringify(details));
     }, 150);
   }
   if (sectionId === 'data' && typeof predictionResults !== 'undefined' && predictionResults && predictionResults.length > 0) {
