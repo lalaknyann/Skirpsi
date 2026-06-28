@@ -714,10 +714,12 @@ function validateAndConvertParsedData(data) {
   const parseCleanInt = (v) => {
     if (v === undefined || v === null) return 0;
     const s = String(v).trim();
+    if (s === '') return 0;
     // Hilangkan titik pemisah ribuan dan karakter selain angka/minus
     const noDots = s.replace(/\./g, '');
     const cleaned = noDots.replace(/[^0-9-]/g, '');
-    return parseInt(cleaned) || 0;
+    const parsed = parseInt(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   for (let i = 0; i < data.length; i++) {
@@ -776,9 +778,12 @@ function parseCSVFallback(text) {
   const rows = [];
   
   const parseCleanInt = (v) => {
-    if (!v) return 0;
-    const cleanStr = String(v).replace(/\./g, '').replace(/[^0-9-]/g, '');
-    return parseInt(cleanStr) || 0;
+    if (v === undefined || v === null) return 0;
+    const s = String(v).trim();
+    if (s === '') return 0;
+    const cleanStr = s.replace(/\./g, '').replace(/[^0-9-]/g, '');
+    const parsed = parseInt(cleanStr);
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   for (let i = 1; i < lines.length; i++) {
