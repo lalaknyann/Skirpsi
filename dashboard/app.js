@@ -1019,7 +1019,7 @@ function updateDashboardChartsAndMetrics(rows, predictedData) {
   initModelCharts(dynamicResults);
 
   // 8. Perbarui 5 Grafik Python ML secara dinamis!
-  initMonthlyTrendDynamic(rows);
+  initMonthlyTrendDynamic(predictedData);
   initActualVsPredictedChart(predictedData);
   initResidualsChart(predictedData);
   initFeatureImportanceChart(predictedData);
@@ -1046,7 +1046,7 @@ function calculateCorrelation(xArr, yArr) {
 }
 
 let chartMonthlyTrendDynamicInstance = null;
-function initMonthlyTrendDynamic(rows) {
+function initMonthlyTrendDynamic(predictedData) {
   const ctx = document.getElementById('chartMonthlyTrendDynamic');
   if (!ctx) return;
 
@@ -1056,15 +1056,21 @@ function initMonthlyTrendDynamic(rows) {
   const salesMonthly = Array(12).fill(0);
   const monthCounts = Array(12).fill(0);
 
-  rows.forEach(r => {
+  const hasActual = predictedData.some(r => r.penjualan !== null && !isNaN(r.penjualan));
+
+  predictedData.forEach(r => {
     const date = parseTanggalString(r.tanggal);
     const m = date.getMonth();
     if (!isNaN(m)) {
       fbMonthly[m] += r.fb || 0;
       igMonthly[m] += r.ig || 0;
       ttMonthly[m] += r.tt || 0;
-      if (r.penjualan !== null && !isNaN(r.penjualan)) {
-        salesMonthly[m] += r.penjualan;
+      if (hasActual) {
+        if (r.penjualan !== null && !isNaN(r.penjualan)) {
+          salesMonthly[m] += r.penjualan;
+        }
+      } else {
+        salesMonthly[m] += (r.result && r.result.xgb) ? r.result.xgb.value : 0;
       }
       monthCounts[m]++;
     }
@@ -1112,10 +1118,10 @@ function initMonthlyTrendDynamic(rows) {
         },
         {
           type: 'bar',
-          label: 'Total Penjualan',
+          label: hasActual ? 'Total Penjualan' : 'Total Prediksi Penjualan (Tidak ada kolom Penjualan)',
           data: salesSum,
-          backgroundColor: 'rgba(255, 68, 68, 0.25)',
-          borderColor: '#FF4444',
+          backgroundColor: hasActual ? 'rgba(255, 68, 68, 0.25)' : 'rgba(255, 184, 0, 0.25)',
+          borderColor: hasActual ? '#FF4444' : '#FFB800',
           borderWidth: 1,
           yAxisID: 'ySales'
         }
@@ -1133,9 +1139,9 @@ function initMonthlyTrendDynamic(rows) {
         },
         ySales: {
           position: 'right',
-          title: { display: true, text: 'Total Penjualan (unit)', color: '#FF4444' },
+          title: { display: true, text: hasActual ? 'Total Penjualan (unit)' : 'Total Prediksi (unit)', color: hasActual ? '#FF4444' : '#FFB800' },
           grid: { drawOnChartArea: false },
-          ticks: { color: '#FF4444' }
+          ticks: { color: hasActual ? '#FF4444' : '#FFB800' }
         }
       }
     }
@@ -1148,12 +1154,25 @@ function initActualVsPredictedChart(predictedData) {
   if (!ctx) return;
 
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
-  if (validRows.length === 0) return;
+  const hasActual = validRows.length > 0;
 
-  const points = validRows.map(r => ({
-    x: r.penjualan,
-    y: r.result.xgb.value
-  }));
+  let points = [];
+  let labelText = '';
+
+  if (hasActual) {
+    points = validRows.map(r => ({
+      x: r.penjualan,
+      y: r.result.xgb.value
+    }));
+    labelText = 'XGBoost Prediksi';
+  } else {
+    labelText = 'Simulasi Baseline (CSV tidak memiliki kolom Penjualan)';
+    for (let i = 0; i < 150; i++) {
+      const act = Math.floor(Math.random() * 4);
+      const noise = (Math.random() - 0.5) * 0.9;
+      points.push({ x: act, y: Math.max(0, Math.min(3, act + noise)) });
+    }
+  }
 
   const jitteredPoints = points.map(p => ({
     x: p.x + (Math.random() - 0.5) * 0.15,
@@ -1166,10 +1185,10 @@ function initActualVsPredictedChart(predictedData) {
     data: {
       datasets: [
         {
-          label: 'XGBoost Prediksi',
+          label: labelText,
           data: jitteredPoints,
-          backgroundColor: 'rgba(255, 68, 68, 0.65)',
-          borderColor: '#FF4444',
+          backgroundColor: hasActual ? 'rgba(255, 68, 68, 0.65)' : 'rgba(150, 150, 150, 0.5)',
+          borderColor: hasActual ? '#FF4444' : '#9E9E9E',
           pointRadius: 4
         },
         {
@@ -1216,13 +1235,26 @@ function initResidualsChart(predictedData) {
   if (!ctx) return;
 
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
-  if (validRows.length === 0) return;
+  const hasActual = validRows.length > 0;
 
-  const points = validRows.map(r => {
-    const pred = r.result.xgb.value;
-    const resid = r.penjualan - pred;
-    return { x: pred, y: resid };
-  });
+  let points = [];
+  let labelText = '';
+
+  if (hasActual) {
+    points = validRows.map(r => {
+      const pred = r.result.xgb.value;
+      const resid = r.penjualan - pred;
+      return { x: pred, y: resid };
+    });
+    labelText = 'Residuals (Aktual - Prediksi)';
+  } else {
+    labelText = 'Simulasi Residuals (CSV tidak memiliki kolom Penjualan)';
+    for (let i = 0; i < 150; i++) {
+      const pred = Math.random() * 3.2;
+      const resid = (Math.random() - 0.5) * 1.5;
+      points.push({ x: pred, y: resid });
+    }
+  }
 
   if (chartResidualsInstance) chartResidualsInstance.destroy();
   chartResidualsInstance = new Chart(ctx, {
@@ -1230,10 +1262,10 @@ function initResidualsChart(predictedData) {
     data: {
       datasets: [
         {
-          label: 'Residuals (Aktual - Prediksi)',
+          label: labelText,
           data: points,
-          backgroundColor: 'rgba(255, 184, 0, 0.65)',
-          borderColor: '#FFB800',
+          backgroundColor: hasActual ? 'rgba(255, 184, 0, 0.65)' : 'rgba(150, 150, 150, 0.5)',
+          borderColor: hasActual ? '#FFB800' : '#9E9E9E',
           pointRadius: 4
         },
         {
@@ -1280,16 +1312,19 @@ function initFeatureImportanceChart(predictedData) {
   if (!ctx) return;
 
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
-  if (validRows.length === 0) return;
+  const hasActual = validRows.length > 0;
 
-  const actuals = validRows.map(r => r.penjualan);
-  const fbs = validRows.map(r => r.fb);
-  const igs = validRows.map(r => r.ig);
-  const tts = validRows.map(r => r.tt);
-  const sentiments = validRows.map(r => r.sentiment || 0.65);
-  const months = validRows.map(r => r.bulan || 6);
-  
-  const dows = validRows.map(r => {
+  const actuals = hasActual ? validRows.map(r => r.penjualan) : predictedData.map(r => r.result.xgb.value);
+  const fbs = predictedData.map(r => r.fb);
+  const igs = predictedData.map(r => r.ig);
+  const tts = predictedData.map(r => r.tt);
+  const sentiments = predictedData.map(r => r.sentiment || 0.65);
+  const months = predictedData.map(r => {
+    const d = parseTanggalString(r.tanggal);
+    return isNaN(d.getMonth()) ? 6 : d.getMonth() + 1;
+  });
+
+  const dows = predictedData.map(r => {
     const d = parseTanggalString(r.tanggal);
     return isNaN(d.getDay()) ? 1 : d.getDay();
   });
@@ -1316,7 +1351,7 @@ function initFeatureImportanceChart(predictedData) {
     data: {
       labels: importances.map(i => i.label),
       datasets: [{
-        label: 'Kekuatan Hubungan (Korelasi Absolut)',
+        label: hasActual ? 'Kekuatan Hubungan (Korelasi Absolut)' : 'Kekuatan Hubungan dengan Prediksi (Tanpa Kolom Penjualan)',
         data: importances.map(i => i.val),
         backgroundColor: [
           'rgba(255, 68, 68, 0.75)',
@@ -1359,35 +1394,38 @@ function initTimeSeriesCompareChart(predictedData) {
   if (!ctx) return;
 
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
-  if (validRows.length === 0) return;
+  const hasActual = validRows.length > 0;
 
-  const labels = validRows.map(r => r.tanggal);
-  const actuals = validRows.map(r => r.penjualan);
-  const predictions = validRows.map(r => r.result.xgb.value);
+  const labels = predictedData.map(r => r.tanggal);
+  const actuals = predictedData.map(r => r.penjualan);
+  const predictions = predictedData.map(r => r.result.xgb.value);
+
+  const datasets = [];
+  if (hasActual) {
+    datasets.push({
+      label: 'Aktual Penjualan',
+      data: actuals,
+      borderColor: 'rgba(158, 158, 158, 0.65)',
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false
+    });
+  }
+  datasets.push({
+    label: hasActual ? 'Prediksi XGBoost' : 'Prediksi XGBoost (Kolom Penjualan tidak ditemukan)',
+    data: predictions,
+    borderColor: '#FF4444',
+    borderWidth: 2,
+    pointRadius: 0,
+    fill: false
+  });
 
   if (chartTimeSeriesCompareInstance) chartTimeSeriesCompareInstance.destroy();
   chartTimeSeriesCompareInstance = new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
-      datasets: [
-        {
-          label: 'Aktual Penjualan',
-          data: actuals,
-          borderColor: 'rgba(158, 158, 158, 0.65)',
-          borderWidth: 2,
-          pointRadius: 0,
-          fill: false
-        },
-        {
-          label: 'Prediksi XGBoost',
-          data: predictions,
-          borderColor: '#FF4444',
-          borderWidth: 2,
-          pointRadius: 0,
-          fill: false
-        }
-      ]
+      datasets: datasets
     },
     options: {
       responsive: true,
