@@ -150,12 +150,14 @@ function showSection(sectionId) {
 
   // Render/Update charts lazily when sections become visible to prevent 0-size canvas blank rendering
   if (sectionId === 'models' && typeof predictionResults !== 'undefined' && predictionResults && predictionResults.length > 0) {
+    console.log("[showSection] Models section active. Triggering 4 charts redraw. Data size:", predictionResults.length);
     initActualVsPredictedChart(predictionResults);
     initResidualsChart(predictionResults);
     initFeatureImportanceChart(predictionResults);
     initTimeSeriesCompareChart(predictionResults);
   }
   if (sectionId === 'data' && typeof predictionResults !== 'undefined' && predictionResults && predictionResults.length > 0) {
+    console.log("[showSection] Data section active. Triggering trend chart redraw. Data size:", predictionResults.length);
     initMonthlyTrendDynamic(predictionResults);
   }
 
@@ -1161,8 +1163,13 @@ function initMonthlyTrendDynamic(predictedData) {
 
 let chartActualVsPredictedInstance = null;
 function initActualVsPredictedChart(predictedData) {
+  console.log("[Chart Init] initActualVsPredictedChart called. Data:", predictedData ? predictedData.length : "null");
   const ctx = document.getElementById('chartActualVsPredicted');
-  if (!ctx) return;
+  if (!ctx) {
+    console.error("[Chart Init] Canvas chartActualVsPredicted NOT found in DOM!");
+    return;
+  }
+  console.log("[Chart Init] Canvas chartActualVsPredicted found successfully:", ctx);
 
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
   const hasActual = validRows.length > 0;
@@ -1242,8 +1249,13 @@ function initActualVsPredictedChart(predictedData) {
 
 let chartResidualsInstance = null;
 function initResidualsChart(predictedData) {
+  console.log("[Chart Init] initResidualsChart called. Data:", predictedData ? predictedData.length : "null");
   const ctx = document.getElementById('chartResiduals');
-  if (!ctx) return;
+  if (!ctx) {
+    console.error("[Chart Init] Canvas chartResiduals NOT found in DOM!");
+    return;
+  }
+  console.log("[Chart Init] Canvas chartResiduals found successfully:", ctx);
 
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
   const hasActual = validRows.length > 0;
@@ -1319,8 +1331,13 @@ function initResidualsChart(predictedData) {
 
 let chartFeatureImportanceInstance = null;
 function initFeatureImportanceChart(predictedData) {
+  console.log("[Chart Init] initFeatureImportanceChart called. Data:", predictedData ? predictedData.length : "null");
   const ctx = document.getElementById('chartFeatureImportance');
-  if (!ctx) return;
+  if (!ctx) {
+    console.error("[Chart Init] Canvas chartFeatureImportance NOT found in DOM!");
+    return;
+  }
+  console.log("[Chart Init] Canvas chartFeatureImportance found successfully:", ctx);
 
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
   const hasActual = validRows.length > 0;
@@ -1401,8 +1418,13 @@ function initFeatureImportanceChart(predictedData) {
 
 let chartTimeSeriesCompareInstance = null;
 function initTimeSeriesCompareChart(predictedData) {
+  console.log("[Chart Init] initTimeSeriesCompareChart called. Data:", predictedData ? predictedData.length : "null");
   const ctx = document.getElementById('chartTimeSeriesCompare');
-  if (!ctx) return;
+  if (!ctx) {
+    console.error("[Chart Init] Canvas chartTimeSeriesCompare NOT found in DOM!");
+    return;
+  }
+  console.log("[Chart Init] Canvas chartTimeSeriesCompare found successfully:", ctx);
 
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
   const hasActual = validRows.length > 0;
