@@ -615,7 +615,7 @@ body {
 .chart-container {
   position: relative;
   width: 100%;
-  min-height: 260px;
+  height: 280px;
 }
 
 .chart-row {
