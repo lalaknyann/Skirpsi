@@ -1253,6 +1253,8 @@ function initActualVsPredictedChart(predictedData) {
           ticks: { color: '#A0A0A0' },
           grid: { color: 'rgba(255,255,255,0.05)' }
         }
+      }
+    }
   });
 }
 
