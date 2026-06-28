@@ -1824,6 +1824,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (overlay) overlay.classList.add('hidden');
   }, 1400);
 
+  // Demo mode: auto-load Data Harian.csv jika ?demo=1 ada di URL
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('demo') === '1') {
+    setTimeout(() => {
+      logToTerminal('[Demo Mode] Mendeteksi parameter ?demo=1. Mengunduh Data Harian.csv...');
+      fetch('./Data%20Harian.csv')
+        .then(response => {
+          if (!response.ok) throw new Error('Gagal mengambil file Data Harian.csv');
+          return response.blob();
+        })
+        .then(blob => {
+          const file = new File([blob], 'Data Harian.csv', { type: 'text/csv' });
+          logToTerminal('[Demo Mode] File berhasil diunduh. Memulai pemrosesan otomatis...');
+          processCSVFile(file);
+        })
+        .catch(err => {
+          logToTerminal(`[Demo Mode] ERROR: ${err.message}`);
+        });
+    }, 2000); // Tunggu sampai inisialisasi awal selesai
+  }
+
   // Setup drag-and-drop for upload zone
   const zone = document.getElementById('uploadZone');
   if (zone) {
