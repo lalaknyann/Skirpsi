@@ -601,31 +601,11 @@ function runPrediction() {
 // CSV UPLOAD & BATCH PREDICTION
 // ═══════════════════════════════════════
 
-// ─── Drag & Drop Events ───
-document.addEventListener('DOMContentLoaded', () => {
-  const zone = document.getElementById('uploadZone');
-  if (!zone) return;
-
-  zone.addEventListener('dragover', e => {
-    e.preventDefault();
-    zone.classList.add('dragover');
-  });
-
-  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-
-  zone.addEventListener('drop', e => {
-    e.preventDefault();
-    zone.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (file && file.name.endsWith('.csv')) processCSVFile(file);
-    else showAlert('Harap upload file dengan format .csv');
-  });
-});
-
+// ─── Drag & Drop / File Upload Events ───
 function handleFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  if (!file.name.endsWith('.csv')) {
+  if (!file.name.toLowerCase().endsWith('.csv')) {
     showAlert('Harap upload file dengan format .csv');
     return;
   }
@@ -634,83 +614,93 @@ function handleFileUpload(event) {
 
 function processCSVFile(file) {
   uploadedFileName = file.name;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const parsed = parseCSV(e.target.result);
-      if (parsed.error) {
-        showAlert('❌ Error: ' + parsed.error);
-        return;
+  
+  // Gunakan PapaParse untuk memparsing CSV agar tangguh terhadap BOM, delimiter (koma/titik koma), quotes, dll.
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      try {
+        const parsed = validateAndConvertParsedData(results.data);
+        if (parsed.error) {
+          showAlert('❌ Error: ' + parsed.error);
+          return;
+        }
+        uploadedData = parsed.rows;
+        renderPreviewTable(uploadedData);
+        showPreviewSection(file.name, uploadedData.length);
+      } catch(err) {
+        showAlert('❌ Gagal memproses file: ' + err.message);
       }
-      uploadedData = parsed.rows;
-      renderPreviewTable(uploadedData);
-      showPreviewSection(file.name, uploadedData.length);
-    } catch(err) {
+    },
+    error: function(err) {
       showAlert('❌ Gagal membaca file: ' + err.message);
     }
-  };
-  reader.readAsText(file);
+  });
 }
 
-/**
- * Parse CSV text → array of row objects
- * Mendukung header: id, tanggal, Facebook, Instagram, TikTok, Penjualan
- */
-function parseCSV(text) {
-  const lines = text.trim().split('\n').filter(l => l.trim() !== '');
-  if (lines.length < 2) return { error: 'File CSV kosong atau hanya berisi header.' };
+function validateAndConvertParsedData(data) {
+  if (!data || data.length === 0) {
+    return { error: 'File CSV kosong atau tidak memiliki baris data.' };
+  }
 
-  // Parse header (case-insensitive)
-  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+  // Ambil nama kolom asli dari baris pertama hasil parse
+  const headers = Object.keys(data[0]);
+  const headersLower = headers.map(h => h.trim().toLowerCase());
 
-  // Required columns
+  // Periksa kolom wajib (case-insensitive)
   const requiredCols = ['facebook', 'instagram', 'tiktok'];
-  const missingCols = requiredCols.filter(c => !header.includes(c));
+  const missingCols = requiredCols.filter(c => !headersLower.includes(c));
   if (missingCols.length > 0) {
     return { error: `Kolom berikut tidak ditemukan: ${missingCols.join(', ')}. Pastikan header CSV sesuai format.` };
   }
 
-  const idxFB     = header.indexOf('facebook');
-  const idxIG     = header.indexOf('instagram');
-  const idxTT     = header.indexOf('tiktok');
-  const idxTgl    = header.indexOf('tanggal');
-  const idxSales  = header.indexOf('penjualan');
-  const idxId     = header.indexOf('id');
+  const keyFB = headers[headersLower.indexOf('facebook')];
+  const keyIG = headers[headersLower.indexOf('instagram')];
+  const keyTT = headers[headersLower.indexOf('tiktok')];
+  
+  // Kolom opsional
+  const idxTgl = headersLower.indexOf('tanggal');
+  const keyTgl = idxTgl >= 0 ? headers[idxTgl] : null;
+
+  const idxSales = headersLower.indexOf('penjualan');
+  const keySales = idxSales >= 0 ? headers[idxSales] : null;
+
+  const idxId = headersLower.indexOf('id');
+  const keyId = idxId >= 0 ? headers[idxId] : null;
 
   const rows = [];
-  let errorCount = 0;
-
-  for (let i = 1; i < lines.length; i++) {
-    const cols = smartSplit(lines[i]);
-    if (cols.length < Math.max(idxFB, idxIG, idxTT) + 1) { errorCount++; continue; }
-
-    const fb    = parseFloat(cols[idxFB]?.replace(/[^0-9.-]/g, '')) || 0;
-    const ig    = parseFloat(cols[idxIG]?.replace(/[^0-9.-]/g, '')) || 0;
-    const tt    = parseFloat(cols[idxTT]?.replace(/[^0-9.-]/g, '')) || 0;
-    const tgl   = idxTgl >= 0  ? cols[idxTgl]?.trim().replace(/"/g, '')  : `Baris ${i}`;
-    const sales = idxSales >= 0 ? parseFloat(cols[idxSales]?.replace(/[^0-9.-]/g, '')) : null;
-    const rowId = idxId >= 0   ? cols[idxId]?.trim() : i;
-
+  
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    
+    // Konversi nilai views
+    const fbValStr = String(row[keyFB] || '').replace(/[^0-9.-]/g, '');
+    const igValStr = String(row[keyIG] || '').replace(/[^0-9.-]/g, '');
+    const ttValStr = String(row[keyTT] || '').replace(/[^0-9.-]/g, '');
+    
+    const fb = parseFloat(fbValStr) || 0;
+    const ig = parseFloat(igValStr) || 0;
+    const tt = parseFloat(ttValStr) || 0;
+    
+    const tgl = keyTgl ? String(row[keyTgl] || '').trim() : `Baris ${i + 1}`;
+    
+    // Konversi nilai penjualan aktual (jika ada)
+    let sales = null;
+    if (keySales && row[keySales] !== undefined && row[keySales] !== null) {
+      const salesValStr = String(row[keySales]).replace(/[^0-9.-]/g, '').trim();
+      if (salesValStr !== '') {
+        sales = parseFloat(salesValStr);
+        if (isNaN(sales)) sales = null;
+      }
+    }
+    
+    const rowId = keyId ? String(row[keyId] || '').trim() : i + 1;
+    
     rows.push({ id: rowId, tanggal: tgl, fb, ig, tt, penjualan: sales });
   }
 
-  if (rows.length === 0) return { error: 'Tidak ada data yang valid di file CSV.' };
-
-  return { rows, errorCount };
-}
-
-/** Smart CSV split: handles quoted fields */
-function smartSplit(line) {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    if (line[i] === '"') { inQuotes = !inQuotes; continue; }
-    if (line[i] === ',' && !inQuotes) { result.push(current.trim()); current = ''; continue; }
-    current += line[i];
-  }
-  result.push(current.trim());
-  return result;
+  return { rows };
 }
 
 /** Render preview table (first 10 rows) */
