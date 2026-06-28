@@ -1273,6 +1273,7 @@ function initActualVsPredictedChart(predictedData) {
       },
       scales: {
         x: {
+          type: 'linear', // Linear scale to map numeric coordinates
           title: { display: true, text: 'Aktual Penjualan', color: '#A0A0A0' },
           min: -0.5,
           max: 3.5,
@@ -1356,6 +1357,7 @@ function initResidualsChart(predictedData) {
       },
       scales: {
         x: {
+          type: 'linear', // Linear scale to map numeric coordinates
           title: { display: true, text: 'Prediksi Penjualan', color: '#A0A0A0' },
           min: -0.2,
           max: 3.5,
