@@ -602,11 +602,18 @@ function runPrediction() {
 // ═══════════════════════════════════════
 
 // ─── Drag & Drop / File Upload Events ───
+function logToTerminal(message) {
+  console.log(message);
+  const cleanMsg = encodeURIComponent(message);
+  // Mengirimkan request GET pasif ke server python lokal untuk memicu pencetakan log di terminal
+  fetch(`/?log=${cleanMsg}`).catch(() => {});
+}
+
 function handleFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
   if (!file.name.toLowerCase().endsWith('.csv')) {
-    showAlert('Harap upload file dengan format .csv');
+    showUIFeedback('Harap upload file dengan format .csv', 'error');
     return;
   }
   processCSVFile(file);
@@ -614,29 +621,61 @@ function handleFileUpload(event) {
 
 function processCSVFile(file) {
   uploadedFileName = file.name;
-  
-  // Gunakan PapaParse untuk memparsing CSV agar tangguh terhadap BOM, delimiter (koma/titik koma), quotes, dll.
-  Papa.parse(file, {
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
+  logToTerminal(`[CSV Upload] Memulai upload file: ${file.name} (${file.size} bytes)`);
+
+  const handleSuccess = (rows) => {
+    uploadedData = rows;
+    logToTerminal(`[CSV Upload] BERHASIL: Memproses ${rows.length} baris dari ${file.name}`);
+    renderPreviewTable(uploadedData);
+    showPreviewSection(file.name, uploadedData.length);
+    showUIFeedback(`✅ Berhasil mengunggah ${file.name} (${rows.length} baris data). Silakan periksa preview di bawah.`, 'success');
+  };
+
+  const handleFailure = (errMessage) => {
+    logToTerminal(`[CSV Upload] GAGAL: ${errMessage}`);
+    showUIFeedback(`❌ Gagal mengunggah file: ${errMessage}`, 'error');
+  };
+
+  // Gunakan PapaParse jika tersedia, jika tidak gunakan fallback parser lokal
+  if (typeof Papa !== 'undefined') {
+    logToTerminal(`[CSV Upload] Menggunakan library PapaParse.`);
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        try {
+          const parsed = validateAndConvertParsedData(results.data);
+          if (parsed.error) {
+            handleFailure(parsed.error);
+            return;
+          }
+          handleSuccess(parsed.rows);
+        } catch(err) {
+          handleFailure(err.message);
+        }
+      },
+      error: function(err) {
+        handleFailure(err.message);
+      }
+    });
+  } else {
+    logToTerminal(`[CSV Upload] PapaParse tidak ditemukan. Menggunakan parser fallback lokal.`);
+    const reader = new FileReader();
+    reader.onload = (e) => {
       try {
-        const parsed = validateAndConvertParsedData(results.data);
+        const parsed = parseCSVFallback(e.target.result);
         if (parsed.error) {
-          showAlert('❌ Error: ' + parsed.error);
+          handleFailure(parsed.error);
           return;
         }
-        uploadedData = parsed.rows;
-        renderPreviewTable(uploadedData);
-        showPreviewSection(file.name, uploadedData.length);
+        handleSuccess(parsed.rows);
       } catch(err) {
-        showAlert('❌ Gagal memproses file: ' + err.message);
+        handleFailure(err.message);
       }
-    },
-    error: function(err) {
-      showAlert('❌ Gagal membaca file: ' + err.message);
-    }
-  });
+    };
+    reader.onerror = () => handleFailure("Gagal membaca file dari penyimpanan lokal.");
+    reader.readAsText(file);
+  }
 }
 
 function validateAndConvertParsedData(data) {
@@ -671,27 +710,31 @@ function validateAndConvertParsedData(data) {
 
   const rows = [];
   
+  // Fungsi pembersihan ribuan (Indonesia menggunakan '.' sebagai pemisah ribuan)
+  const parseCleanInt = (v) => {
+    if (v === undefined || v === null) return 0;
+    const s = String(v).trim();
+    // Hilangkan titik pemisah ribuan dan karakter selain angka/minus
+    const noDots = s.replace(/\./g, '');
+    const cleaned = noDots.replace(/[^0-9-]/g, '');
+    return parseInt(cleaned) || 0;
+  };
+
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
     
-    // Konversi nilai views
-    const fbValStr = String(row[keyFB] || '').replace(/[^0-9.-]/g, '');
-    const igValStr = String(row[keyIG] || '').replace(/[^0-9.-]/g, '');
-    const ttValStr = String(row[keyTT] || '').replace(/[^0-9.-]/g, '');
-    
-    const fb = parseFloat(fbValStr) || 0;
-    const ig = parseFloat(igValStr) || 0;
-    const tt = parseFloat(ttValStr) || 0;
+    const fb = parseCleanInt(row[keyFB]);
+    const ig = parseCleanInt(row[keyIG]);
+    const tt = parseCleanInt(row[keyTT]);
     
     const tgl = keyTgl ? String(row[keyTgl] || '').trim() : `Baris ${i + 1}`;
     
     // Konversi nilai penjualan aktual (jika ada)
     let sales = null;
     if (keySales && row[keySales] !== undefined && row[keySales] !== null) {
-      const salesValStr = String(row[keySales]).replace(/[^0-9.-]/g, '').trim();
+      const salesValStr = String(row[keySales]).trim();
       if (salesValStr !== '') {
-        sales = parseFloat(salesValStr);
-        if (isNaN(sales)) sales = null;
+        sales = parseCleanInt(salesValStr);
       }
     }
     
@@ -701,6 +744,82 @@ function validateAndConvertParsedData(data) {
   }
 
   return { rows };
+}
+
+function parseCSVFallback(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
+  if (lines.length < 2) return { error: 'File CSV kosong atau hanya berisi header.' };
+
+  // Deteksi delimiter: hitung kemunculan koma vs titik koma di baris pertama
+  const firstLine = lines[0];
+  const commaCount = (firstLine.match(/,/g) || []).length;
+  const semiCount = (firstLine.match(/;/g) || []).length;
+  const delimiter = semiCount > commaCount ? ';' : ',';
+
+  // Parse header
+  const header = firstLine.split(delimiter).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+
+  // Required columns
+  const requiredCols = ['facebook', 'instagram', 'tiktok'];
+  const missingCols = requiredCols.filter(c => !header.includes(c));
+  if (missingCols.length > 0) {
+    return { error: `Kolom berikut tidak ditemukan: ${missingCols.join(', ')}. Pastikan header CSV sesuai format.` };
+  }
+
+  const idxFB     = header.indexOf('facebook');
+  const idxIG     = header.indexOf('instagram');
+  const idxTT     = header.indexOf('tiktok');
+  const idxTgl    = header.indexOf('tanggal');
+  const idxSales  = header.indexOf('penjualan');
+  const idxId     = header.indexOf('id');
+
+  const rows = [];
+  
+  const parseCleanInt = (v) => {
+    if (!v) return 0;
+    const cleanStr = String(v).replace(/\./g, '').replace(/[^0-9-]/g, '');
+    return parseInt(cleanStr) || 0;
+  };
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = smartSplitFallback(lines[i], delimiter);
+    if (cols.length < Math.max(idxFB, idxIG, idxTT) + 1) continue;
+
+    const fb = parseCleanInt(cols[idxFB]);
+    const ig = parseCleanInt(cols[idxIG]);
+    const tt = parseCleanInt(cols[idxTT]);
+    
+    const tgl = idxTgl >= 0 ? cols[idxTgl].trim().replace(/"/g, '') : `Baris ${i}`;
+    
+    let sales = null;
+    if (idxSales >= 0 && cols[idxSales] !== undefined) {
+      const salesVal = cols[idxSales].trim().replace(/"/g, '');
+      if (salesVal !== '') {
+        sales = parseCleanInt(salesVal);
+      }
+    }
+    
+    const rowId = idxId >= 0 ? cols[idxId].trim().replace(/"/g, '') : i;
+
+    rows.push({ id: rowId, tanggal: tgl, fb, ig, tt, penjualan: sales });
+  }
+
+  if (rows.length === 0) return { error: 'Tidak ada data yang valid di file CSV.' };
+
+  return { rows };
+}
+
+function smartSplitFallback(line, delimiter) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') { inQuotes = !inQuotes; continue; }
+    if (line[i] === delimiter && !inQuotes) { result.push(current.trim()); current = ''; continue; }
+    current += line[i];
+  }
+  result.push(current.trim());
+  return result;
 }
 
 /** Render preview table (first 10 rows) */
@@ -948,25 +1067,48 @@ function resetUpload() {
   if (resultsSection) resultsSection.classList.remove('visible');
 }
 
-/** Show alert message */
-function showAlert(msg) {
-  // Simple inline alert
+/** Show UI feedback message (success/error/info) */
+function showUIFeedback(msg, type = "info") {
   const zone = document.getElementById('uploadZone');
   if (!zone) return;
+  
+  // Hapus feedback sebelumnya jika ada
+  const existing = zone.parentElement.querySelectorAll('.ui-feedback-alert');
+  existing.forEach(el => el.remove());
+
   const alertEl = document.createElement('div');
+  alertEl.className = 'ui-feedback-alert';
+  
+  let bg = 'rgba(77, 77, 79, 0.12)';
+  let border = 'rgba(77, 77, 79, 0.35)';
+  let color = 'var(--text-primary)';
+  
+  if (type === 'success') {
+    bg = 'rgba(0, 200, 83, 0.12)';
+    border = 'rgba(0, 200, 83, 0.35)';
+    color = '#00C853';
+  } else if (type === 'error') {
+    bg = 'rgba(204, 0, 0, 0.12)';
+    border = 'rgba(204, 0, 0, 0.35)';
+    color = '#FF4444';
+  }
+
   alertEl.style.cssText = `
     margin-top: 12px;
     padding: 12px 16px;
-    background: rgba(204,0,0,0.12);
-    border: 1px solid rgba(204,0,0,0.35);
+    background: ${bg};
+    border: 1px solid ${border};
     border-radius: 8px;
     font-size: 13px;
-    color: #FF4444;
+    color: ${color};
     text-align: center;
+    font-weight: 500;
   `;
   alertEl.textContent = msg;
   zone.parentElement.insertBefore(alertEl, zone.nextSibling);
-  setTimeout(() => alertEl.remove(), 5000);
+  
+  // Hapus otomatis setelah beberapa detik
+  setTimeout(() => alertEl.remove(), 7000);
 }
 
 // ═══════════════════════════════════════
@@ -1005,7 +1147,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (file && file.name.toLowerCase().endsWith('.csv')) {
         processCSVFile(file);
       } else {
-        showAlert('⚠️ Harap upload file dengan format .csv');
+        showUIFeedback('⚠️ Harap upload file dengan format .csv', 'error');
       }
     });
   }
