@@ -121,6 +121,7 @@ let uploadedData = [];
 let predictionResults = [];
 let uploadedFileName = '';
 let forecastResults = [];
+let currentMLResults = null; // Menyimpan hasil ML terbaru setelah upload CSV
 
 // ═══════════════════════════════════════
 // NAVIGATION
@@ -152,7 +153,8 @@ function showSection(sectionId) {
   if (sectionId === 'models' && typeof predictionResults !== 'undefined' && predictionResults && predictionResults.length > 0) {
     console.log("[showSection] Models section active. Triggering charts redraw with 150ms reflow delay. Data size:", predictionResults.length);
     setTimeout(() => {
-      initModelCharts(ML_RESULTS);
+      const resultsToUse = currentMLResults || ML_RESULTS;
+      initModelCharts(resultsToUse);
       initActualVsPredictedChart(predictionResults);
       initResidualsChart(predictionResults);
       initFeatureImportanceChart(predictionResults);
@@ -160,9 +162,10 @@ function showSection(sectionId) {
     }, 500);
   }
   if (sectionId === 'data' && typeof predictionResults !== 'undefined' && predictionResults && predictionResults.length > 0) {
-    console.log("[showSection] Data section active. Triggering trend chart redraw with 150ms reflow delay. Data size:", predictionResults.length);
+    console.log("[showSection] Data section active. Triggering chart redraw with 500ms reflow delay.");
     setTimeout(() => {
       initMonthlyTrendDynamic(predictionResults);
+      updateDataChartsDynamic(uploadedData);
     }, 500);
   }
 
@@ -1038,6 +1041,7 @@ function updateDashboardChartsAndMetrics(rows, predictedData) {
   updateDataChartsDynamic(rows);
 
   // 7. Perbarui Chart Perbandingan Model di Section 3
+  currentMLResults = dynamicResults; // Simpan ke global untuk dipakai saat tab switch
   initModelCharts(dynamicResults);
 
   // 8. Perbarui 5 Grafik Python ML secara dinamis!
@@ -1140,12 +1144,13 @@ function initMonthlyTrendDynamic(predictedData) {
         },
         {
           type: 'bar',
-          label: hasActual ? 'Total Penjualan' : 'Total Prediksi Penjualan (Tidak ada kolom Penjualan)',
+          label: hasActual ? 'Total Penjualan' : 'Prediksi XGBoost',
           data: salesSum,
           backgroundColor: hasActual ? 'rgba(255, 68, 68, 0.25)' : 'rgba(255, 184, 0, 0.25)',
           borderColor: hasActual ? '#FF4444' : '#FFB800',
           borderWidth: 1,
-          yAxisID: 'ySales'
+          yAxisID: 'ySales',
+          hidden: !hasActual // Sembunyikan bar prediksi jika tidak ada kolom Penjualan
         }
       ]
     },
@@ -1155,15 +1160,16 @@ function initMonthlyTrendDynamic(predictedData) {
         x: CHART_DEFAULTS.scales.x,
         yViews: {
           position: 'left',
-          title: { display: true, text: 'Rata-rata Views', color: '#A0A0A0' },
+          title: { display: true, text: 'Rata-rata Views/Hari', color: '#A0A0A0' },
           grid: { color: 'rgba(255,255,255,0.05)' },
           ticks: { color: '#A0A0A0', callback: v => (v/1000).toFixed(0) + 'K' }
         },
         ySales: {
           position: 'right',
-          title: { display: true, text: hasActual ? 'Total Penjualan (unit)' : 'Total Prediksi (unit)', color: hasActual ? '#FF4444' : '#FFB800' },
+          display: hasActual, // Hanya tampilkan axis penjualan jika ada data aktual
+          title: { display: hasActual, text: 'Total Penjualan (unit)', color: '#FF4444' },
           grid: { drawOnChartArea: false },
-          ticks: { color: hasActual ? '#FF4444' : '#FFB800' }
+          ticks: { color: '#FF4444' }
         }
       }
     }
@@ -1521,12 +1527,13 @@ function renderMetricsTableDynamic(results) {
       let accCell = `<strong style="color:${isBest ? '#FFBB00' : 'inherit'}">${res.Accuracy_bin.toFixed(1)}%</strong>`;
 
       if (isDetail) {
-        // Tabel detail - 4 kolom: Model | MAE | RMSE | R² Score
+        // Tabel detail - 5 kolom: Model | MAE | RMSE | R² Score | Akurasi Binary | R² Visual
+        const r2Pct = res.R2_pct || (res.R2 * 100) || 0;
         const r2Visual = `
           <div class="r2-bar-container">
-            <span class="r2-val">${res.R2.toFixed(4)}</span>
+            <span class="r2-val">${r2Pct.toFixed(2)}%</span>
             <div class="r2-bar-bg">
-              <div class="r2-bar-fill" style="width:${Math.min(100, Math.max(0, res.R2_pct * 8)) || 0}%;background:${color}"></div>
+              <div class="r2-bar-fill" style="width:${Math.min(100, Math.max(0, r2Pct * 8))}%;background:${color}"></div>
             </div>
           </div>
         `;
@@ -1537,6 +1544,8 @@ function renderMetricsTableDynamic(results) {
           </td>
           <td>${res.MAE.toFixed(4)}</td>
           <td>${res.RMSE.toFixed(4)}</td>
+          <td style="color:${color};font-weight:600">${r2Pct.toFixed(4)}%</td>
+          <td>${accCell}</td>
           <td style="min-width:160px">${r2Visual}</td>
         `;
       } else {
@@ -1871,11 +1880,38 @@ function updateSidebarMetrics(rows) {
 // ─── FORECASTING ENGINE FOR 2026 (BARU) ───
 function parseTanggalString(tglStr) {
   if (!tglStr) return new Date();
-  const MONTHS_ID = { jan:0, feb:1, mar:2, apr:3, mei:4, jun:5, jul:6, agu:7, sep:8, okt:9, nov:10, des:11 };
-  const MONTHS_EN = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
+  // Support short and full Indonesian & English month names
+  const MONTHS_ID = {
+    jan:0, januari:0,
+    feb:1, februari:1,
+    mar:2, maret:2,
+    apr:3, april:3,
+    mei:4,
+    jun:5, juni:5,
+    jul:6, juli:6,
+    agu:7, agustus:7,
+    sep:8, september:8,
+    okt:9, oktober:9,
+    nov:10, november:10,
+    des:11, desember:11
+  };
+  const MONTHS_EN = {
+    jan:0, january:0,
+    feb:1, february:1,
+    mar:2, march:2,
+    apr:3, april:3,
+    may:4,
+    jun:5, june:5,
+    jul:6, july:6,
+    aug:7, august:7,
+    sep:8, september:8,
+    oct:9, october:9,
+    nov:10, november:10,
+    dec:11, december:11
+  };
 
   const str = tglStr.toLowerCase().trim();
-  
+
   // Format YYYY-MM-DD
   const dateMatch = str.match(/(\d{4})[/-](\d{2})[/-](\d{2})/);
   if (dateMatch) return new Date(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
@@ -1884,23 +1920,27 @@ function parseTanggalString(tglStr) {
   const dmyMatch = str.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
   if (dmyMatch) return new Date(parseInt(dmyMatch[3]), parseInt(dmyMatch[2]) - 1, parseInt(dmyMatch[1]));
 
-  // Format "DD Month YYYY" (contoh: "10 Des 2025")
+  // Format "DD Month YYYY" (contoh: "10 Desember 2025" or "10 Des 2025")
   const parts = str.split(/\s+/);
   if (parts.length >= 3) {
     const dd = parseInt(parts[0]) || 1;
     const yyyy = parseInt(parts[2]) || new Date().getFullYear();
-    const monthWord = parts[1];
-    
-    let mm = 5; // default June
+    const monthWord = parts[1].toLowerCase();
+
+    let mm = -1;
+    // Match full name first (e.g., 'agustus' before 'agu' for disambiguation)
     for (const [key, val] of Object.entries(MONTHS_ID)) {
-      if (monthWord.startsWith(key)) { mm = val; break; }
+      if (monthWord === key || monthWord.startsWith(key)) { mm = val; break; }
     }
-    for (const [key, val] of Object.entries(MONTHS_EN)) {
-      if (monthWord.startsWith(key)) { mm = val; break; }
+    if (mm === -1) {
+      for (const [key, val] of Object.entries(MONTHS_EN)) {
+        if (monthWord === key || monthWord.startsWith(key)) { mm = val; break; }
+      }
     }
+    if (mm === -1) mm = 5; // default June if nothing matched
     return new Date(yyyy, mm, dd);
   }
-  
+
   return new Date();
 }
 
