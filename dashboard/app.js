@@ -166,6 +166,11 @@ function showSection(sectionId) {
     }, 150);
   }
 
+  // Force Chart.js to recalculate container dimensions by dispatching window resize events
+  setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100);
+  setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 300);
+  setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 600);
+
   if (window.event) window.event.preventDefault();
 }
 
@@ -1204,7 +1209,7 @@ function initActualVsPredictedChart(predictedData) {
 
   if (chartActualVsPredictedInstance) chartActualVsPredictedInstance.destroy();
   chartActualVsPredictedInstance = new Chart(ctx, {
-    type: 'scatter',
+    type: 'line',
     data: {
       datasets: [
         {
@@ -1212,7 +1217,8 @@ function initActualVsPredictedChart(predictedData) {
           data: jitteredPoints,
           backgroundColor: hasActual ? 'rgba(255, 68, 68, 0.65)' : 'rgba(150, 150, 150, 0.5)',
           borderColor: hasActual ? '#FF4444' : '#9E9E9E',
-          pointRadius: 4
+          pointRadius: 4,
+          showLine: false // Scatter style points
         },
         {
           label: 'Garis Ideal (y = x)',
@@ -1286,7 +1292,7 @@ function initResidualsChart(predictedData) {
 
   if (chartResidualsInstance) chartResidualsInstance.destroy();
   chartResidualsInstance = new Chart(ctx, {
-    type: 'scatter',
+    type: 'line',
     data: {
       datasets: [
         {
@@ -1294,7 +1300,8 @@ function initResidualsChart(predictedData) {
           data: points,
           backgroundColor: hasActual ? 'rgba(255, 184, 0, 0.65)' : 'rgba(150, 150, 150, 0.5)',
           borderColor: hasActual ? '#FFB800' : '#9E9E9E',
-          pointRadius: 4
+          pointRadius: 4,
+          showLine: false // Scatter style points
         },
         {
           label: 'Garis Nol (y = 0)',
