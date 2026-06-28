@@ -1017,6 +1017,402 @@ function updateDashboardChartsAndMetrics(rows, predictedData) {
 
   // 7. Perbarui Chart Perbandingan Model di Section 3
   initModelCharts(dynamicResults);
+
+  // 8. Perbarui 5 Grafik Python ML secara dinamis!
+  initMonthlyTrendDynamic(rows);
+  initActualVsPredictedChart(predictedData);
+  initResidualsChart(predictedData);
+  initFeatureImportanceChart(predictedData);
+  initTimeSeriesCompareChart(predictedData);
+}
+
+function calculateCorrelation(xArr, yArr) {
+  const n = xArr.length;
+  if (n === 0) return 0;
+  const meanX = xArr.reduce((a, b) => a + b, 0) / n;
+  const meanY = yArr.reduce((a, b) => a + b, 0) / n;
+  let num = 0;
+  let denX = 0;
+  let denY = 0;
+  for (let i = 0; i < n; i++) {
+    const dx = xArr[i] - meanX;
+    const dy = yArr[i] - meanY;
+    num += dx * dy;
+    denX += dx * dx;
+    denY += dy * dy;
+  }
+  if (denX === 0 || denY === 0) return 0;
+  return num / Math.sqrt(denX * denY);
+}
+
+let chartMonthlyTrendDynamicInstance = null;
+function initMonthlyTrendDynamic(rows) {
+  const ctx = document.getElementById('chartMonthlyTrendDynamic');
+  if (!ctx) return;
+
+  const fbMonthly = Array(12).fill(0);
+  const igMonthly = Array(12).fill(0);
+  const ttMonthly = Array(12).fill(0);
+  const salesMonthly = Array(12).fill(0);
+  const monthCounts = Array(12).fill(0);
+
+  rows.forEach(r => {
+    const date = parseTanggalString(r.tanggal);
+    const m = date.getMonth();
+    if (!isNaN(m)) {
+      fbMonthly[m] += r.fb || 0;
+      igMonthly[m] += r.ig || 0;
+      ttMonthly[m] += r.tt || 0;
+      if (r.penjualan !== null && !isNaN(r.penjualan)) {
+        salesMonthly[m] += r.penjualan;
+      }
+      monthCounts[m]++;
+    }
+  });
+
+  const fbAvg = fbMonthly.map((v, i) => monthCounts[i] ? Math.round(v / monthCounts[i]) : 0);
+  const igAvg = igMonthly.map((v, i) => monthCounts[i] ? Math.round(v / monthCounts[i]) : 0);
+  const ttAvg = ttMonthly.map((v, i) => monthCounts[i] ? Math.round(v / monthCounts[i]) : 0);
+  const salesSum = salesMonthly;
+
+  const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+  if (chartMonthlyTrendDynamicInstance) chartMonthlyTrendDynamicInstance.destroy();
+  chartMonthlyTrendDynamicInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          type: 'line',
+          label: 'Facebook Views',
+          data: fbAvg,
+          borderColor: '#1877F2',
+          tension: 0.3,
+          yAxisID: 'yViews',
+          pointRadius: 3
+        },
+        {
+          type: 'line',
+          label: 'Instagram Views',
+          data: igAvg,
+          borderColor: '#E1306C',
+          tension: 0.3,
+          yAxisID: 'yViews',
+          pointRadius: 3
+        },
+        {
+          type: 'line',
+          label: 'TikTok Views',
+          data: ttAvg,
+          borderColor: '#FF0050',
+          tension: 0.3,
+          yAxisID: 'yViews',
+          pointRadius: 3
+        },
+        {
+          type: 'bar',
+          label: 'Total Penjualan',
+          data: salesSum,
+          backgroundColor: 'rgba(255, 68, 68, 0.25)',
+          borderColor: '#FF4444',
+          borderWidth: 1,
+          yAxisID: 'ySales'
+        }
+      ]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      scales: {
+        x: CHART_DEFAULTS.scales.x,
+        yViews: {
+          position: 'left',
+          title: { display: true, text: 'Rata-rata Views', color: '#A0A0A0' },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#A0A0A0', callback: v => (v/1000).toFixed(0) + 'K' }
+        },
+        ySales: {
+          position: 'right',
+          title: { display: true, text: 'Total Penjualan (unit)', color: '#FF4444' },
+          grid: { drawOnChartArea: false },
+          ticks: { color: '#FF4444' }
+        }
+      }
+    }
+  });
+}
+
+let chartActualVsPredictedInstance = null;
+function initActualVsPredictedChart(predictedData) {
+  const ctx = document.getElementById('chartActualVsPredicted');
+  if (!ctx) return;
+
+  const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
+  if (validRows.length === 0) return;
+
+  const points = validRows.map(r => ({
+    x: r.penjualan,
+    y: r.result.xgb.value
+  }));
+
+  const jitteredPoints = points.map(p => ({
+    x: p.x + (Math.random() - 0.5) * 0.15,
+    y: p.y
+  }));
+
+  if (chartActualVsPredictedInstance) chartActualVsPredictedInstance.destroy();
+  chartActualVsPredictedInstance = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'XGBoost Prediksi',
+          data: jitteredPoints,
+          backgroundColor: 'rgba(255, 68, 68, 0.65)',
+          borderColor: '#FF4444',
+          pointRadius: 4
+        },
+        {
+          label: 'Garis Ideal (y = x)',
+          data: [{x: 0, y: 0}, {x: 3, y: 3}],
+          type: 'line',
+          borderColor: '#A0A0A0',
+          borderDash: [5, 5],
+          fill: false,
+          pointRadius: 0,
+          showLine: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#A0A0A0' } }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Aktual Penjualan', color: '#A0A0A0' },
+          min: -0.5,
+          max: 3.5,
+          ticks: { stepSize: 1, color: '#A0A0A0' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        },
+        y: {
+          title: { display: true, text: 'Prediksi Penjualan', color: '#A0A0A0' },
+          min: -0.5,
+          max: 3.5,
+          ticks: { color: '#A0A0A0' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        }
+      }
+    }
+  });
+}
+
+let chartResidualsInstance = null;
+function initResidualsChart(predictedData) {
+  const ctx = document.getElementById('chartResiduals');
+  if (!ctx) return;
+
+  const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
+  if (validRows.length === 0) return;
+
+  const points = validRows.map(r => {
+    const pred = r.result.xgb.value;
+    const resid = r.penjualan - pred;
+    return { x: pred, y: resid };
+  });
+
+  if (chartResidualsInstance) chartResidualsInstance.destroy();
+  chartResidualsInstance = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'Residuals (Aktual - Prediksi)',
+          data: points,
+          backgroundColor: 'rgba(255, 184, 0, 0.65)',
+          borderColor: '#FFB800',
+          pointRadius: 4
+        },
+        {
+          label: 'Garis Nol (y = 0)',
+          data: [{x: 0, y: 0}, {x: 3.5, y: 0}],
+          type: 'line',
+          borderColor: '#A0A0A0',
+          borderDash: [3, 3],
+          fill: false,
+          pointRadius: 0,
+          showLine: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#A0A0A0' } }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Prediksi Penjualan', color: '#A0A0A0' },
+          min: -0.2,
+          max: 3.5,
+          ticks: { color: '#A0A0A0' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        },
+        y: {
+          title: { display: true, text: 'Residual', color: '#A0A0A0' },
+          min: -3,
+          max: 3,
+          ticks: { color: '#A0A0A0' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        }
+      }
+    }
+  });
+}
+
+let chartFeatureImportanceInstance = null;
+function initFeatureImportanceChart(predictedData) {
+  const ctx = document.getElementById('chartFeatureImportance');
+  if (!ctx) return;
+
+  const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
+  if (validRows.length === 0) return;
+
+  const actuals = validRows.map(r => r.penjualan);
+  const fbs = validRows.map(r => r.fb);
+  const igs = validRows.map(r => r.ig);
+  const tts = validRows.map(r => r.tt);
+  const sentiments = validRows.map(r => r.sentiment || 0.65);
+  const months = validRows.map(r => r.bulan || 6);
+  
+  const dows = validRows.map(r => {
+    const d = parseTanggalString(r.tanggal);
+    return isNaN(d.getDay()) ? 1 : d.getDay();
+  });
+
+  const features = [
+    { label: 'Facebook Views', vals: fbs },
+    { label: 'Instagram Views', vals: igs },
+    { label: 'TikTok Views', vals: tts },
+    { label: 'Sentiment Score', vals: sentiments },
+    { label: 'Bulan (Konteks)', vals: months },
+    { label: 'Hari Pekan (Konteks)', vals: dows }
+  ];
+
+  const importances = features.map(f => {
+    const rVal = Math.abs(calculateCorrelation(f.vals, actuals));
+    return { label: f.label, val: rVal };
+  });
+
+  importances.sort((a, b) => b.val - a.val);
+
+  if (chartFeatureImportanceInstance) chartFeatureImportanceInstance.destroy();
+  chartFeatureImportanceInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: importances.map(i => i.label),
+      datasets: [{
+        label: 'Kekuatan Hubungan (Korelasi Absolut)',
+        data: importances.map(i => i.val),
+        backgroundColor: [
+          'rgba(255, 68, 68, 0.75)',
+          'rgba(255, 184, 0, 0.75)',
+          'rgba(0, 200, 83, 0.75)',
+          'rgba(24, 119, 242, 0.75)',
+          'rgba(156, 39, 176, 0.75)',
+          'rgba(158, 158, 158, 0.75)'
+        ],
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Koefisien Korelasi Absolut |r|', color: '#A0A0A0' },
+          min: 0,
+          max: 1.0,
+          ticks: { color: '#A0A0A0' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        },
+        y: {
+          ticks: { color: '#A0A0A0' },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+let chartTimeSeriesCompareInstance = null;
+function initTimeSeriesCompareChart(predictedData) {
+  const ctx = document.getElementById('chartTimeSeriesCompare');
+  if (!ctx) return;
+
+  const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
+  if (validRows.length === 0) return;
+
+  const labels = validRows.map(r => r.tanggal);
+  const actuals = validRows.map(r => r.penjualan);
+  const predictions = validRows.map(r => r.result.xgb.value);
+
+  if (chartTimeSeriesCompareInstance) chartTimeSeriesCompareInstance.destroy();
+  chartTimeSeriesCompareInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Aktual Penjualan',
+          data: actuals,
+          borderColor: 'rgba(158, 158, 158, 0.65)',
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: false
+        },
+        {
+          label: 'Prediksi XGBoost',
+          data: predictions,
+          borderColor: '#FF4444',
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#A0A0A0' } }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#A0A0A0',
+            maxTicksLimit: 12
+          },
+          grid: { color: 'rgba(255,255,255,0.03)' }
+        },
+        y: {
+          title: { display: true, text: 'Unit Penjualan', color: '#A0A0A0' },
+          min: -0.2,
+          max: 3.5,
+          ticks: { color: '#A0A0A0', stepSize: 1 },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        }
+      }
+    }
+  });
 }
 
 function renderMetricsTableDynamic(results) {

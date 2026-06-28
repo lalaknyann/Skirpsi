@@ -259,14 +259,12 @@
         <!-- Images from Python -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">&#x1F5BC;&#xFE0F; Grafik Tren Bulanan (Python Output)</span>
+            <span class="card-title">&#x1F4C8; Grafik Tren Bulanan &amp; Penjualan (Dinamis)</span>
             <span class="card-tag">Generated</span>
           </div>
-          <img src="figures/monthly_trend.png" alt="Monthly Trend" class="rq-img" loading="lazy"
-               onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
-          <p style="display:none;color:var(--text-muted);font-size:12px;margin-top:8px">
-            âš &#xFE0F; Grafik belum tersedia. Jalankan: <code>python ml_indibiz/main.py</code>
-          </p>
+          <div class="chart-container" style="min-height:300px">
+            <canvas id="chartMonthlyTrendDynamic"></canvas>
+          </div>
         </div>
       </section>
 
@@ -335,38 +333,42 @@
           </div>
         </div>
 
-        <!-- Python output images -->
+        <!-- Dynamic Python output charts -->
         <div class="chart-row col-2">
           <div class="card">
             <div class="card-header">
-              <span class="card-title">Actual vs Predicted</span>
+              <span class="card-title">Actual vs Predicted (Dynamic Scatter)</span>
             </div>
-            <img src="figures/actual_vs_predicted.png" alt="Actual vs Predicted" class="rq-img" loading="lazy"
-                 onerror="this.style.display='none'"/>
+            <div class="chart-container" style="min-height:280px">
+              <canvas id="chartActualVsPredicted"></canvas>
+            </div>
           </div>
           <div class="card">
             <div class="card-header">
-              <span class="card-title">Residual Plot</span>
+              <span class="card-title">Residual Plot (Dynamic Scatter)</span>
             </div>
-            <img src="figures/residuals.png" alt="Residuals" class="rq-img" loading="lazy"
-                 onerror="this.style.display='none'"/>
+            <div class="chart-container" style="min-height:280px">
+              <canvas id="chartResiduals"></canvas>
+            </div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Feature Importance &rarr; RF & XGBoost</span>
+            <span class="card-title">Feature Importance &rarr; Correlation Strength</span>
           </div>
-          <img src="figures/feature_importance.png" alt="Feature Importance" class="rq-img" loading="lazy"
-               onerror="this.style.display='none'"/>
+          <div class="chart-container" style="min-height:280px">
+            <canvas id="chartFeatureImportance"></canvas>
+          </div>
         </div>
 
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Time Series Prediksi vs Aktual</span>
+            <span class="card-title">Time Series Prediksi vs Aktual (Dynamic Line)</span>
           </div>
-          <img src="figures/time_series_prediction.png" alt="Time Series" class="rq-img" loading="lazy"
-               onerror="this.style.display='none'"/>
+          <div class="chart-container" style="min-height:320px">
+            <canvas id="chartTimeSeriesCompare"></canvas>
+          </div>
         </div>
       </section>
 
