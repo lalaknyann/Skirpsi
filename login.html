@@ -7,10 +7,9 @@
   <link rel="stylesheet" href="style.css">
   
   <script>
-    // Inisialisasi tema instan sebelum body dirender untuk mencegah flash putih/hitam
+    // Inisialisasi tema instan sebelum body dirender untuk mencegah screen flash
     (function initTheme() {
       const saved = localStorage.getItem('indibiz-theme');
-      // Default ke light mode jika belum ada preferensi tersimpan
       const activeTheme = saved || 'light';
       if (activeTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -21,6 +20,10 @@
   </script>
 
   <style>
+    /* =====================================================
+       Responsive & Fluid Login Layout (Berdasarkan Breakpoint)
+       ===================================================== */
+    
     body {
       display: flex;
       justify-content: center;
@@ -29,35 +32,28 @@
       background: var(--bg-primary);
       margin: 0;
       font-family: 'Inter', sans-serif;
-      position: relative;
       transition: background 0.4s ease, color 0.4s ease;
-    }
-    
-    /* Container for floating theme toggle */
-    .theme-toggle-container {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      z-index: 10;
+      box-sizing: border-box;
+      padding: 1rem;
     }
     
     .login-container {
       width: 100%;
-      max-width: 420px;
-      padding: 20px;
+      margin: 0 auto;
+      transition: max-width 0.3s ease;
     }
     
     .login-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 45px 35px;
+      border-radius: 1rem;
       box-shadow: var(--shadow-card);
       position: relative;
       overflow: hidden;
-      transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+      transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, padding 0.3s ease;
     }
     
+    /* Background light glow effect */
     .login-card::before {
       content: '';
       position: absolute;
@@ -65,52 +61,59 @@
       left: -50%;
       width: 200%;
       height: 200%;
-      background: radial-gradient(circle, rgba(204, 0, 0, 0.05) 0%, transparent 60%);
+      background: radial-gradient(circle, rgba(204, 0, 0, 0.04) 0%, transparent 60%);
       pointer-events: none;
+    }
+    
+    /* Floating theme switcher positioned inside the card to prevent overlap on mobile */
+    .theme-toggle-container {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      z-index: 10;
     }
     
     .login-header {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 2rem;
       position: relative;
       z-index: 1;
     }
     
     .login-logo {
-      width: 140px;
-      max-width: 100%;
       height: auto;
-      margin-bottom: 16px;
-      transition: filter 0.3s ease;
+      margin-bottom: 1rem;
+      transition: width 0.3s ease;
     }
     
     .login-title {
       font-family: 'Outfit', sans-serif;
-      font-size: 22px;
       font-weight: 700;
       color: var(--text-primary);
-      margin-bottom: 8px;
-      transition: color 0.4s ease;
+      margin: 0 0 0.5rem 0;
+      line-height: 1.2;
+      transition: color 0.4s ease, font-size 0.3s ease;
     }
     
     .login-subtitle {
-      font-size: 13px;
       color: var(--text-muted);
-      transition: color 0.4s ease;
+      margin: 0;
+      line-height: 1.4;
+      transition: color 0.4s ease, font-size 0.3s ease;
     }
     
     .form-group {
-      margin-bottom: 22px;
+      margin-bottom: 1.5rem;
       position: relative;
       z-index: 1;
     }
     
     .form-label {
       display: block;
-      font-size: 11px;
+      font-size: 0.75rem;
       font-weight: 700;
       color: var(--text-secondary);
-      margin-bottom: 8px;
+      margin-bottom: 0.5rem;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       transition: color 0.4s ease;
@@ -120,10 +123,10 @@
       width: 100%;
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 16px;
+      border-radius: 0.5rem;
       color: var(--text-primary);
-      font-size: 14px;
+      font-size: 0.875rem;
+      box-sizing: border-box;
       transition: all 0.3s ease;
     }
     
@@ -137,17 +140,16 @@
       width: 100%;
       background: var(--gradient-telkom);
       border: none;
-      border-radius: 8px;
-      padding: 14px;
+      border-radius: 0.5rem;
       color: #FFFFFF;
-      font-size: 14px;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.3s ease;
       box-shadow: var(--shadow-red);
-      margin-top: 10px;
+      margin-top: 0.5rem;
       position: relative;
       z-index: 1;
+      box-sizing: border-box;
     }
     
     .btn-login:hover {
@@ -168,13 +170,13 @@
     }
     
     .error-alert {
-      background: rgba(204, 0, 0, 0.1);
+      background: rgba(204, 0, 0, 0.08);
       border: 1px solid rgba(204, 0, 0, 0.25);
       color: var(--telkom-red);
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 13px;
-      margin-bottom: 22px;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      margin-bottom: 1.5rem;
       display: none;
       animation: fadeIn 0.3s ease;
       position: relative;
@@ -188,61 +190,130 @@
     
     .login-footer {
       text-align: center;
-      margin-top: 28px;
-      font-size: 11px;
+      margin-top: 2rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
       position: relative;
       z-index: 1;
       transition: color 0.4s ease;
     }
 
-    /* ─── MEDIA QUERY RESPONSIVE ─── */
-    @media (max-width: 480px) {
-      .theme-toggle-container {
-        top: 15px;
-        right: 15px;
-      }
+    /* =====================================================
+       Breakpoint-specific responsive rules (Desktop, Tablet, Mobile)
+       ===================================================== */
+
+    /* ─── DESKTOP (Width > 1024px) ─── */
+    @media (min-width: 1025px) {
       .login-container {
-        padding: 15px;
+        max-width: 450px;
       }
       .login-card {
-        padding: 35px 20px;
-        border-radius: 12px;
+        padding: 3.5rem 3rem;
+      }
+      .login-logo {
+        width: 150px;
       }
       .login-title {
-        font-size: 19px;
+        font-size: 1.5rem;
+      }
+      .login-subtitle {
+        font-size: 0.875rem;
       }
       .form-input {
-        padding: 11px 14px;
-        font-size: 13px;
+        padding: 0.85rem 1.15rem;
       }
       .btn-login {
-        padding: 12px;
-        font-size: 13px;
+        padding: 0.95rem;
+        font-size: 0.9rem;
+      }
+    }
+
+    /* ─── TABLET (Width 640px - 1024px) ─── */
+    @media (min-width: 640px) and (max-width: 1024px) {
+      .login-container {
+        max-width: 410px;
+      }
+      .login-card {
+        padding: 3rem 2.25rem;
+      }
+      .login-logo {
+        width: 135px;
+      }
+      .login-title {
+        font-size: 1.35rem;
+      }
+      .login-subtitle {
+        font-size: 0.825rem;
+      }
+      .form-input {
+        padding: 0.775rem 1.05rem;
+      }
+      .btn-login {
+        padding: 0.875rem;
+        font-size: 0.875rem;
+      }
+    }
+
+    /* ─── MOBILE (Width < 640px) ─── */
+    @media (max-width: 639px) {
+      body {
+        padding: 0.75rem;
+      }
+      .login-container {
+        width: 100%;
+        max-width: 100%;
+      }
+      .login-card {
+        padding: 2.25rem 1.25rem;
+        border-radius: 0.75rem;
+      }
+      .theme-toggle-container {
+        top: 0.875rem;
+        right: 0.875rem;
+      }
+      .login-logo {
+        width: 115px;
+      }
+      .login-title {
+        font-size: 1.2rem;
+      }
+      .login-subtitle {
+        font-size: 0.75rem;
+      }
+      .form-input {
+        padding: 0.7rem 0.9rem;
+        font-size: 0.8125rem;
+      }
+      .btn-login {
+        padding: 0.8rem;
+        font-size: 0.8125rem;
+      }
+      .form-group {
+        margin-bottom: 1.25rem;
       }
     }
   </style>
 </head>
 <body>
 
-<!-- Floating Theme Switcher -->
-<div class="theme-toggle-container">
-  <div class="theme-widget" id="themeWidget" onclick="toggleTheme()" title="Ganti Tema">
-    <span class="theme-widget-icon">&#x2600;&#xFE0F;</span>
-    <div class="theme-widget-track">
-      <div class="theme-widget-thumb" id="themeThumb"></div>
-    </div>
-    <span class="theme-widget-icon">&#x1F319;</span>
-    <span class="theme-widget-label" id="themeLabel">Light</span>
-  </div>
-</div>
-
 <div class="login-container">
   <div class="login-card">
+    <!-- Floating Theme Switcher Inside Card -->
+    <div class="theme-toggle-container">
+      <div class="theme-widget" id="themeWidget" onclick="toggleTheme()" title="Ganti Tema">
+        <span class="theme-widget-icon">&#x2600;&#xFE0F;</span>
+        <div class="theme-widget-track">
+          <div class="theme-widget-thumb" id="themeThumb"></div>
+        </div>
+        <span class="theme-widget-icon">&#x1F319;</span>
+        <span class="theme-widget-label" id="themeLabel">Light</span>
+      </div>
+    </div>
+
     <div class="login-header">
       <img src="indibiz_logo.png" alt="Indibiz" class="login-logo">
-      <div class="login-title">Machine Learning Dashboard</div>
-      <div class="login-subtitle">Silakan login untuk mengakses dashboard prediksi</div>
+      <h1 class="login-title">Machine Learning Dashboard</h1>
+      <p class="login-subtitle">Silakan login untuk mengakses dashboard prediksi</p>
     </div>
 
     <div class="error-alert" id="errorAlert">Username atau password salah.</div>
