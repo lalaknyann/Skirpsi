@@ -170,7 +170,14 @@ let currentMLResults = null; // Menyimpan hasil ML terbaru setelah upload CSV
 // NAVIGATION
 // ═══════════════════════════════════════
 
+function toggleSidebar() {
+  document.body.classList.toggle('sidebar-open');
+}
+
 function showSection(sectionId) {
+  // Close sidebar on mobile/tablet after navigating
+  document.body.classList.remove('sidebar-open');
+
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 

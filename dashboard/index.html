@@ -11,6 +11,9 @@
 </head>
 <body>
 
+<!-- Sidebar Overlay Backdrop -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
 <!-- &#x2600;&#xFE0F; LOADING SCREEN &#x2600;&#xFE0F; -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loader-container">
@@ -84,6 +87,11 @@
 
     <!-- TOPBAR -->
     <div class="topbar">
+      <!-- Hamburger Menu Button (visible on mobile/tablet) -->
+      <button class="hamburger-menu" id="hamburgerMenu" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
+        &#9776;
+      </button>
+
       <!-- Judul halaman -->
       <div class="topbar-title">
         <h2 id="topbarTitle">Upload CSV</h2>
