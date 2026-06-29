@@ -17,6 +17,14 @@ Jalankan dengan:
 
 import sys
 import os
+
+# Fix Windows terminal encoding for emojis
+if sys.platform.startswith('win'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 import json
 import numpy as np
 import pandas as pd

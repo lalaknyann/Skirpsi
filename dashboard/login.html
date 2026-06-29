@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Indibiz ML Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #0F1117;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+    }
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+    .login-card {
+      background: #1A2035;
+      border: 1px solid #2A3555;
+      border-radius: 16px;
+      padding: 40px 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(204, 0, 0, 0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .login-logo {
+      width: 140px;
+      margin-bottom: 16px;
+    }
+    .login-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #F0F0F5;
+      margin-bottom: 6px;
+    }
+    .login-subtitle {
+      font-size: 13px;
+      color: #6070A0;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #A8B4D0;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-input {
+      width: 100%;
+      background: #161B27;
+      border: 1px solid #2A3555;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #F0F0F5;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #CC0000;
+      box-shadow: 0 0 8px rgba(204, 0, 0, 0.25);
+    }
+    .btn-login {
+      width: 100%;
+      background: linear-gradient(135deg, #CC0000 0%, #E8001D 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      color: #FFFFFF;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 16px rgba(204, 0, 0, 0.25);
+      margin-top: 10px;
+    }
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(204, 0, 0, 0.4);
+    }
+    .btn-login:active {
+      transform: translateY(0);
+    }
+    .error-alert {
+      background: rgba(204, 0, 0, 0.15);
+      border: 1px solid rgba(204, 0, 0, 0.3);
+      color: #FF4444;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .login-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 11px;
+      color: #6070A0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <img src="indibiz_logo.png" alt="Indibiz" class="login-logo">
+      <div class="login-title">Machine Learning Dashboard</div>
+      <div class="login-subtitle">Silakan login untuk mengakses dashboard prediksi</div>
+    </div>
+
+    <div class="error-alert" id="errorAlert">Username atau password salah.</div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input type="text" id="username" class="form-input" required placeholder="Masukkan username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input type="password" id="password" class="form-input" required placeholder="Masukkan password" autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-login" id="submitBtn">MASUK KE DASHBOARD</button>
+    </form>
+
+    <div class="login-footer">
+      &copy; 2026 Telkom Indonesia &middot; Keperluan Skripsi SMT 8
+    </div>
+  </div>
+</div>
+
+<script>
+  async function handleLogin(e) {
+    e.preventDefault();
+    const usernameInput = document.getElementById('username').value;
+    const passwordInput = document.getElementById('password').value;
+    const errorAlert = document.getElementById('errorAlert');
+    const submitBtn = document.getElementById('submitBtn');
+
+    errorAlert.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'MEMPROSES...';
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: usernameInput,
+          password: passwordInput
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Simpan token di sessionStorage (optional, sebagai backup/informasi tambahan untuk front-end)
+        sessionStorage.setItem('auth_token', data.token);
+        
+        // Redirect ke dashboard
+        window.location.href = '/';
+      } else {
+        errorAlert.textContent = data.message || 'Username atau password salah';
+        errorAlert.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'MASUK KE DASHBOARD';
+      }
+    } catch (err) {
+      console.error(err);
+      errorAlert.textContent = 'Terjadi kesalahan koneksi ke server.';
+      errorAlert.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'MASUK KE DASHBOARD';
+    }
+  }
+</script>
+
+</body>
+</html>

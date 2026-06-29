@@ -5,6 +5,49 @@
 
 'use strict';
 
+// ─── AUTH PROTECTION GUARD ───
+(async function initAuthCheck() {
+  if (window.location.hostname.includes('netlify.app') || window.location.hostname.includes('github.io')) {
+    console.log("[Auth] Bypassing auth check on static hosting (Netlify/GitHub Pages).");
+    return;
+  }
+  try {
+    const res = await fetch('/api/verify');
+    if (res.status === 404) {
+      console.log("[Auth] API verify returned 404 (local static server). Bypassing.");
+      return;
+    }
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      window.location.href = '/login';
+    } else {
+      console.log("[Auth] Authenticated successfully as:", data.username);
+    }
+  } catch (e) {
+    console.log("[Auth] Fetch verify failed, assuming static environment:", e);
+  }
+})();
+
+async function handleLogout() {
+  if (window.location.hostname.includes('netlify.app') || window.location.hostname.includes('github.io')) {
+    alert("Logout tidak tersedia di demo hosting statis (Netlify).");
+    return;
+  }
+  try {
+    const res = await fetch('/api/logout', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      sessionStorage.removeItem('auth_token');
+      window.location.href = '/login';
+    } else {
+      alert("Gagal melakukan logout.");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Terjadi kesalahan koneksi saat logout.");
+  }
+}
+
 // ═══════════════════════════════════════
 // THEME TOGGLE — Dark / Light Mode
 // ═══════════════════════════════════════
