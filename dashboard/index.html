@@ -78,7 +78,7 @@
       Data: <span id="meta-date-range">Belum ada</span><br>
       Dataset: <span id="meta-row-count">0 baris</span><br>
       Platform: <span id="meta-platforms">-</span><br>
-      Model terbaik: <span id="meta-best-model">XGBoost</span>
+      Model Diuji: <span id="meta-best-model">3 Model</span>
     </div>
   </aside>
 
@@ -102,8 +102,8 @@
       <div class="topbar-right">
         <div class="topbar-badges">
           <span class="badge badge-gray">LR</span>
-          <span class="badge badge-gold">RF</span>
-          <span class="badge badge-red">XGBoost &#x1F3C6;</span>
+          <span class="badge badge-gray">RF</span>
+          <span class="badge badge-gray">XGBoost</span>
         </div>
         <!-- Theme Toggle Widget -->
         <div class="theme-widget" id="themeWidget" onclick="toggleTheme()" title="Ganti Tema">
@@ -125,7 +125,7 @@
       <section class="section" id="section-overview">
         <div class="section-header">
           <h3>&#x1F3E0; Overview Dashboard</h3>
-          <p>Ringkasan lengkap dataset, model ML, dan hasil prediksi penjualan paket internet Indibiz</p>
+          <p>Ringkasan prediksi <strong>Total Views Media Sosial</strong> Indibiz menggunakan model ML &mdash; Linear Regression, Random Forest, dan XGBoost</p>
         </div>
 
         <!-- KPI Cards -->
@@ -143,21 +143,21 @@
             <div class="kpi-sub">LR &middot; RF &middot; XGBoost</div>
           </div>
           <div class="kpi-card red">
-            <div class="kpi-icon">&#x1F3C6;</div>
-            <div class="kpi-value" id="kpi-bestmodel">XGBoost</div>
-            <div class="kpi-label">Model Terbaik</div>
-            <div class="kpi-sub" id="kpi-bestval">Akurasi Binary: 62.3%</div>
+            <div class="kpi-icon">&#x1F4C8;</div>
+            <div class="kpi-value" id="kpi-r2-avg">99.76%</div>
+            <div class="kpi-label">R&sup2; Rerata</div>
+            <div class="kpi-sub">Koefisien Determinasi</div>
           </div>
           <div class="kpi-card gold">
             <div class="kpi-icon">&#x1F3AF;</div>
-            <div class="kpi-value" id="kpi-acc">62.3%</div>
-            <div class="kpi-label">Akurasi XGBoost</div>
-            <div class="kpi-sub">Binary Classification</div>
+            <div class="kpi-value" id="kpi-acc-avg">—</div>
+            <div class="kpi-label">MAPE Rerata</div>
+            <div class="kpi-sub">Mean Absolute Percentage Error</div>
           </div>
           <div class="kpi-card gray">
             <div class="kpi-icon">&#x1F4CA;</div>
-            <div class="kpi-value" id="kpi-mae">0.9261</div>
-            <div class="kpi-label">MAE Terbaik</div>
+            <div class="kpi-value" id="kpi-mae-avg">123.37</div>
+            <div class="kpi-label">MAE Rerata</div>
             <div class="kpi-sub">Mean Absolute Error</div>
           </div>
           <div class="kpi-card green">
@@ -183,8 +183,7 @@
                   <th>Model</th>
                   <th>MAE &#x2193;</th>
                   <th>RMSE &#x2193;</th>
-                  <th>R&sup2; Score &#x2193;</th>
-                  <th>Akurasi Binary &#x2193;</th>
+                  <th>R&sup2; Score &#x2191;</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -199,8 +198,8 @@
         <div class="chart-row col-2">
           <div class="card">
             <div class="card-header">
-              <span class="card-title">&#x1F4CA; Perbandingan Akurasi Binary</span>
-              <span class="card-tag">Tinggi vs Rendah</span>
+              <span class="card-title">&#x1F4CA; Perbandingan R&sup2; Score</span>
+              <span class="card-tag">Lebih Tinggi Lebih Baik</span>
             </div>
             <div class="chart-container">
               <canvas id="chartR2Overview"></canvas>
@@ -304,8 +303,7 @@
                   <th>Model</th>
                   <th>MAE &#x2193;</th>
                   <th>RMSE &#x2193;</th>
-                  <th>R&sup2; Score &#x2193;</th>
-                  <th>Akurasi Binary &#x2193;</th>
+                  <th>R&sup2; Score &#x2191;</th>
                   <th>R&sup2; Visual</th>
                 </tr>
               </thead>
@@ -320,7 +318,7 @@
         <div class="chart-row col-3">
           <div class="card">
             <div class="card-header">
-              <span class="card-title">Akurasi Binary</span>
+              <span class="card-title">R&sup2; Score</span>
               <span class="card-tag">&#x2B06; Lebih Baik</span>
             </div>
             <div class="chart-container" style="min-height:220px">
@@ -656,7 +654,7 @@
           <div class="rq-answer">
             Berdasarkan evaluasi komprehensif dengan 80% data training dan 20% data testing:
             <br><br>
-            &bull; <strong>XGBoost</strong> &rarr; Akurasi Binary: 62.3% | MAE: 0.9261 | R&sup2;: 6.46% &mdash; <strong>Model Terbaik</strong><br>
+            &bull; <strong>XGBoost</strong> &rarr; Akurasi Binary: 62.3% | MAE: 0.9261 | R&sup2;: 6.46%<br>
             &bull; <strong>Random Forest</strong> &rarr; Akurasi Binary: 60.1% | MAE: 0.9697 | R&sup2;: 5.00%<br>
             &bull; <strong>Linear Regression</strong> &rarr; Akurasi Binary: 57.8% | MAE: 0.9711 | R&sup2;: 2.56%<br>
             <br>

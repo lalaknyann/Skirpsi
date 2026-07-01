@@ -80,7 +80,7 @@ def login():
 @app.route("/api/logout", methods=["POST"])
 def logout():
     resp = make_response(jsonify({"success": True, "message": "Logout berhasil"}))
-    resp.set_cookie("auth_token", "", expires=0)
+    resp.set_cookie("auth_token", "", max_age=0, httponly=True, samesite="Lax", path="/")
     return resp
 
 @app.route("/api/verify", methods=["GET"])

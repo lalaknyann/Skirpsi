@@ -1,0 +1,195 @@
+{
+  "regresi": {
+    "Linear Regression": {
+      "MAE": 245.3,
+      "RMSE": 603.64,
+      "R2": 0.9952,
+      "R2_pct": 99.52,
+      "MAPE": 0.79
+    },
+    "Random Forest": {
+      "MAE": 105.99,
+      "RMSE": 409.67,
+      "R2": 0.9978,
+      "R2_pct": 99.78,
+      "MAPE": 0.3
+    },
+    "XGBoost": {
+      "MAE": 18.8,
+      "RMSE": 79.13,
+      "R2": 0.9999,
+      "R2_pct": 99.99,
+      "MAPE": 0.06
+    }
+  },
+  "binary_classifier": {
+    "Linear Regression": {
+      "MAE": 245.3,
+      "RMSE": 603.64,
+      "R2": 0.9952,
+      "R2_pct": 99.52,
+      "Accuracy": 0.9952,
+      "Accuracy_bin": 99.52,
+      "Accuracy_pct": 99.52
+    },
+    "Random Forest": {
+      "MAE": 105.99,
+      "RMSE": 409.67,
+      "R2": 0.9978,
+      "R2_pct": 99.78,
+      "Accuracy": 0.9978,
+      "Accuracy_bin": 99.78,
+      "Accuracy_pct": 99.78
+    },
+    "XGBoost": {
+      "MAE": 18.8,
+      "RMSE": 79.13,
+      "R2": 0.9999,
+      "R2_pct": 99.99,
+      "Accuracy": 0.9999,
+      "Accuracy_bin": 99.99,
+      "Accuracy_pct": 99.99
+    }
+  },
+  "dataset_info": {
+    "total_rows": 731,
+    "train_size": 560,
+    "test_size": 141,
+    "n_features": 47,
+    "date_range": "2024-01-01 sd 2025-12-31",
+    "platforms": [
+      "Facebook",
+      "Instagram",
+      "TikTok"
+    ],
+    "target": "Total Views (Facebook+Instagram+TikTok)",
+    "best_model": "XGBoost"
+  },
+  "monthly_stats": {
+    "1": {
+      "penjualan_sum": 197212.0,
+      "penjualan_mean": 6163.0,
+      "facebook_mean": 2959.0,
+      "instagram_mean": 2849.0,
+      "tiktok_mean": 355.0
+    },
+    "2": {
+      "penjualan_sum": 1561034.0,
+      "penjualan_mean": 27387.0,
+      "facebook_mean": 20103.0,
+      "instagram_mean": 6749.0,
+      "tiktok_mean": 535.0
+    },
+    "3": {
+      "penjualan_sum": 1539080.0,
+      "penjualan_mean": 24824.0,
+      "facebook_mean": 19191.0,
+      "instagram_mean": 5172.0,
+      "tiktok_mean": 461.0
+    },
+    "4": {
+      "penjualan_sum": 1356212.0,
+      "penjualan_mean": 22604.0,
+      "facebook_mean": 15481.0,
+      "instagram_mean": 5988.0,
+      "tiktok_mean": 1135.0
+    },
+    "5": {
+      "penjualan_sum": 1025910.0,
+      "penjualan_mean": 16547.0,
+      "facebook_mean": 10788.0,
+      "instagram_mean": 5093.0,
+      "tiktok_mean": 667.0
+    },
+    "6": {
+      "penjualan_sum": 1489936.0,
+      "penjualan_mean": 24832.0,
+      "facebook_mean": 17511.0,
+      "instagram_mean": 6952.0,
+      "tiktok_mean": 370.0
+    },
+    "7": {
+      "penjualan_sum": 1586216.0,
+      "penjualan_mean": 25584.0,
+      "facebook_mean": 19590.0,
+      "instagram_mean": 5414.0,
+      "tiktok_mean": 580.0
+    },
+    "8": {
+      "penjualan_sum": 1220578.0,
+      "penjualan_mean": 19687.0,
+      "facebook_mean": 13849.0,
+      "instagram_mean": 5319.0,
+      "tiktok_mean": 519.0
+    },
+    "9": {
+      "penjualan_sum": 1516882.0,
+      "penjualan_mean": 25281.0,
+      "facebook_mean": 18590.0,
+      "instagram_mean": 6299.0,
+      "tiktok_mean": 392.0
+    },
+    "10": {
+      "penjualan_sum": 2688682.0,
+      "penjualan_mean": 43366.0,
+      "facebook_mean": 36375.0,
+      "instagram_mean": 6627.0,
+      "tiktok_mean": 364.0
+    },
+    "11": {
+      "penjualan_sum": 2424338.0,
+      "penjualan_mean": 40406.0,
+      "facebook_mean": 23629.0,
+      "instagram_mean": 16628.0,
+      "tiktok_mean": 149.0
+    },
+    "12": {
+      "penjualan_sum": 2013748.0,
+      "penjualan_mean": 32480.0,
+      "facebook_mean": 27571.0,
+      "instagram_mean": 4715.0,
+      "tiktok_mean": 194.0
+    }
+  },
+  "correlation": {
+    "Facebook": 0.939,
+    "Instagram": 0.5884,
+    "TikTok": -0.4361
+  },
+  "feature_importance": {
+    "XGBoost": {
+      "log_total_views": 0.307,
+      "ig_lag1": 0.1398,
+      "week_of_year": 0.117,
+      "ratio_tt": 0.1116,
+      "ratio_fb": 0.1023,
+      "ig_lag3": 0.0949,
+      "bulan_cos": 0.0487,
+      "bulan": 0.0226,
+      "doy_sin": 0.0145,
+      "ratio_ig": 0.011,
+      "doy_cos": 0.0064,
+      "fb_lag1": 0.0055,
+      "tv_lag30": 0.0053,
+      "tv_lag1": 0.004,
+      "tv_roll14_mean": 0.0025
+    },
+    "Random Forest": {
+      "log_total_views": 0.4702,
+      "ratio_tt": 0.1477,
+      "ratio_ig": 0.0821,
+      "ratio_fb": 0.0745,
+      "bulan": 0.0365,
+      "week_of_year": 0.0348,
+      "is_q4": 0.0289,
+      "quarter": 0.0264,
+      "tv_lag1": 0.0125,
+      "tv_roll5_mean": 0.0105,
+      "doy_sin": 0.0103,
+      "doy_cos": 0.0091,
+      "fb_lag1": 0.0067,
+      "tt_lag7": 0.0048,
+      "tt_lag1": 0.0048
+    }
+  }
+}

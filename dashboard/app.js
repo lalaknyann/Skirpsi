@@ -38,6 +38,7 @@ async function handleLogout() {
     const data = await res.json();
     if (res.ok && data.success) {
       sessionStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_token');
       window.location.href = '/login';
     } else {
       alert("Gagal melakukan logout.");
@@ -84,28 +85,27 @@ function toggleTheme() {
 
 
 // ═══════════════════════════════════════
-// DATA MODEL — Updated dengan Binary Accuracy
+// DATA MODEL — Regresi Total Views (R² / MAE / RMSE / MAPE)
+// Target: Total Views (Facebook + Instagram + TikTok)
 // ═══════════════════════════════════════
 
 const ML_RESULTS = {
-  "Linear Regression": { MAE: 0.9711, RMSE: 1.1071, R2: 0.0256, R2_pct: 2.56, Accuracy_bin: 57.8 },
-  "Random Forest":     { MAE: 0.9697, RMSE: 1.0931, R2: 0.0500, R2_pct: 5.00, Accuracy_bin: 60.1 },
-  "XGBoost":           { MAE: 0.9261, RMSE: 1.0847, R2: 0.0646, R2_pct: 6.46, Accuracy_bin: 62.3 }
+  "Linear Regression": { MAE: 245.30, RMSE: 603.60, R2: 0.9952, R2_pct: 99.52, MAPE: 0.79 },
+  "Random Forest":     { MAE: 106.00, RMSE: 409.70, R2: 0.9978, R2_pct: 99.78, MAPE: 0.30 },
+  "XGBoost":           { MAE:  18.80, RMSE:  79.10, R2: 0.9999, R2_pct: 99.99, MAPE: 0.06 }
 };
 
 const ML_RESULTS_NO_SENT = {
-  "Linear Regression": { MAE: 0.9715, RMSE: 1.1071, R2: 0.0255, R2_pct: 2.55, Accuracy_bin: 57.2 },
-  "Random Forest":     { MAE: 0.9639, RMSE: 1.0865, R2: 0.0615, R2_pct: 6.15, Accuracy_bin: 59.4 },
-  "XGBoost":           { MAE: 0.9288, RMSE: 1.0889, R2: 0.0573, R2_pct: 5.73, Accuracy_bin: 61.5 }
+  "Linear Regression": { MAE: 268.50, RMSE: 632.10, R2: 0.9941, R2_pct: 99.41, MAPE: 0.88 },
+  "Random Forest":     { MAE: 118.20, RMSE: 428.30, R2: 0.9971, R2_pct: 99.71, MAPE: 0.36 },
+  "XGBoost":           { MAE:  24.60, RMSE:  98.40, R2: 0.9998, R2_pct: 99.98, MAPE: 0.09 }
 };
 
 const CORRELATION = {
-  "Facebook":         0.0213,
-  "Instagram":        0.0189,
-  "TikTok":           0.0312,
-  "Total Views":      0.0224,
-  "Total Engagement": 0.0301,
-  "Sentiment Score":  0.0445
+  "Facebook":    0.8821,
+  "Instagram":   0.6234,
+  "TikTok":      0.3876,
+  "Total Views": 1.0000
 };
 
 const MONTHLY_VIEWS = {
@@ -235,57 +235,49 @@ function renderMetricsTable(tableBodyId, withBars = false) {
   if (!tbody) return;
 
   const models = Object.entries(ML_RESULTS);
-  const bestAcc = Math.max(...models.map(([,r]) => r.Accuracy_bin));
   const bestMAE = Math.min(...models.map(([,r]) => r.MAE));
+  const bestR2  = Math.max(...models.map(([,r]) => r.R2_pct));
 
   tbody.innerHTML = '';
   models.forEach(([name, res]) => {
-    const isBest = (res.Accuracy_bin === bestAcc && res.MAE === bestMAE);
+    const isBest = res.R2_pct === bestR2;
     const tr = document.createElement('tr');
-    if (isBest) tr.className = 'metric-best';
-
     const color = MODEL_COLORS[name];
 
-    // Kolom Akurasi Binary
-    let accCell = `<strong style="color:${isBest ? '#FF4444' : 'inherit'}">${res.Accuracy_bin.toFixed(1)}%</strong>`;
-
-    // Kolom R² Visual (bar)
-    const r2Pct  = res.R2_pct;           // misal: 6.46
-    const barPct = Math.min((r2Pct / 10) * 100, 100).toFixed(0); // skala 0–10%
-
+    // Kolom R² Visual (bar — skala 0–100%)
+    const r2Pct  = res.R2_pct || 0;
+    const barPct = Math.min(r2Pct, 100).toFixed(0);
     const r2Visual = `
       <div class="r2-bar">
-        <span style="min-width:38px;font-size:12px;color:${color};font-weight:700">${r2Pct.toFixed(2)}%</span>
+        <span style="min-width:42px;font-size:12px;color:${color};font-weight:700">${r2Pct.toFixed(2)}%</span>
         <div class="r2-bar-track" style="flex:1">
           <div class="r2-bar-fill" style="width:${barPct}%;background:${color}"></div>
         </div>
       </div>`;
 
     if (withBars) {
-      // Tabel detail — 5 kolom: Model | MAE | RMSE | R² Score | Akurasi | R² Visual
+      // Tabel detail — 4 kolom: Model | MAE | RMSE | R² Score | R² Visual
       tr.innerHTML = `
         <td>
           <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${color};margin-right:8px;vertical-align:middle"></span>
-          ${name}${isBest ? ' 🏆' : ''}
+          ${name}
         </td>
         <td style="color:${res.MAE === bestMAE ? '#00C853' : 'inherit'}">${res.MAE.toFixed(4)}</td>
         <td>${res.RMSE.toFixed(4)}</td>
-        <td style="color:${color};font-weight:600">${res.R2_pct.toFixed(2)}%</td>
-        <td>${accCell}</td>
+        <td style="color:${color};font-weight:600">${r2Pct.toFixed(2)}%</td>
         <td style="min-width:160px">${r2Visual}</td>
       `;
     } else {
-      // Tabel ringkas — 6 kolom: Model | MAE | RMSE | R² Score | Akurasi | Status
+      // Tabel ringkas — 5 kolom: Model | MAE | RMSE | R² Score | Status
       tr.innerHTML = `
         <td>
           <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${color};margin-right:8px;vertical-align:middle"></span>
-          ${name}${isBest ? ' 🏆' : ''}
+          ${name}
         </td>
         <td style="color:${res.MAE === bestMAE ? '#00C853' : 'inherit'}">${res.MAE.toFixed(4)}</td>
         <td>${res.RMSE.toFixed(4)}</td>
-        <td style="color:${color};font-weight:600">${res.R2_pct.toFixed(2)}%</td>
-        <td>${accCell}</td>
-        <td><span class="badge ${isBest ? 'badge-red' : 'badge-gray'}">${isBest ? '🏆 Terbaik' : 'Baik'}</span></td>
+        <td style="color:${color};font-weight:600">${r2Pct.toFixed(2)}%</td>
+        <td><span class="badge badge-gray">Baik</span></td>
       `;
     }
     tbody.appendChild(tr);
@@ -310,7 +302,7 @@ let chartModelRMSECompareInstance = null;
 function initOverviewCharts(customResults = null) {
   const results = customResults || ML_RESULTS;
   const modelNames = Object.keys(results);
-  const accVals = modelNames.map(m => results[m].Accuracy_bin);
+  const r2Vals  = modelNames.map(m => results[m].R2_pct || 0);
   const maeVals = modelNames.map(m => results[m].MAE);
 
   const ctxR2 = document.getElementById('chartR2Overview');
@@ -321,8 +313,8 @@ function initOverviewCharts(customResults = null) {
       data: {
         labels: modelNames,
         datasets: [{
-          label: 'Akurasi Binary (%)',
-          data: accVals,
+          label: 'R² Score (%)',
+          data: r2Vals,
           backgroundColor: Object.values(MODEL_BG),
           borderColor: Object.values(MODEL_COLORS),
           borderWidth: 2,
@@ -336,8 +328,8 @@ function initOverviewCharts(customResults = null) {
           ...CHART_DEFAULTS.scales,
           y: {
             ...CHART_DEFAULTS.scales.y,
-            min: Math.max(0, Math.floor(Math.min(...accVals) - 5)),
-            max: Math.min(100, Math.ceil(Math.max(...accVals) + 5)),
+            min: 0,
+            max: Math.min(100, Math.ceil(Math.max(...r2Vals) + 10)),
             ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => v.toFixed(0) + '%' }
           }
         }
@@ -503,7 +495,7 @@ function initDataCharts(customFB = null, customIG = null, customTT = null, custo
 function initModelCharts(customResults = null) {
   const results = customResults || ML_RESULTS;
   const modelNames = Object.keys(results);
-  const accVals  = modelNames.map(m => results[m].Accuracy_bin);
+  const r2Vals   = modelNames.map(m => results[m].R2_pct || 0);
   const maeVals  = modelNames.map(m => results[m].MAE);
   const rmseVals = modelNames.map(m => results[m].RMSE);
 
@@ -543,7 +535,7 @@ function initModelCharts(customResults = null) {
     if (instanceKey === 'rmse') chartModelRMSECompareInstance = chartObj;
   }
 
-  barChart('chartR2Compare', 'Akurasi Binary (%)', accVals, Math.max(0, Math.floor(Math.min(...accVals) - 5)), Math.min(100, Math.ceil(Math.max(...accVals) + 5)), 'r2');
+  barChart('chartR2Compare', 'R² Score (%)', r2Vals, 0, Math.min(100, Math.ceil(Math.max(...r2Vals) + 10)), 'r2');
   barChart('chartMAECompare', 'MAE', maeVals, Math.max(0, Math.min(...maeVals) - 0.05), Math.max(...maeVals) + 0.05, 'mae');
   barChart('chartRMSECompare', 'RMSE', rmseVals, Math.max(0, Math.min(...rmseVals) - 0.05), Math.max(...rmseVals) + 0.05, 'rmse');
 }
@@ -1046,17 +1038,11 @@ function updateDashboardChartsAndMetrics(rows, predictedData) {
   // 1. Hitung metrik model dinamis pada data yang diunggah
   const dynamicResults = calculateMetricsOnUploadedData(predictedData);
 
-  // 2. Tentukan model terbaik berdasarkan akurasi tertinggi
-  let bestModelName = 'XGBoost';
-  let bestAcc = 0;
-  let bestMAE = Infinity;
-  Object.entries(dynamicResults).forEach(([name, res]) => {
-    if (res.Accuracy_bin > bestAcc) {
-      bestAcc = res.Accuracy_bin;
-      bestModelName = name;
-      bestMAE = res.MAE;
-    }
-  });
+  // Calculate average metrics
+  const models = Object.values(dynamicResults);
+  const avgR2 = models.reduce((sum, r) => sum + r.R2_pct, 0) / models.length;
+  const avgAcc = models.reduce((sum, r) => sum + r.Accuracy_bin, 0) / models.length;
+  const avgMAE = models.reduce((sum, r) => sum + r.MAE, 0) / models.length;
 
   // 3. Perbarui KPI Cards di halaman Overview
   const elTotalDays = document.getElementById('kpi-total-days');
@@ -1066,20 +1052,14 @@ function updateDashboardChartsAndMetrics(rows, predictedData) {
   const elSidebarRange = document.getElementById('meta-date-range');
   if (elDateRange && elSidebarRange) elDateRange.textContent = elSidebarRange.textContent;
 
-  const elBestModel = document.getElementById('kpi-bestmodel');
-  if (elBestModel) elBestModel.textContent = bestModelName;
+  const elR2Avg = document.getElementById('kpi-r2-avg');
+  if (elR2Avg) elR2Avg.textContent = `${avgR2.toFixed(2)}%`;
 
-  const elBestVal = document.getElementById('kpi-bestval');
-  if (elBestVal) elBestVal.textContent = `Akurasi Binary: ${bestAcc.toFixed(1)}%`;
+  const elAccAvg = document.getElementById('kpi-acc-avg');
+  if (elAccAvg) elAccAvg.textContent = `${avgAcc.toFixed(1)}%`;
 
-  const elAccVal = document.getElementById('kpi-acc');
-  if (elAccVal) elAccVal.textContent = `${bestAcc.toFixed(1)}%`;
-
-  const elAccLabelEl = document.getElementById('kpi-acc') ? document.getElementById('kpi-acc').nextElementSibling : null;
-  if (elAccLabelEl) elAccLabelEl.textContent = `Akurasi ${bestModelName}`;
-
-  const elMaeVal = document.getElementById('kpi-mae');
-  if (elMaeVal) elMaeVal.textContent = bestMAE.toFixed(4);
+  const elMaeAvg = document.getElementById('kpi-mae-avg');
+  if (elMaeAvg) elMaeAvg.textContent = avgMAE.toFixed(4);
 
   // 4. Perbarui Tabel Evaluasi Semua Model
   renderMetricsTableDynamic(dynamicResults);
@@ -1558,32 +1538,27 @@ function initTimeSeriesCompareChart(predictedData) {
 function renderMetricsTableDynamic(results) {
   const tbody = document.getElementById('metricsTableBody');
   const tbodyDetail = document.getElementById('metricsTableDetail');
-  
+
   const updateTable = (el, isDetail) => {
     if (!el) return;
     const models = Object.entries(results);
-    const bestAcc = Math.max(...models.map(([,r]) => r.Accuracy_bin));
     const bestMAE = Math.min(...models.map(([,r]) => r.MAE));
+    const bestR2  = Math.max(...models.map(([,r]) => r.R2_pct || 0));
 
     el.innerHTML = '';
     models.forEach(([name, res]) => {
-      const isBest = (res.Accuracy_bin === bestAcc && res.MAE === bestMAE) || (name === 'XGBoost' && bestAcc === res.Accuracy_bin);
       const tr = document.createElement('tr');
-      if (isBest) tr.className = 'metric-best';
-
       const color = MODEL_COLORS[name];
-
-      // Kolom Akurasi Binary
-      let accCell = `<strong style="color:${isBest ? '#FFBB00' : 'inherit'}">${res.Accuracy_bin.toFixed(1)}%</strong>`;
+      const r2Pct = res.R2_pct || (res.R2 ? res.R2 * 100 : 0);
 
       if (isDetail) {
-        // Tabel detail - 5 kolom: Model | MAE | RMSE | R² Score | Akurasi Binary | R² Visual
-        const r2Pct = res.R2_pct || (res.R2 * 100) || 0;
+        // Tabel detail — 5 kolom: Model | MAE | RMSE | R² Score | R² Visual
+        const barPct = Math.min(100, Math.max(0, r2Pct)).toFixed(0);
         const r2Visual = `
           <div class="r2-bar-container">
-            <span class="r2-val">${r2Pct.toFixed(2)}%</span>
+            <span class="r2-val" style="color:${color}">${r2Pct.toFixed(2)}%</span>
             <div class="r2-bar-bg">
-              <div class="r2-bar-fill" style="width:${Math.min(100, Math.max(0, r2Pct * 8))}%;background:${color}"></div>
+              <div class="r2-bar-fill" style="width:${barPct}%;background:${color}"></div>
             </div>
           </div>
         `;
@@ -1594,30 +1569,28 @@ function renderMetricsTableDynamic(results) {
           </td>
           <td>${res.MAE.toFixed(4)}</td>
           <td>${res.RMSE.toFixed(4)}</td>
-          <td style="color:${color};font-weight:600">${r2Pct.toFixed(4)}%</td>
-          <td>${accCell}</td>
+          <td style="color:${color};font-weight:600">${r2Pct.toFixed(2)}%</td>
           <td style="min-width:160px">${r2Visual}</td>
         `;
       } else {
-        // Tabel ringkas - 6 kolom
+        // Tabel ringkas — 5 kolom: Model | MAE | RMSE | R² Score | Status
         const r2Visual = `
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="width:36px;font-size:11px">${res.R2.toFixed(4)}</span>
+            <span style="width:46px;font-size:11px;color:${color};font-weight:700">${r2Pct.toFixed(2)}%</span>
             <div style="flex:1;height:6px;background:rgba(46,46,46,0.5);border-radius:3px;overflow:hidden">
-              <div style="width:${Math.min(100, Math.max(0, res.R2_pct * 8)) || 0}%;height:100%;background:${color}"></div>
+              <div style="width:${Math.min(100, Math.max(0, r2Pct)).toFixed(0)}%;height:100%;background:${color}"></div>
             </div>
           </div>
         `;
         tr.innerHTML = `
           <td>
             <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${color};margin-right:8px;vertical-align:middle"></span>
-            ${name}${isBest ? ' 🏆' : ''}
+            ${name}
           </td>
           <td style="color:${res.MAE === bestMAE ? '#00C853' : 'inherit'}">${res.MAE.toFixed(4)}</td>
           <td>${res.RMSE.toFixed(4)}</td>
           <td style="color:${color};font-weight:600">${r2Visual}</td>
-          <td>${accCell}</td>
-          <td><span class="badge ${isBest ? 'badge-red' : 'badge-gray'}">${isBest ? '🏆 Terbaik' : 'Baik'}</span></td>
+          <td><span class="badge badge-gray">Baik</span></td>
         `;
       }
       el.appendChild(tr);
@@ -1866,20 +1839,14 @@ function resetUpload() {
   const elDateRange = document.getElementById('kpi-date-range');
   if (elDateRange) elDateRange.textContent = 'Jan 2024 – Des 2025';
 
-  const elBestModel = document.getElementById('kpi-bestmodel');
-  if (elBestModel) elBestModel.textContent = 'XGBoost';
+  const elR2Avg = document.getElementById('kpi-r2-avg');
+  if (elR2Avg) elR2Avg.textContent = '99.76%';
 
-  const elBestVal = document.getElementById('kpi-bestval');
-  if (elBestVal) elBestVal.textContent = 'Akurasi Binary: 62.3%';
+  const elAccAvg = document.getElementById('kpi-acc-avg');
+  if (elAccAvg) elAccAvg.textContent = '0.38%';
 
-  const elAccVal = document.getElementById('kpi-acc');
-  if (elAccVal) elAccVal.textContent = '62.3%';
-
-  const elAccLabelEl = document.getElementById('kpi-acc') ? document.getElementById('kpi-acc').nextElementSibling : null;
-  if (elAccLabelEl) elAccLabelEl.textContent = 'Akurasi XGBoost';
-
-  const elMaeVal = document.getElementById('kpi-mae');
-  if (elMaeVal) elMaeVal.textContent = '0.9261';
+  const elMaeAvg = document.getElementById('kpi-mae-avg');
+  if (elMaeAvg) elMaeAvg.textContent = '123.37';
 
   renderMetricsTableDynamic(ML_RESULTS);
   initOverviewCharts(ML_RESULTS);
@@ -1924,7 +1891,7 @@ function updateSidebarMetrics(rows) {
   if (elPlatforms) elPlatforms.textContent = 'FB · IG · TikTok';
 
   const elBestModel = document.getElementById('meta-best-model');
-  if (elBestModel) elBestModel.textContent = 'XGBoost';
+  if (elBestModel) elBestModel.textContent = '3 Model';
 }
 
 // ─── FORECASTING ENGINE FOR 2026 (BARU) ───
