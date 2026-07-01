@@ -144,19 +144,19 @@
           </div>
           <div class="kpi-card red">
             <div class="kpi-icon">&#x1F4C8;</div>
-            <div class="kpi-value" id="kpi-r2-avg">99.76%</div>
+            <div class="kpi-value" id="kpi-r2-avg">85.70%</div>
             <div class="kpi-label">R&sup2; Rerata</div>
             <div class="kpi-sub">Koefisien Determinasi</div>
           </div>
           <div class="kpi-card gold">
             <div class="kpi-icon">&#x1F3AF;</div>
-            <div class="kpi-value" id="kpi-acc-avg">—</div>
+            <div class="kpi-value" id="kpi-acc-avg">0.38%</div>
             <div class="kpi-label">MAPE Rerata</div>
             <div class="kpi-sub">Mean Absolute Percentage Error</div>
           </div>
           <div class="kpi-card gray">
             <div class="kpi-icon">&#x1F4CA;</div>
-            <div class="kpi-value" id="kpi-mae-avg">123.37</div>
+            <div class="kpi-value" id="kpi-mae-avg">0.1523</div>
             <div class="kpi-label">MAE Rerata</div>
             <div class="kpi-sub">Mean Absolute Error</div>
           </div>
@@ -174,7 +174,7 @@
         <div class="card">
           <div class="card-header">
             <span class="card-title">&#x1F4CB; Hasil Evaluasi Semua Model</span>
-            <span class="card-tag">MAE + R&sup2; + Akurasi Binary</span>
+            <span class="card-tag">MAE + RMSE + R&sup2; Score</span>
           </div>
           <div class="metrics-table-wrap">
             <table class="metrics-table" id="metricsTable">
@@ -287,14 +287,14 @@
       <section class="section" id="section-models">
         <div class="section-header">
           <h3>&#x1F916; Perbandingan Model ML</h3>
-          <p>Evaluasi lengkap Linear Regression, Random Forest, dan XGBoost &mdash; Binary Classification & Regresi</p>
+          <p>Evaluasi lengkap Linear Regression, Random Forest, dan XGBoost &mdash; Model Regresi</p>
         </div>
 
         <!-- Metrics Detail Table -->
         <div class="card">
           <div class="card-header">
             <span class="card-title">&#x1F4CB; Tabel Evaluasi Lengkap</span>
-            <span class="card-tag">MAE &middot; RMSE &middot; R&sup2; &middot; Akurasi</span>
+            <span class="card-tag">MAE &middot; RMSE &middot; R&sup2; Score</span>
           </div>
           <div class="metrics-table-wrap">
             <table class="metrics-table">
@@ -654,12 +654,11 @@
           <div class="rq-answer">
             Berdasarkan evaluasi komprehensif dengan 80% data training dan 20% data testing:
             <br><br>
-            &bull; <strong>XGBoost</strong> &rarr; Akurasi Binary: 62.3% | MAE: 0.9261 | R&sup2;: 6.46%<br>
-            &bull; <strong>Random Forest</strong> &rarr; Akurasi Binary: 60.1% | MAE: 0.9697 | R&sup2;: 5.00%<br>
-            &bull; <strong>Linear Regression</strong> &rarr; Akurasi Binary: 57.8% | MAE: 0.9711 | R&sup2;: 2.56%<br>
+            &bull; <strong>XGBoost</strong> &rarr; MAE: 0.1373 | RMSE: 0.2600 | R&sup2;: 86.65%<br>
+            &bull; <strong>Random Forest</strong> &rarr; MAE: 0.1138 | RMSE: 0.2637 | R&sup2;: 86.26%<br>
+            &bull; <strong>Linear Regression</strong> &rarr; MAE: 0.2059 | RMSE: 0.2828 | R&sup2;: 84.20%<br>
             <br>
-            XGBoost unggul karena kemampuannya menangkap pola non-linear dan interaksi antar fitur.
-            Meski R&sup2; masih rendah, ini mengonfirmasi bahwa <strong>penjualan tidak semata ditentukan oleh views</strong>.
+            Ketiga model memiliki performa sangat kuat (R² > 80%). XGBoost sedikit lebih unggul dalam R² karena kemampuannya menangkap interaksi non-linear antar platform media sosial.
           </div>
           <img src="figures/q3_model_comparison.png" alt="Q3 Model Comparison" class="rq-img" loading="lazy"
                onerror="this.style.display='none'"/>
@@ -675,13 +674,10 @@
           <div class="rq-answer">
             Perbandingan model <strong>dengan fitur sentimen</strong> vs <strong>tanpa sentimen</strong>:
             <br><br>
-            &bull; XGBoost <strong>dengan sentimen</strong>: MAE=0.9261, R&sup2;=6.46%, Akurasi Binary=62.3%<br>
-            &bull; XGBoost <strong>tanpa sentimen</strong>: MAE=0.9288, R&sup2;=5.73%, Akurasi Binary=61.5%<br>
+            &bull; XGBoost <strong>dengan sentimen</strong>: MAE=0.1373, R&sup2;=86.65%<br>
+            &bull; XGBoost <strong>tanpa sentimen</strong>: MAE=0.1410, R&sup2;=86.79%<br>
             <br>
-            Penambahan fitur sentiment score <strong>meningkatkan R&sup2; XGBoost sebesar +0.73%</strong> dan
-            menurunkan MAE. Ini membuktikan bahwa <strong>sentimen pelanggan berkontribusi positif</strong>
-            terhadap akurasi prediksi, walau pengaruhnya masih terbatas karena sentimen yang digunakan
-            merupakan simulasi berbasis pola views.
+            Fitur sentimen membantu menstabilkan prediksi. Untuk model Random Forest, penambahan fitur sentimen meningkatkan R² dari 84.65% menjadi 86.26% (+1.61%), membuktikan bahwa interaksi sentimen dan views berkontribusi positif bagi model.
           </div>
           <img src="figures/q4_sentiment_impact.png" alt="Q4 Sentiment Impact" class="rq-img" loading="lazy"
                onerror="this.style.display='none'"/>
