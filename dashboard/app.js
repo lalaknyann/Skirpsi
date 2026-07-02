@@ -1814,26 +1814,133 @@ function renderMetricsTableDynamic(results) {
   updateTable(tbodyDetail, true);
 }
 
-function updateDataChartsDynamic(rows) {
-  const fbMonthly = Array(12).fill(0);
-  const igMonthly = Array(12).fill(0);
-  const ttMonthly = Array(12).fill(0);
-  const monthCounts = Array(12).fill(0);
+let _viewsTrendRawRows = null; // cache for year filter
+
+function buildViewsTrendDataset(rows, yearFilter) {
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
   
+  // Collect unique years
+  const years = [];
   rows.forEach(r => {
     const date = parseTanggalString(r.tanggal);
-    const m = date.getMonth(); // 0-11
-    if (!isNaN(m)) {
-      fbMonthly[m] += r.fb;
-      igMonthly[m] += r.ig;
-      ttMonthly[m] += r.tt;
-      monthCounts[m]++;
+    if (!isNaN(date.getFullYear())) {
+      const y = date.getFullYear();
+      if (!years.includes(y)) years.push(y);
     }
   });
-  
-  const fbAvgMonthly = fbMonthly.map((v, i) => monthCounts[i] ? Math.round(v / monthCounts[i]) : 0);
-  const igAvgMonthly = igMonthly.map((v, i) => monthCounts[i] ? Math.round(v / monthCounts[i]) : 0);
-  const ttAvgMonthly = ttMonthly.map((v, i) => monthCounts[i] ? Math.round(v / monthCounts[i]) : 0);
+  years.sort();
+
+  const filteredYears = yearFilter === 'all' ? years : [parseInt(yearFilter)];
+
+  // Build labels (e.g. "Jan 2024", "Feb 2024", ...)
+  const labels = [];
+  filteredYears.forEach(y => {
+    MONTH_NAMES.forEach(m => labels.push(m + ' ' + y));
+  });
+
+  // Aggregate per year-month slot
+  const slotCount = filteredYears.length * 12;
+  const fbArr = Array(slotCount).fill(0);
+  const igArr = Array(slotCount).fill(0);
+  const ttArr = Array(slotCount).fill(0);
+  const cntArr = Array(slotCount).fill(0);
+
+  rows.forEach(r => {
+    const date = parseTanggalString(r.tanggal);
+    const y = date.getFullYear();
+    const m = date.getMonth();
+    const yi = filteredYears.indexOf(y);
+    if (yi === -1) return;
+    const idx = yi * 12 + m;
+    fbArr[idx] += r.fb || 0;
+    igArr[idx] += r.ig || 0;
+    ttArr[idx] += r.tt || 0;
+    cntArr[idx]++;
+  });
+
+  const fbAvg = fbArr.map((v,i) => cntArr[i] ? Math.round(v/cntArr[i]) : null);
+  const igAvg = igArr.map((v,i) => cntArr[i] ? Math.round(v/cntArr[i]) : null);
+  const ttAvg = ttArr.map((v,i) => cntArr[i] ? Math.round(v/cntArr[i]) : null);
+
+  return { labels, fbAvg, igAvg, ttAvg };
+}
+
+function updateViewsTrendFilter(yearVal) {
+  if (_viewsTrendRawRows) renderViewsTrendChart(yearVal);
+}
+
+function renderViewsTrendChart(yearFilter) {
+  const ctxViews = document.getElementById('chartViewsTrend');
+  if (!ctxViews || !_viewsTrendRawRows) return;
+  const { labels, fbAvg, igAvg, ttAvg } = buildViewsTrendDataset(_viewsTrendRawRows, yearFilter);
+
+  if (chartViewsTrendInstance) chartViewsTrendInstance.destroy();
+  chartViewsTrendInstance = new Chart(ctxViews, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Facebook',
+          data: fbAvg,
+          borderColor: '#1877F2',
+          backgroundColor: 'rgba(24,119,242,0.07)',
+          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#1877F2'
+        },
+        {
+          label: 'Instagram',
+          data: igAvg,
+          borderColor: '#E1306C',
+          backgroundColor: 'rgba(225,48,108,0.07)',
+          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#E1306C'
+        },
+        {
+          label: 'TikTok',
+          data: ttAvg,
+          borderColor: '#FF0050',
+          backgroundColor: 'rgba(255,0,80,0.07)',
+          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#FF0050'
+        }
+      ]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      scales: {
+        ...CHART_DEFAULTS.scales,
+        x: {
+          ...CHART_DEFAULTS.scales.x,
+          ticks: { ...CHART_DEFAULTS.scales.x.ticks, maxRotation: 45, font:{size:10} }
+        },
+        y: {
+          ...CHART_DEFAULTS.scales.y,
+          ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => (v/1000).toFixed(0) + 'K' }
+        }
+      }
+    }
+  });
+}
+
+function updateDataChartsDynamic(rows) {
+  const ctxViews = document.getElementById('chartViewsTrend');
+  if (!ctxViews) return;
+  _viewsTrendRawRows = rows;
+
+  // Inject year filter dropdown if not already present
+  let filterDiv = document.getElementById('viewsYearFilter');
+  if (!filterDiv) {
+    filterDiv = document.createElement('div');
+    filterDiv.id = 'viewsYearFilter';
+    filterDiv.style.cssText = 'text-align:right;margin-bottom:8px;';
+    filterDiv.innerHTML = `
+      <label style="color:#A0A0A0;font-size:12px;margin-right:6px">Tahun:</label>
+      <select id="viewsYearSelect" onchange="updateViewsTrendFilter(this.value)"
+        style="background:#1A1A1A;color:#F5F5F5;border:1px solid #2E2E2E;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">
+        <option value="all">Semua (2024–2025)</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+      </select>`;
+    ctxViews.parentElement.insertBefore(filterDiv, ctxViews);
+  }
 
   // Hitung distribusi penjualan jika ada kolom penjualan
   const salesCounts = [0, 0, 0, 0];
@@ -1845,7 +1952,77 @@ function updateDataChartsDynamic(rows) {
     }
   });
 
-  initDataCharts(fbAvgMonthly, igAvgMonthly, ttAvgMonthly, hasActualSales ? salesCounts : null);
+  // Update donut chart and sales distribution chart
+  const totalFB = rows.reduce((a,b)=>a+(b.fb||0),0);
+  const totalIG = rows.reduce((a,b)=>a+(b.ig||0),0);
+  const totalTT = rows.reduce((a,b)=>a+(b.tt||0),0);
+  const grandTotal = totalFB + totalIG + totalTT;
+
+  const donutSubtitle = document.getElementById('donutSubtitle');
+  if (donutSubtitle) {
+    const fmt = v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'K' : v;
+    donutSubtitle.textContent = `Total Views Keseluruhan (2024–2025): ${fmt(grandTotal)}`;
+  }
+
+  const ctxDist = document.getElementById('chartViewsDist');
+  if (ctxDist) {
+    if (chartViewsDistInstance) chartViewsDistInstance.destroy();
+    chartViewsDistInstance = new Chart(ctxDist, {
+      type: 'doughnut',
+      data: {
+        labels: ['Facebook', 'Instagram', 'TikTok'],
+        datasets: [{
+          data: [totalFB, totalIG, totalTT],
+          backgroundColor: ['rgba(24,119,242,0.8)', 'rgba(225,48,108,0.8)', 'rgba(255,0,80,0.8)'],
+          borderColor: '#1A1A1A', borderWidth: 3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#A0A0A0', padding: 16 } },
+          tooltip: {
+            ...CHART_DEFAULTS.plugins.tooltip,
+            callbacks: {
+              label: function(ctx) {
+                const val = ctx.raw;
+                const pct = grandTotal > 0 ? (val/grandTotal*100).toFixed(1) : 0;
+                const fmt = v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'K' : v;
+                return ` ${ctx.label}: ${fmt(val)} (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const ctxSales = document.getElementById('chartSalesDist');
+  if (ctxSales && hasActualSales) {
+    if (chartSalesDistInstance) chartSalesDistInstance.destroy();
+    chartSalesDistInstance = new Chart(ctxSales, {
+      type: 'bar',
+      data: {
+        labels: ['Level 0', 'Level 1', 'Level 2', 'Level 3'],
+        datasets: [{
+          data: salesCounts,
+          backgroundColor: [
+            'rgba(160,160,160,0.7)',
+            'rgba(255,184,0,0.7)',
+            'rgba(204,0,0,0.7)',
+            'rgba(255,68,68,0.7)'
+          ],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        ...CHART_DEFAULTS,
+        plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } }
+      }
+    });
+  }
+
+  renderViewsTrendChart('all');
 }
 
 /** Extract bulan (1-12) from tanggal string like "01 Jan 2024" or "2024-01-15" */
