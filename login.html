@@ -9,7 +9,7 @@
   <script>
     // Inisialisasi tema instan sebelum body dirender untuk mencegah screen flash
     (function initTheme() {
-      const saved = localStorage.getItem('indibiz-theme');
+      const saved = localStorage.getItem('app_theme');
       const activeTheme = saved || 'light';
       if (activeTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -294,7 +294,7 @@
     }
   </style>
 </head>
-<body>
+<body class="login-page">
 
 <div class="login-container">
   <div class="login-card">
@@ -346,11 +346,11 @@
     if (isDark) {
       html.removeAttribute('data-theme');
       if (label) label.textContent = 'Light';
-      localStorage.setItem('indibiz-theme', 'light');
+      localStorage.setItem('app_theme', 'light');
     } else {
       html.setAttribute('data-theme', 'dark');
       if (label) label.textContent = 'Dark';
-      localStorage.setItem('indibiz-theme', 'dark');
+      localStorage.setItem('app_theme', 'dark');
     }
   }
 
@@ -391,7 +391,7 @@
 
       if (response.ok && data.success) {
         // Simpan token di sessionStorage
-        sessionStorage.setItem('auth_token', data.token);
+        sessionStorage.setItem('app_session', data.token);
         
         // Redirect ke dashboard utama
         window.location.href = '/';

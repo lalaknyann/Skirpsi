@@ -3,11 +3,25 @@ import json
 import datetime
 import bcrypt
 import jwt
-from flask import Flask, request, jsonify, send_from_directory, redirect, make_response
+import secrets
+from datetime import timedelta
+from flask import Flask, request, jsonify, send_from_directory, redirect, make_response, session
 
 app = Flask(__name__, static_folder=None) # Disable default static serving to prevent direct path bypass
+
+# B2. KEAMANAN SESSION FLASK
+app.secret_key = secrets.token_hex(32)
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,  
+    SESSION_COOKIE_SAMESITE='Lax', 
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=2)
+)
+
 SECRET_KEY = "indibiz-ml-secret-key-skripsi-2026"
 DASHBOARD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard")
+
+# B4. LIMIT PERCOBAAN LOGIN — ANTI BRUTE FORCE
+login_attempts = {}  # { ip: { count, last_attempt } }
 
 def load_credentials():
     cred_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "credentials.json")
@@ -25,6 +39,9 @@ def verify_token(token):
 
 # Middleware to check auth on routes
 def is_authenticated():
+    if 'user' not in session:
+        return False
+        
     token = request.cookies.get("auth_token")
     if not token:
         # Also check Authorization Header as fallback
@@ -42,6 +59,20 @@ def is_authenticated():
 
 @app.route("/api/login", methods=["POST"])
 def login():
+    ip = request.remote_addr
+    now = datetime.datetime.utcnow()
+    
+    # B4. Cek apakah IP sedang diblokir
+    if ip in login_attempts:
+        attempts = login_attempts[ip]
+        if attempts["count"] >= 5:
+            time_passed = now - attempts["last_attempt"]
+            if time_passed < datetime.timedelta(minutes=5):
+                return jsonify({"success": False, "message": "Terlalu banyak percobaan. Coba lagi dalam 5 menit."}), 429
+            else:
+                # 5 menit sudah berlalu, reset hitungan
+                login_attempts.pop(ip)
+
     try:
         data = request.get_json()
         username = data.get("username")
@@ -52,12 +83,37 @@ def login():
             
         credentials = load_credentials()
         
+        # Helper function to record a failed attempt
+        def record_failure():
+            if ip not in login_attempts:
+                login_attempts[ip] = {"count": 1, "last_attempt": now}
+            else:
+                attempts = login_attempts[ip]
+                # Jika percobaan gagal terakhir lebih dari 5 menit lalu, reset ke 1
+                if now - attempts["last_attempt"] >= datetime.timedelta(minutes=5):
+                    attempts["count"] = 1
+                else:
+                    attempts["count"] += 1
+                attempts["last_attempt"] = now
+        
         if username.lower() != credentials["username"].lower():
+            record_failure()
+            count = login_attempts[ip]["count"]
+            if count >= 5:
+                return jsonify({"success": False, "message": "Terlalu banyak percobaan. Coba lagi dalam 5 menit."}), 429
             return jsonify({"success": False, "message": "Username atau password salah"}), 401
             
         # Verify hash
         hashed_password = credentials["password_hash"].encode('utf-8')
         if bcrypt.checkpw(password.encode('utf-8'), hashed_password):
+            # Reset attempts on success
+            if ip in login_attempts:
+                login_attempts.pop(ip)
+                
+            # Set Flask session
+            session['user'] = username
+            session.permanent = True
+            
             # Generate JWT Token (valid for 8 hours)
             expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
             token = jwt.encode(
@@ -72,6 +128,10 @@ def login():
             resp.set_cookie("auth_token", token, httponly=True, max_age=28800, samesite="Lax")
             return resp
         else:
+            record_failure()
+            count = login_attempts[ip]["count"]
+            if count >= 5:
+                return jsonify({"success": False, "message": "Terlalu banyak percobaan. Coba lagi dalam 5 menit."}), 429
             return jsonify({"success": False, "message": "Username atau password salah"}), 401
             
     except Exception as e:
@@ -79,12 +139,16 @@ def login():
 
 @app.route("/api/logout", methods=["POST"])
 def logout():
+    session.clear() # B2. Bersihkan Flask session
     resp = make_response(jsonify({"success": True, "message": "Logout berhasil"}))
     resp.set_cookie("auth_token", "", max_age=0, httponly=True, samesite="Lax", path="/")
     return resp
 
 @app.route("/api/verify", methods=["GET"])
 def verify():
+    if 'user' not in session or not is_authenticated():
+        return jsonify({"success": False, "message": "Session tidak valid atau expired"}), 401
+        
     token = request.cookies.get("auth_token")
     if not token:
         auth_header = request.headers.get("Authorization")
@@ -99,6 +163,16 @@ def verify():
         return jsonify({"success": True, "username": payload["username"]})
     else:
         return jsonify({"success": False, "message": "Token tidak valid atau kedaluwarsa"}), 401
+
+# B3. PROTEKSI FILE CSV LEWAT FLASK ROUTE TERPROTEKSI
+@app.route("/data/<path:filename>")
+def serve_protected_csv(filename):
+    if 'user' not in session or not is_authenticated():
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    safe_filename = os.path.basename(filename)
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    return send_from_directory(data_dir, safe_filename)
 
 # ─── FRONTEND ROUTES & STATIC FILES SERVING ───
 

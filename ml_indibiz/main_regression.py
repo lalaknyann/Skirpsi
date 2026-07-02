@@ -19,7 +19,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from xgboost import XGBRegressor
 import math
 
-DATA_PATH  = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'dashboard', 'Data Harian.csv')
+DATA_PATH  = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'Data Harian.csv')
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'output', 'figures')
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 

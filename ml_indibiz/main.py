@@ -42,7 +42,7 @@ from research_questions import (plot_q1_views_correlation, plot_q2_engagement_ef
 # ─────────────────────────────────────────────────
 #  KONFIGURASI
 # ─────────────────────────────────────────────────
-LOCAL_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dashboard", "Data Harian.csv")
+LOCAL_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "Data Harian.csv")
 DATA_URL   = LOCAL_PATH if os.path.exists(LOCAL_PATH) else "https://docs.google.com/spreadsheets/d/1LEArWXOoacCU4hVa5u5ffFG_s09LL8PbyGDyFa1MpUA/export?format=csv"
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "output", "figures")
 os.makedirs(OUTPUT_DIR, exist_ok=True)

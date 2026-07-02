@@ -1,3 +1,7 @@
+/* ============================================
+   DASHBOARD PAGE STYLES
+============================================ */
+
 /* =====================================================
    style.css — Indibiz ML Dashboard | Telkom Indonesia
    Tema Merah Telkom · Premium Dark/Light Mode
@@ -816,13 +820,13 @@ body {
 }
 
 
-.form-group {
+.dashboard-page .form-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.form-label {
+.dashboard-page .form-label {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
@@ -833,7 +837,7 @@ body {
   gap: 6px;
 }
 
-.form-input {
+.dashboard-page .form-input {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -845,13 +849,13 @@ body {
   outline: none;
 }
 
-.form-input:focus {
+.dashboard-page .form-input:focus {
   border-color: var(--telkom-red);
   box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.12);
 }
 
-.form-input::-webkit-outer-spin-button,
-.form-input::-webkit-inner-spin-button {
+.dashboard-page .form-input::-webkit-outer-spin-button,
+.dashboard-page .form-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
 }
 
@@ -1727,7 +1731,7 @@ body {
 /* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
    THEME TOGGLE WIDGET (topbar)
 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
-.theme-widget {
+.dashboard-page .theme-widget {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1741,19 +1745,19 @@ body {
   flex-shrink: 0;
 }
 
-.theme-widget:hover {
+.dashboard-page .theme-widget:hover {
   border-color: var(--telkom-red);
   box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.1);
 }
 
-.theme-widget-icon {
+.dashboard-page .theme-widget-icon {
   font-size: 14px;
   line-height: 1;
   flex-shrink: 0;
 }
 
 /* The sliding track */
-.theme-widget-track {
+.dashboard-page .theme-widget-track {
   position: relative;
   width: 34px;
   height: 18px;
@@ -1763,12 +1767,12 @@ body {
   flex-shrink: 0;
 }
 
-[data-theme="dark"] .theme-widget-track {
+[data-theme="dark"] .dashboard-page .theme-widget-track {
   background: var(--telkom-red);
 }
 
 /* The sliding thumb */
-.theme-widget-thumb {
+.dashboard-page .theme-widget-thumb {
   position: absolute;
   top: 2px;
   left: 2px;
@@ -1780,11 +1784,11 @@ body {
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-[data-theme="dark"] .theme-widget-thumb {
+[data-theme="dark"] .dashboard-page .theme-widget-thumb {
   transform: translateX(16px);
 }
 
-.theme-widget-label {
+.dashboard-page .theme-widget-label {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
@@ -1939,4 +1943,17 @@ body.sidebar-open .sidebar-overlay {
     text-align: center;
     gap: 8px;
   }
+}
+
+/* ============================================
+   LOGIN PAGE STYLES
+============================================ */
+/* Diisolasi ke dalam tag <style> di login.html untuk 
+   menghindari kebocoran style ke dashboard. */
+body.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--bg-primary);
 }
