@@ -96,7 +96,14 @@ def login():
                     attempts["count"] += 1
                 attempts["last_attempt"] = now
         
-        if username.lower() != credentials["username"].lower():
+        user_list = credentials.get("users", [])
+        user_data = None
+        for u in user_list:
+            if u["username"].lower() == username.lower():
+                user_data = u
+                break
+                
+        if not user_data:
             record_failure()
             count = login_attempts[ip]["count"]
             if count >= 5:
@@ -104,7 +111,7 @@ def login():
             return jsonify({"success": False, "message": "Username atau password salah"}), 401
             
         # Verify hash
-        hashed_password = credentials["password_hash"].encode('utf-8')
+        hashed_password = user_data["password_hash"].encode('utf-8')
         if bcrypt.checkpw(password.encode('utf-8'), hashed_password):
             # Reset attempts on success
             if ip in login_attempts:

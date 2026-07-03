@@ -139,13 +139,13 @@ const MONTHLY_VIEWS = {
 
 // ─── Telkom-themed Colors ───
 const MODEL_COLORS = {
-  "Linear Regression": "#A0A0A0",
+  "Linear Regression": "#0066CC",
   "Random Forest":     "#FFB800",
   "XGBoost":           "#CC0000"
 };
 
 const MODEL_BG = {
-  "Linear Regression": "rgba(160,160,160,0.2)",
+  "Linear Regression": "rgba(0,102,204,0.2)",
   "Random Forest":     "rgba(255,184,0,0.2)",
   "XGBoost":           "rgba(204,0,0,0.2)"
 };
@@ -1310,21 +1310,21 @@ function initActualVsPredictedChart(predictedData) {
   if (hasActual) {
     // 1. Linear Regression
     const ptsLR = validRows.map(r => ({
-      x: r.penjualan + (Math.random() - 0.5) * 0.15,
+      x: parseFloat(r.penjualan) + (Math.random() - 0.5) * 0.15,
       y: r.result.lr.value
     }));
     datasets.push({
       label: 'Linear Regression',
       data: ptsLR,
-      backgroundColor: 'rgba(108, 142, 191, 0.65)',
-      borderColor: '#6C8EBF',
+      backgroundColor: 'rgba(0, 102, 204, 0.65)',
+      borderColor: '#0066CC',
       pointRadius: 4,
       showLine: false
     });
 
     // 2. Random Forest
     const ptsRF = validRows.map(r => ({
-      x: r.penjualan + (Math.random() - 0.5) * 0.15,
+      x: parseFloat(r.penjualan) + (Math.random() - 0.5) * 0.15,
       y: r.result.rf.value
     }));
     datasets.push({
@@ -1338,7 +1338,7 @@ function initActualVsPredictedChart(predictedData) {
 
     // 3. XGBoost
     const ptsXGB = validRows.map(r => ({
-      x: r.penjualan + (Math.random() - 0.5) * 0.15,
+      x: parseFloat(r.penjualan) + (Math.random() - 0.5) * 0.15,
       y: r.result.xgb.value
     }));
     datasets.push({
@@ -1431,14 +1431,14 @@ function initResidualsChart(predictedData) {
     // 1. Linear Regression
     const ptsLR = validRows.map(r => {
       const pred = r.result.lr.value;
-      const resid = r.penjualan - pred;
+      const resid = parseFloat(r.penjualan) - pred;
       return { x: pred, y: resid };
     });
     datasets.push({
       label: 'Linear Regression',
       data: ptsLR,
-      backgroundColor: 'rgba(108, 142, 191, 0.65)',
-      borderColor: '#6C8EBF',
+      backgroundColor: 'rgba(0, 102, 204, 0.65)',
+      borderColor: '#0066CC',
       pointRadius: 4,
       showLine: false
     });
@@ -1446,7 +1446,7 @@ function initResidualsChart(predictedData) {
     // 2. Random Forest
     const ptsRF = validRows.map(r => {
       const pred = r.result.rf.value;
-      const resid = r.penjualan - pred;
+      const resid = parseFloat(r.penjualan) - pred;
       return { x: pred, y: resid };
     });
     datasets.push({
@@ -1461,7 +1461,7 @@ function initResidualsChart(predictedData) {
     // 3. XGBoost
     const ptsXGB = validRows.map(r => {
       const pred = r.result.xgb.value;
-      const resid = r.penjualan - pred;
+      const resid = parseFloat(r.penjualan) - pred;
       return { x: pred, y: resid };
     });
     datasets.push({
@@ -1549,17 +1549,19 @@ function initFeatureImportanceChart(predictedData) {
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
   const hasActual = validRows.length > 0;
 
-  const actuals = hasActual ? validRows.map(r => r.penjualan) : predictedData.map(r => r.result.xgb.value);
-  const fbs = predictedData.map(r => r.fb);
-  const igs = predictedData.map(r => r.ig);
-  const tts = predictedData.map(r => r.tt);
-  const sentiments = predictedData.map(r => r.sentiment || 0.65);
-  const months = predictedData.map(r => {
+  // Use validRows for both features and actuals to align lengths perfectly and prevent NaN crash!
+  const dataToUse = hasActual ? validRows : predictedData;
+  const actuals = hasActual ? validRows.map(r => parseFloat(r.penjualan)) : predictedData.map(r => r.result.xgb.value);
+  const fbs = dataToUse.map(r => r.fb);
+  const igs = dataToUse.map(r => r.ig);
+  const tts = dataToUse.map(r => r.tt);
+  const sentiments = dataToUse.map(r => r.sentiment || 0.65);
+  const months = dataToUse.map(r => {
     const d = parseTanggalString(r.tanggal);
     return isNaN(d.getMonth()) ? 6 : d.getMonth() + 1;
   });
 
-  const dows = predictedData.map(r => {
+  const dows = dataToUse.map(r => {
     const d = parseTanggalString(r.tanggal);
     return isNaN(d.getDay()) ? 1 : d.getDay();
   });
@@ -1575,7 +1577,7 @@ function initFeatureImportanceChart(predictedData) {
 
   const importances = features.map(f => {
     const rVal = Math.abs(calculateCorrelation(f.vals, actuals));
-    return { label: f.label, val: rVal };
+    return { label: f.label, val: isNaN(rVal) ? 0 : rVal };
   });
 
   importances.sort((a, b) => b.val - a.val);
@@ -1616,7 +1618,7 @@ function initFeatureImportanceChart(predictedData) {
         },
         y: {
           ticks: { color: '#A0A0A0' },
-          grid: { display: false }
+          grid: { color: 'rgba(255,255,255,0.05)' }
         }
       }
     }
@@ -1747,7 +1749,7 @@ function renderTimeSeriesCompareChart(periodVal) {
   datasets.push({
     label: 'Prediksi Linear Regression',
     data: predsLR,
-    borderColor: '#6C8EBF',
+    borderColor: '#0066CC',
     borderWidth: 2,
     pointRadius: 0,
     borderDash: [2, 4],
@@ -2698,7 +2700,7 @@ function initForecastChart(results) {
         {
           label: 'Prediksi Penjualan (LR - Kanan)',
           data: salesLR,
-          borderColor: '#6C8EBF',
+          borderColor: '#0066CC',
           backgroundColor: 'transparent',
           borderWidth: 2,
           borderDash: [2, 4],
