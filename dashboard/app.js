@@ -1298,54 +1298,84 @@ function initActualVsPredictedChart(predictedData) {
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
   const hasActual = validRows.length > 0;
 
-  let points = [];
-  let labelText = '';
+  let datasets = [];
 
   if (hasActual) {
-    points = validRows.map(r => ({
-      x: r.penjualan,
+    // 1. Linear Regression
+    const ptsLR = validRows.map(r => ({
+      x: r.penjualan + (Math.random() - 0.5) * 0.15,
+      y: r.result.lr.value
+    }));
+    datasets.push({
+      label: 'Linear Regression',
+      data: ptsLR,
+      backgroundColor: 'rgba(108, 142, 191, 0.65)',
+      borderColor: '#6C8EBF',
+      pointRadius: 4,
+      showLine: false
+    });
+
+    // 2. Random Forest
+    const ptsRF = validRows.map(r => ({
+      x: r.penjualan + (Math.random() - 0.5) * 0.15,
+      y: r.result.rf.value
+    }));
+    datasets.push({
+      label: 'Random Forest',
+      data: ptsRF,
+      backgroundColor: 'rgba(255, 184, 0, 0.65)',
+      borderColor: '#FFB800',
+      pointRadius: 4,
+      showLine: false
+    });
+
+    // 3. XGBoost
+    const ptsXGB = validRows.map(r => ({
+      x: r.penjualan + (Math.random() - 0.5) * 0.15,
       y: r.result.xgb.value
     }));
-    labelText = 'XGBoost Prediksi';
+    datasets.push({
+      label: 'XGBoost',
+      data: ptsXGB,
+      backgroundColor: 'rgba(255, 68, 68, 0.65)',
+      borderColor: '#FF4444',
+      pointRadius: 4,
+      showLine: false
+    });
   } else {
-    labelText = 'Simulasi Baseline (CSV tidak memiliki kolom Penjualan)';
+    // Baseline simulation when no Penjualan column in CSV
+    let points = [];
     for (let i = 0; i < 150; i++) {
       const act = Math.floor(Math.random() * 4);
       const noise = (Math.random() - 0.5) * 0.9;
-      points.push({ x: act, y: Math.max(0, Math.min(3, act + noise)) });
+      points.push({ x: act + (Math.random() - 0.5) * 0.15, y: Math.max(0, Math.min(3, act + noise)) });
     }
+    datasets.push({
+      label: 'Simulasi Baseline (CSV tidak memiliki kolom Penjualan)',
+      data: points,
+      backgroundColor: 'rgba(150, 150, 150, 0.5)',
+      borderColor: '#9E9E9E',
+      pointRadius: 4,
+      showLine: false
+    });
   }
 
-  const jitteredPoints = points.map(p => ({
-    x: p.x + (Math.random() - 0.5) * 0.15,
-    y: p.y
-  }));
+  // Add Garis Ideal
+  datasets.push({
+    label: 'Garis Ideal (y = x)',
+    data: [{x: 0, y: 0}, {x: 3, y: 3}],
+    type: 'line',
+    borderColor: '#A0A0A0',
+    borderDash: [5, 5],
+    fill: false,
+    pointRadius: 0,
+    showLine: true
+  });
 
   if (chartActualVsPredictedInstance) chartActualVsPredictedInstance.destroy();
   chartActualVsPredictedInstance = new Chart(ctx, {
     type: 'line',
-    data: {
-      datasets: [
-        {
-          label: labelText,
-          data: jitteredPoints,
-          backgroundColor: hasActual ? 'rgba(255, 68, 68, 0.65)' : 'rgba(150, 150, 150, 0.5)',
-          borderColor: hasActual ? '#FF4444' : '#9E9E9E',
-          pointRadius: 4,
-          showLine: false // Scatter style points
-        },
-        {
-          label: 'Garis Ideal (y = x)',
-          data: [{x: 0, y: 0}, {x: 3, y: 3}],
-          type: 'line',
-          borderColor: '#A0A0A0',
-          borderDash: [5, 5],
-          fill: false,
-          pointRadius: 0,
-          showLine: true
-        }
-      ]
-    },
+    data: { datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -1354,7 +1384,7 @@ function initActualVsPredictedChart(predictedData) {
       },
       scales: {
         x: {
-          type: 'linear', // Linear scale to map numeric coordinates
+          type: 'linear',
           title: { display: true, text: 'Aktual Penjualan', color: '#A0A0A0' },
           min: -0.5,
           max: 3.5,
@@ -1373,7 +1403,6 @@ function initActualVsPredictedChart(predictedData) {
   });
 }
 
-let chartResidualsInstance = null;
 function initResidualsChart(predictedData) {
   console.log("[Chart Init] initResidualsChart called. Data:", predictedData ? predictedData.length : "null");
   const ctx = document.getElementById('chartResiduals');
@@ -1386,50 +1415,87 @@ function initResidualsChart(predictedData) {
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
   const hasActual = validRows.length > 0;
 
-  let points = [];
-  let labelText = '';
+  let datasets = [];
 
   if (hasActual) {
-    points = validRows.map(r => {
+    // 1. Linear Regression
+    const ptsLR = validRows.map(r => {
+      const pred = r.result.lr.value;
+      const resid = r.penjualan - pred;
+      return { x: pred, y: resid };
+    });
+    datasets.push({
+      label: 'Linear Regression',
+      data: ptsLR,
+      backgroundColor: 'rgba(108, 142, 191, 0.65)',
+      borderColor: '#6C8EBF',
+      pointRadius: 4,
+      showLine: false
+    });
+
+    // 2. Random Forest
+    const ptsRF = validRows.map(r => {
+      const pred = r.result.rf.value;
+      const resid = r.penjualan - pred;
+      return { x: pred, y: resid };
+    });
+    datasets.push({
+      label: 'Random Forest',
+      data: ptsRF,
+      backgroundColor: 'rgba(255, 184, 0, 0.65)',
+      borderColor: '#FFB800',
+      pointRadius: 4,
+      showLine: false
+    });
+
+    // 3. XGBoost
+    const ptsXGB = validRows.map(r => {
       const pred = r.result.xgb.value;
       const resid = r.penjualan - pred;
       return { x: pred, y: resid };
     });
-    labelText = 'Residuals (Aktual - Prediksi)';
+    datasets.push({
+      label: 'XGBoost',
+      data: ptsXGB,
+      backgroundColor: 'rgba(255, 68, 68, 0.65)',
+      borderColor: '#FF4444',
+      pointRadius: 4,
+      showLine: false
+    });
   } else {
-    labelText = 'Simulasi Residuals (CSV tidak memiliki kolom Penjualan)';
+    // Baseline simulation when no Penjualan column in CSV
+    let points = [];
     for (let i = 0; i < 150; i++) {
       const pred = Math.random() * 3.2;
       const resid = (Math.random() - 0.5) * 1.5;
       points.push({ x: pred, y: resid });
     }
+    datasets.push({
+      label: 'Simulasi Residuals (CSV tidak memiliki kolom Penjualan)',
+      data: points,
+      backgroundColor: 'rgba(150, 150, 150, 0.5)',
+      borderColor: '#9E9E9E',
+      pointRadius: 4,
+      showLine: false
+    });
   }
+
+  // Add Garis Nol
+  datasets.push({
+    label: 'Garis Nol (y = 0)',
+    data: [{x: 0, y: 0}, {x: 3.5, y: 0}],
+    type: 'line',
+    borderColor: '#A0A0A0',
+    borderDash: [3, 3],
+    fill: false,
+    pointRadius: 0,
+    showLine: true
+  });
 
   if (chartResidualsInstance) chartResidualsInstance.destroy();
   chartResidualsInstance = new Chart(ctx, {
     type: 'line',
-    data: {
-      datasets: [
-        {
-          label: labelText,
-          data: points,
-          backgroundColor: hasActual ? 'rgba(255, 184, 0, 0.65)' : 'rgba(150, 150, 150, 0.5)',
-          borderColor: hasActual ? '#FFB800' : '#9E9E9E',
-          pointRadius: 4,
-          showLine: false // Scatter style points
-        },
-        {
-          label: 'Garis Nol (y = 0)',
-          data: [{x: 0, y: 0}, {x: 3.5, y: 0}],
-          type: 'line',
-          borderColor: '#A0A0A0',
-          borderDash: [3, 3],
-          fill: false,
-          pointRadius: 0,
-          showLine: true
-        }
-      ]
-    },
+    data: { datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -1438,7 +1504,7 @@ function initResidualsChart(predictedData) {
       },
       scales: {
         x: {
-          type: 'linear', // Linear scale to map numeric coordinates
+          type: 'linear',
           title: { display: true, text: 'Prediksi Penjualan', color: '#A0A0A0' },
           min: -0.2,
           max: 3.5,
