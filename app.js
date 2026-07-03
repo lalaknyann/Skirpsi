@@ -2136,7 +2136,10 @@ function renderResultsSummary(results) {
   const tinggi = results.filter(r => r.result.xgb.class === 'Tinggi').length;
   const rendah = total - tinggi;
   const avgPred = results.reduce((s,r) => s + r.result.avg, 0) / total;
-  const maxPred = Math.max(...results.map(r => r.result.xgb.value));
+  
+  const maxLR  = Math.max(...results.map(r => r.result.lr.value));
+  const maxRF  = Math.max(...results.map(r => r.result.rf.value));
+  const maxXGB = Math.max(...results.map(r => r.result.xgb.value));
 
   const summaryEl = document.getElementById('resultsSummary');
   if (!summaryEl) return;
@@ -2162,14 +2165,13 @@ function renderResultsSummary(results) {
       <div class="sum-value red">${((tinggi/total)*100).toFixed(1)}%</div>
       <div class="sum-label">Proporsi Hari Tinggi</div>
     </div>
-    <div class="sum-card">
-      <div class="sum-value gold">${maxPred.toFixed(2)}</div>
-      <div class="sum-label">Prediksi Tertinggi (XGB)</div>
+    <div class="sum-card" style="min-width:180px">
+      <div class="sum-value gold">${maxXGB.toFixed(2)}</div>
+      <div class="sum-label">Max Pred (LR: ${maxLR.toFixed(2)} | RF: ${maxRF.toFixed(2)} | XGB: ${maxXGB.toFixed(2)})</div>
     </div>
   `;
 }
 
-/** Render full results table */
 function renderResultsTable(results) {
   const tbody = document.getElementById('resultsTableBody');
   if (!tbody) return;
@@ -2609,7 +2611,10 @@ function renderForecastSummary(results) {
   const tinggi = results.filter(r => r.result.xgb.class === 'Tinggi').length;
   const rendah = total - tinggi;
   const avgPred = results.reduce((s,r) => s + r.result.avg, 0) / total;
-  const maxPred = Math.max(...results.map(r => r.result.xgb.value));
+  
+  const maxLR  = Math.max(...results.map(r => r.result.lr.value));
+  const maxRF  = Math.max(...results.map(r => r.result.rf.value));
+  const maxXGB = Math.max(...results.map(r => r.result.xgb.value));
 
   const summaryEl = document.getElementById('forecastSummary');
   if (!summaryEl) return;
@@ -2635,9 +2640,9 @@ function renderForecastSummary(results) {
       <div class="sum-value red">${((tinggi/total)*100).toFixed(1)}%</div>
       <div class="sum-label">Proporsi Hari Tinggi</div>
     </div>
-    <div class="sum-card">
-      <div class="sum-value gold">${maxPred.toFixed(2)}</div>
-      <div class="sum-label">Prediksi Tertinggi (XGB)</div>
+    <div class="sum-card" style="min-width:180px">
+      <div class="sum-value gold">${maxXGB.toFixed(2)}</div>
+      <div class="sum-label">Max Pred (LR: ${maxLR.toFixed(2)} | RF: ${maxRF.toFixed(2)} | XGB: ${maxXGB.toFixed(2)})</div>
     </div>
   `;
 }
@@ -2654,6 +2659,8 @@ function initForecastChart(results) {
   const fbData = results.map(r => r.fb);
   const igData = results.map(r => r.ig);
   const ttData = results.map(r => r.tt);
+  const salesLR  = results.map(r => r.result.lr.value);
+  const salesRF  = results.map(r => r.result.rf.value);
   const salesXGB = results.map(r => r.result.xgb.value);
 
   forecastChartInstance = new Chart(ctx, {
@@ -2664,7 +2671,7 @@ function initForecastChart(results) {
         {
           label: 'FB Views (Kiri)',
           data: fbData,
-          borderColor: 'rgba(24,119,242,0.8)',
+          borderColor: 'rgba(24,119,242,0.4)',
           backgroundColor: 'transparent',
           borderWidth: 1.5,
           yAxisID: 'yViews',
@@ -2673,7 +2680,7 @@ function initForecastChart(results) {
         {
           label: 'IG Views (Kiri)',
           data: igData,
-          borderColor: 'rgba(225,48,108,0.8)',
+          borderColor: 'rgba(225,48,108,0.4)',
           backgroundColor: 'transparent',
           borderWidth: 1.5,
           yAxisID: 'yViews',
@@ -2682,17 +2689,37 @@ function initForecastChart(results) {
         {
           label: 'TikTok Views (Kiri)',
           data: ttData,
-          borderColor: 'rgba(255,0,80,0.8)',
+          borderColor: 'rgba(255,0,80,0.4)',
           backgroundColor: 'transparent',
           borderWidth: 1.5,
           yAxisID: 'yViews',
           pointRadius: 0
         },
         {
+          label: 'Prediksi Penjualan (LR - Kanan)',
+          data: salesLR,
+          borderColor: '#6C8EBF',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [2, 4],
+          yAxisID: 'ySales',
+          pointRadius: 0
+        },
+        {
+          label: 'Prediksi Penjualan (RF - Kanan)',
+          data: salesRF,
+          borderColor: '#FFB800',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [5, 3],
+          yAxisID: 'ySales',
+          pointRadius: 0
+        },
+        {
           label: 'Prediksi Penjualan (XGB - Kanan)',
           data: salesXGB,
           borderColor: '#FF4444',
-          backgroundColor: 'rgba(204,0,0,0.05)',
+          backgroundColor: 'rgba(204,0,0,0.03)',
           borderWidth: 3,
           fill: true,
           yAxisID: 'ySales',
@@ -2701,7 +2728,7 @@ function initForecastChart(results) {
         }
       ]
     },
-    options: {
+options: {
       ...CHART_DEFAULTS,
       scales: {
         x: CHART_DEFAULTS.scales.x,
