@@ -1413,6 +1413,7 @@ function initActualVsPredictedChart(predictedData) {
   });
 }
 
+let chartResidualsInstance = null;
 function initResidualsChart(predictedData) {
   console.log("[Chart Init] initResidualsChart called. Data:", predictedData ? predictedData.length : "null");
   const ctx = document.getElementById('chartResiduals');
