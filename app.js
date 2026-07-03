@@ -1379,6 +1379,9 @@ function initActualVsPredictedChart(predictedData) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: false,
+      hover: { animationDuration: 0 },
+      responsiveAnimationDuration: 0,
       plugins: {
         legend: { labels: { color: '#A0A0A0' } }
       },
@@ -1499,6 +1502,9 @@ function initResidualsChart(predictedData) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: false,
+      hover: { animationDuration: 0 },
+      responsiveAnimationDuration: 0,
       plugins: {
         legend: { labels: { color: '#A0A0A0' } }
       },
