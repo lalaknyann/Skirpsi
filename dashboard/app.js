@@ -1093,19 +1093,18 @@ function updateDashboardChartsAndMetrics(rows, predictedData) {
   // 1. Hitung metrik model dinamis pada data yang diunggah
   const dynamicResults = calculateMetricsOnUploadedData(predictedData);
 
-  // Calculate average metrics
-  const models = Object.values(dynamicResults);
-  const avgR2 = models.reduce((sum, r) => sum + r.R2_pct, 0) / models.length;
-  const avgAcc = models.reduce((sum, r) => sum + r.Accuracy_bin, 0) / models.length;
-  const avgMAE = models.reduce((sum, r) => sum + r.MAE, 0) / models.length;
-
-  // 3. Perbarui KPI Cards di halaman Overview
+  // 2. Perbarui KPI Cards di halaman Overview
   const elTotalDays = document.getElementById('kpi-total-days');
   if (elTotalDays) elTotalDays.textContent = rows.length;
 
   const elDateRange = document.getElementById('kpi-date-range');
   const elSidebarRange = document.getElementById('meta-date-range');
   if (elDateRange && elSidebarRange) elDateRange.textContent = elSidebarRange.textContent;
+
+  const models = Object.values(dynamicResults);
+  const avgR2 = models.reduce((sum, r) => sum + r.R2_pct, 0) / models.length;
+  const avgAcc = models.reduce((sum, r) => sum + r.Accuracy_bin, 0) / models.length;
+  const avgMAE = models.reduce((sum, r) => sum + r.MAE, 0) / models.length;
 
   const elR2Avg = document.getElementById('kpi-r2-avg');
   if (elR2Avg) elR2Avg.textContent = `${avgR2.toFixed(2)}%`;
@@ -1116,25 +1115,33 @@ function updateDashboardChartsAndMetrics(rows, predictedData) {
   const elMaeAvg = document.getElementById('kpi-mae-avg');
   if (elMaeAvg) elMaeAvg.textContent = avgMAE.toFixed(4);
 
-  // 4. Perbarui Tabel Evaluasi Semua Model
+  // 3. Perbarui Tabel Evaluasi Semua Model
   renderMetricsTableDynamic(dynamicResults);
 
-  // 5. Perbarui Chart Overview (Akurasi & MAE)
-  initOverviewCharts(dynamicResults);
+  // 4. Simpan ke global untuk dipakai saat tab switch
+  currentMLResults = dynamicResults;
 
-  // 6. Perbarui Chart Eksplorasi Data (Trend Bulanan & Distribusi Doughnut)
-  updateDataChartsDynamic(rows);
+  // 5. Render secara malas (lazy load) berdasarkan tab aktif saat ini
+  let activeSection = 'overview';
+  ['overview', 'data', 'models', 'upload', 'rq'].forEach(sec => {
+    const el = document.getElementById('section-' + sec);
+    if (el && el.classList.contains('active')) {
+      activeSection = sec;
+    }
+  });
 
-  // 7. Perbarui Chart Perbandingan Model di Section 3
-  currentMLResults = dynamicResults; // Simpan ke global untuk dipakai saat tab switch
-  initModelCharts(dynamicResults);
-
-  // 8. Perbarui 5 Grafik Python ML secara dinamis!
-  initMonthlyTrendDynamic(predictedData);
-  initActualVsPredictedChart(predictedData);
-  initResidualsChart(predictedData);
-  initFeatureImportanceChart(predictedData);
-  initTimeSeriesCompareChart(predictedData);
+  if (activeSection === 'overview' || activeSection === 'upload') {
+    initOverviewCharts(dynamicResults);
+  } else if (activeSection === 'data') {
+    updateDataChartsDynamic(rows);
+    initMonthlyTrendDynamic(predictedData);
+  } else if (activeSection === 'models') {
+    initModelCharts(dynamicResults);
+    initActualVsPredictedChart(predictedData);
+    initResidualsChart(predictedData);
+    initFeatureImportanceChart(predictedData);
+    initTimeSeriesCompareChart(predictedData);
+  }
 }
 
 function calculateCorrelation(xArr, yArr) {
@@ -2166,36 +2173,36 @@ function renderResultsSummary(results) {
 function renderResultsTable(results) {
   const tbody = document.getElementById('resultsTableBody');
   if (!tbody) return;
-  tbody.innerHTML = '';
-
+  
+  let html = '';
   results.forEach((row, i) => {
     const r     = row.result;
     const avg   = r.avg.toFixed(2);
     const isTinggi = r.xgb.class === 'Tinggi';
     const levelClass = isTinggi ? 'level-tinggi' : 'level-rendah';
-    const levelText  = isTinggi ? '🔴 Tinggi' : '⚫ Rendah';
+    const levelText  = isTinggi ? '🔥 Tinggi' : '❄️ Rendah';
     const totalViews = row.fb + row.ig + row.tt;
 
     // Highlight if high prediction
-    const rowStyle = isTinggi ? 'background:rgba(204,0,0,0.04)' : '';
+    const rowStyle = isTinggi ? 'style="background:rgba(204,0,0,0.04)"' : '';
 
-    const tr = document.createElement('tr');
-    tr.setAttribute('style', rowStyle);
-    tr.innerHTML = `
-      <td style="color:var(--text-muted)">${i + 1}</td>
-      <td>${sanitize(row.tanggal)}</td>
-      <td>${row.fb.toLocaleString('id-ID')}</td>
-      <td>${row.ig.toLocaleString('id-ID')}</td>
-      <td>${row.tt.toLocaleString('id-ID')}</td>
-      <td>${row.penjualan !== null ? `<strong>${row.penjualan}</strong>` : '<span style="color:var(--text-muted)">–</span>'}</td>
-      <td style="color:#A0A0A0">${r.lr.value.toFixed(2)}</td>
-      <td style="color:#FFB800">${r.rf.value.toFixed(2)}</td>
-      <td style="color:${isTinggi ? '#FF4444' : '#A0A0A0'};font-weight:600">${r.xgb.value.toFixed(2)}</td>
-      <td><strong>${avg}</strong></td>
-      <td><span class="level-badge ${levelClass}">${levelText}</span></td>
+    html += `
+      <tr ${rowStyle}>
+        <td style="color:var(--text-muted)">${i + 1}</td>
+        <td>${sanitize(row.tanggal)}</td>
+        <td>${row.fb.toLocaleString('id-ID')}</td>
+        <td>${row.ig.toLocaleString('id-ID')}</td>
+        <td>${row.tt.toLocaleString('id-ID')}</td>
+        <td>${row.penjualan !== null ? `<strong>${row.penjualan}</strong>` : '<span style="color:var(--text-muted)">?</span>'}</td>
+        <td style="color:#A0A0A0">${r.lr.value.toFixed(2)}</td>
+        <td style="color:#FFB800">${r.rf.value.toFixed(2)}</td>
+        <td style="color:${isTinggi ? '#FF4444' : '#A0A0A0'};font-weight:600">${r.xgb.value.toFixed(2)}</td>
+        <td><strong>${avg}</strong></td>
+        <td><span class="level-badge ${levelClass}">${levelText}</span></td>
+      </tr>
     `;
-    tbody.appendChild(tr);
   });
+  tbody.innerHTML = html;
 }
 
 /** Export prediction results as CSV */
@@ -2568,34 +2575,33 @@ function run3MonthForecast() {
 function renderForecastTable(results) {
   const tbody = document.getElementById('forecastTableBody');
   if (!tbody) return;
-  tbody.innerHTML = '';
-
+  
+  let html = '';
   results.forEach((row, i) => {
     const r     = row.result;
-    const avg   = r.avg.toFixed(2);
     const isTinggi = r.xgb.class === 'Tinggi';
     const levelClass = isTinggi ? 'level-tinggi' : 'level-rendah';
-    const levelText  = isTinggi ? '🔴 Tinggi' : '⚫ Rendah';
+    const levelText  = isTinggi ? '🔥 Tinggi' : '❄️ Rendah';
     const totalViews = row.fb + row.ig + row.tt;
 
-    const rowStyle = isTinggi ? 'background:rgba(204,0,0,0.04)' : '';
+    const rowStyle = isTinggi ? 'style="background:rgba(204,0,0,0.04)"' : '';
 
-    const tr = document.createElement('tr');
-    tr.setAttribute('style', rowStyle);
-    tr.innerHTML = `
-      <td style="color:var(--text-muted)">${i + 1}</td>
-      <td>${sanitize(row.tanggal)}</td>
-      <td>${row.fb.toLocaleString('id-ID')}</td>
-      <td>${row.ig.toLocaleString('id-ID')}</td>
-      <td>${row.tt.toLocaleString('id-ID')}</td>
-      <td><strong>${totalViews.toLocaleString('id-ID')}</strong></td>
-      <td style="color:#A0A0A0">${r.lr.value.toFixed(2)}</td>
-      <td style="color:#FFB800">${r.rf.value.toFixed(2)}</td>
-      <td style="color:${isTinggi ? '#FF4444' : '#A0A0A0'};font-weight:600">${r.xgb.value.toFixed(2)}</td>
-      <td><span class="level-badge ${levelClass}">${levelText}</span></td>
+    html += `
+      <tr ${rowStyle}>
+        <td style="color:var(--text-muted)">${i + 1}</td>
+        <td>${sanitize(row.tanggal)}</td>
+        <td>${row.fb.toLocaleString('id-ID')}</td>
+        <td>${row.ig.toLocaleString('id-ID')}</td>
+        <td>${row.tt.toLocaleString('id-ID')}</td>
+        <td><strong>${totalViews.toLocaleString('id-ID')}</strong></td>
+        <td style="color:#A0A0A0">${r.lr.value.toFixed(2)}</td>
+        <td style="color:#FFB800">${r.rf.value.toFixed(2)}</td>
+        <td style="color:${isTinggi ? '#FF4444' : '#A0A0A0'};font-weight:600">${r.xgb.value.toFixed(2)}</td>
+        <td><span class="level-badge ${levelClass}">${levelText}</span></td>
+      </tr>
     `;
-    tbody.appendChild(tr);
   });
+  tbody.innerHTML = html;
 }
 
 function renderForecastSummary(results) {
