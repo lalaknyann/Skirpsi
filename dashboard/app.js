@@ -1571,7 +1571,6 @@ function initFeatureImportanceChart(predictedData) {
     { label: 'Facebook Views', vals: fbs },
     { label: 'Instagram Views', vals: igs },
     { label: 'TikTok Views', vals: tts },
-    { label: 'Sentiment Score', vals: sentiments },
     { label: 'Bulan (Konteks)', vals: months },
     { label: 'Hari Pekan (Konteks)', vals: dows }
   ];
@@ -1595,7 +1594,6 @@ function initFeatureImportanceChart(predictedData) {
           'rgba(255, 68, 68, 0.75)',
           'rgba(255, 184, 0, 0.75)',
           'rgba(0, 200, 83, 0.75)',
-          'rgba(24, 119, 242, 0.75)',
           'rgba(156, 39, 176, 0.75)',
           'rgba(158, 158, 158, 0.75)'
         ],
