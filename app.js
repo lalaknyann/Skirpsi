@@ -2182,7 +2182,7 @@ function renderResultsTable(results) {
   let html = '';
   results.forEach((row, i) => {
     const r     = row.result;
-    const avg   = r.avg.toFixed(2);
+    const avg   = Math.round(r.avg);
     const isTinggi = r.xgb.class === 'Tinggi';
     const levelClass = isTinggi ? 'level-tinggi' : 'level-rendah';
     const levelText  = isTinggi ? '🔥 Tinggi' : '❄️ Rendah';
@@ -2199,10 +2199,10 @@ function renderResultsTable(results) {
         <td>${row.ig.toLocaleString('id-ID')}</td>
         <td>${row.tt.toLocaleString('id-ID')}</td>
         <td>${row.penjualan !== null ? `<strong>${row.penjualan}</strong>` : '<span style="color:var(--text-muted)">?</span>'}</td>
-        <td style="color:#A0A0A0">${r.lr.value.toFixed(2)}</td>
-        <td style="color:#FFB800">${r.rf.value.toFixed(2)}</td>
-        <td style="color:${isTinggi ? '#FF4444' : '#A0A0A0'};font-weight:600">${r.xgb.value.toFixed(2)}</td>
-        <td><strong>${avg}</strong></td>
+        <td style="color:#A0A0A0">${Math.round(r.lr.value)}</td>
+        <td style="color:#FFB800">${Math.round(r.rf.value)}</td>
+        <td style="color:${isTinggi ? '#FF4444' : '#A0A0A0'};font-weight:600">${Math.round(r.xgb.value)}</td>
+        <td><strong>${Math.round(r.avg)}</strong></td>
         <td><span class="level-badge ${levelClass}">${levelText}</span></td>
       </tr>
     `;
@@ -2228,10 +2228,10 @@ function downloadResultsCSV() {
       row.tt,
       totalViews,
       row.penjualan !== null ? row.penjualan : '',
-      r.lr.value.toFixed(2),
-      r.rf.value.toFixed(2),
-      r.xgb.value.toFixed(2),
-      r.avg.toFixed(2),
+      Math.round(r.lr.value),
+      Math.round(r.rf.value),
+      Math.round(r.xgb.value),
+      Math.round(r.avg),
       r.xgb.class
     ].join(',');
   });
@@ -2599,9 +2599,9 @@ function renderForecastTable(results) {
         <td>${row.ig.toLocaleString('id-ID')}</td>
         <td>${row.tt.toLocaleString('id-ID')}</td>
         <td><strong>${totalViews.toLocaleString('id-ID')}</strong></td>
-        <td style="color:#A0A0A0">${r.lr.value.toFixed(2)}</td>
-        <td style="color:#FFB800">${r.rf.value.toFixed(2)}</td>
-        <td style="color:${isTinggi ? '#FF4444' : '#A0A0A0'};font-weight:600">${r.xgb.value.toFixed(2)}</td>
+        <td style="color:#A0A0A0">${Math.round(r.lr.value)}</td>
+        <td style="color:#FFB800">${Math.round(r.rf.value)}</td>
+        <td style="color:${isTinggi ? '#FF4444' : '#A0A0A0'};font-weight:600">${Math.round(r.xgb.value)}</td>
         <td><span class="level-badge ${levelClass}">${levelText}</span></td>
       </tr>
     `;
@@ -2772,10 +2772,10 @@ function downloadForecastCSV() {
       row.ig,
       row.tt,
       totalViews,
-      r.lr.value.toFixed(2),
-      r.rf.value.toFixed(2),
-      r.xgb.value.toFixed(2),
-      r.avg.toFixed(2),
+      Math.round(r.lr.value),
+      Math.round(r.rf.value),
+      Math.round(r.xgb.value),
+      Math.round(r.avg),
       r.xgb.class
     ].join(',');
   });
