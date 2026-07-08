@@ -115,7 +115,6 @@ def login():
         # Dummy hash for timing attack protection
         dummy_hash = b'$2b$12$L7Rz52L7h9i2S3C2k8Q4uey1NfP1Q9C2S2Q4L8L9L7L2S2Q4S2Q4e'
         
-        user_list = credentials.get("users", [])
         user_data = None
         for u in user_list:
             if u["username"].lower() == username.lower():
