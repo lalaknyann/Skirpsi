@@ -401,23 +401,23 @@ function initDataCharts(customFB = null, customIG = null, customTT = null, custo
           {
             label: 'Facebook',
             data: fbData,
-            borderColor: '#D0D0D0',
-            backgroundColor: 'rgba(208,208,208,0.07)',
-            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#D0D0D0'
+            borderColor: '#1877F2',
+            backgroundColor: 'rgba(24,119,242,0.07)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#1877F2'
           },
           {
             label: 'Instagram',
             data: igData,
-            borderColor: '#888888',
-            backgroundColor: 'rgba(136,136,136,0.07)',
-            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#888888'
+            borderColor: '#E1306C',
+            backgroundColor: 'rgba(225,48,108,0.07)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#E1306C'
           },
           {
             label: 'TikTok',
             data: ttData,
-            borderColor: '#CC0000',
-            backgroundColor: 'rgba(204,0,0,0.07)',
-            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#CC0000'
+            borderColor: '#FF0050',
+            backgroundColor: 'rgba(255,0,80,0.07)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#FF0050'
           }
         ]
       },
@@ -455,7 +455,7 @@ function initDataCharts(customFB = null, customIG = null, customTT = null, custo
         labels: ['Facebook', 'Instagram', 'TikTok'],
         datasets: [{
           data: [totalFB, totalIG, totalTT],
-          backgroundColor: ['rgba(208,208,208,0.8)', 'rgba(136,136,136,0.8)', 'rgba(204,0,0,0.8)'],
+          backgroundColor: ['rgba(24,119,242,0.8)', 'rgba(225,48,108,0.8)', 'rgba(255,0,80,0.8)'],
           borderColor: '#1A1A1A', borderWidth: 3
         }]
       },
@@ -490,10 +490,10 @@ function initDataCharts(customFB = null, customIG = null, customTT = null, custo
           label: 'Frekuensi Hari',
           data: sCounts,
           backgroundColor: [
-            'rgba(208,208,208,0.7)',
-            'rgba(136,136,136,0.7)',
-            'rgba(77,77,79,0.7)',
-            'rgba(204,0,0,0.7)'
+            'rgba(160,160,160,0.7)',
+            'rgba(255,184,0,0.7)',
+            'rgba(204,0,0,0.7)',
+            'rgba(255,68,68,0.7)'
           ],
           borderRadius: 8
         }]
@@ -1261,14 +1261,14 @@ function renderMonthlyTrendChart(yearFilter) {
     data: {
       labels,
       datasets: [
-        { type:'line', label:'Facebook Views', data:fbAvg, borderColor:'#D0D0D0', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
-        { type:'line', label:'Instagram Views', data:igAvg, borderColor:'#888888', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
-        { type:'line', label:'TikTok Views', data:ttAvg, borderColor:'#CC0000', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
+        { type:'line', label:'Facebook Views', data:fbAvg, borderColor:'#1877F2', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
+        { type:'line', label:'Instagram Views', data:igAvg, borderColor:'#E1306C', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
+        { type:'line', label:'TikTok Views', data:ttAvg, borderColor:'#FF0050', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
         {
           type:'bar', label: hasActual ? 'Total Penjualan' : 'Prediksi XGBoost',
           data: salesArr,
-          backgroundColor: 'rgba(204,0,0,0.2)',
-          borderColor: '#CC0000',
+          backgroundColor: 'rgba(255,68,68,0.25)',
+          borderColor: '#FF4444',
           borderWidth:1, yAxisID:'ySales', hidden: !hasActual
         }
       ]
@@ -1285,9 +1285,9 @@ function renderMonthlyTrendChart(yearFilter) {
         },
         ySales: {
           position:'right', display: hasActual,
-          title:{ display: hasActual, text:'Total Penjualan (unit)', color:'#CC0000' },
+          title:{ display: hasActual, text:'Total Penjualan (unit)', color:'#FF4444' },
           grid:{ drawOnChartArea:false },
-          ticks:{ color:'#CC0000' }
+          ticks:{ color:'#FF4444' }
         }
       }
     }
@@ -1982,23 +1982,23 @@ function renderViewsTrendChart(yearFilter) {
         {
           label: 'Facebook',
           data: fbAvg,
-          borderColor: '#D0D0D0',
-          backgroundColor: 'rgba(208,208,208,0.07)',
-          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#D0D0D0'
+          borderColor: '#1877F2',
+          backgroundColor: 'rgba(24,119,242,0.07)',
+          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#1877F2'
         },
         {
           label: 'Instagram',
           data: igAvg,
-          borderColor: '#888888',
-          backgroundColor: 'rgba(136,136,136,0.07)',
-          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#888888'
+          borderColor: '#E1306C',
+          backgroundColor: 'rgba(225,48,108,0.07)',
+          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#E1306C'
         },
         {
           label: 'TikTok',
           data: ttAvg,
-          borderColor: '#CC0000',
-          backgroundColor: 'rgba(204,0,0,0.07)',
-          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#CC0000'
+          borderColor: '#FF0050',
+          backgroundColor: 'rgba(255,0,80,0.07)',
+          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#FF0050'
         }
       ]
     },
@@ -2072,7 +2072,7 @@ function updateDataChartsDynamic(rows) {
         labels: ['Facebook', 'Instagram', 'TikTok'],
         datasets: [{
           data: [totalFB, totalIG, totalTT],
-          backgroundColor: ['rgba(208,208,208,0.8)', 'rgba(136,136,136,0.8)', 'rgba(204,0,0,0.8)'],
+          backgroundColor: ['rgba(24,119,242,0.8)', 'rgba(225,48,108,0.8)', 'rgba(255,0,80,0.8)'],
           borderColor: '#1A1A1A', borderWidth: 3
         }]
       },
@@ -2106,10 +2106,10 @@ function updateDataChartsDynamic(rows) {
         datasets: [{
           data: salesCounts,
           backgroundColor: [
-            'rgba(208,208,208,0.7)',
-            'rgba(136,136,136,0.7)',
-            'rgba(77,77,79,0.7)',
-            'rgba(204,0,0,0.7)'
+            'rgba(160,160,160,0.7)',
+            'rgba(255,184,0,0.7)',
+            'rgba(204,0,0,0.7)',
+            'rgba(255,68,68,0.7)'
           ],
           borderRadius: 8
         }]
