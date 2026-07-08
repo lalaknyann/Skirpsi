@@ -116,14 +116,14 @@ const MONTHLY_VIEWS = {
 
 // ─── Telkom-themed Colors ───
 const MODEL_COLORS = {
-  "Linear Regression": "#888888",
-  "Random Forest":     "#D0D0D0",
+  "Linear Regression": "#0066CC",
+  "Random Forest":     "#FFB800",
   "XGBoost":           "#CC0000"
 };
 
 const MODEL_BG = {
-  "Linear Regression": "rgba(136,136,136,0.15)",
-  "Random Forest":     "rgba(208,208,208,0.15)",
+  "Linear Regression": "rgba(0,102,204,0.15)",
+  "Random Forest":     "rgba(255,184,0,0.15)",
   "XGBoost":           "rgba(204,0,0,0.15)"
 };
 
@@ -195,6 +195,7 @@ function showSection(sectionId) {
     overview: ['Overview', 'Ringkasan sistem prediksi penjualan Indibiz via Media Sosial'],
     data:     ['Eksplorasi Data', 'Analisis distribusi views harian di Facebook, Instagram, TikTok'],
     models:   ['Perbandingan Model', 'Evaluasi Linear Regression, Random Forest, XGBoost'],
+    forecast: ['Proyeksi 3 Bulan', 'Simulasi Proyeksi Penjualan & Media Sosial Tahun 2026'],
     upload:   ['Upload CSV', 'Upload file CSV dan dapatkan prediksi batch otomatis'],
     rq:       ['Pertanyaan Penelitian', 'Jawaban visual 4 pertanyaan penelitian skripsi']
   };
@@ -221,6 +222,12 @@ function showSection(sectionId) {
       initMonthlyTrendDynamic(predictionResults);
       updateDataChartsDynamic(uploadedData);
     }, 500);
+  }
+  if (sectionId === 'forecast' && typeof forecastResults !== 'undefined' && forecastResults && forecastResults.length > 0) {
+    console.log("[showSection] Forecast section active. Triggering chart redraw with 150ms delay.");
+    setTimeout(() => {
+      initForecastChart(forecastResults);
+    }, 150);
   }
 
   // Force Chart.js to recalculate container dimensions by dispatching window resize events
@@ -687,7 +694,7 @@ function processCSVFile(file) {
     logToTerminal(`[CSV Upload] BERHASIL: Memproses ${rows.length} baris dari ${file.name}`);
     
     // Tampilkan menu navigasi yang disembunyikan
-    ['nav-overview', 'nav-data', 'nav-models'].forEach(id => {
+    ['nav-overview', 'nav-data', 'nav-models', 'nav-forecast'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'flex';
     });
@@ -1334,8 +1341,8 @@ function initActualVsPredictedChart(predictedData) {
   datasets.push({
     label: 'Linear Regression',
     data: ptsLR,
-    backgroundColor: 'rgba(136, 136, 136, 0.65)',
-    borderColor: '#888888',
+    backgroundColor: 'rgba(0, 102, 204, 0.65)',
+    borderColor: '#0066CC',
     pointRadius: 4,
     showLine: false
   });
@@ -1347,8 +1354,8 @@ function initActualVsPredictedChart(predictedData) {
   datasets.push({
     label: 'Random Forest',
     data: ptsRF,
-    backgroundColor: 'rgba(208, 208, 208, 0.65)',
-    borderColor: '#D0D0D0',
+    backgroundColor: 'rgba(255, 184, 0, 0.65)',
+    borderColor: '#FFB800',
     pointRadius: 4,
     showLine: false
   });
@@ -1464,8 +1471,8 @@ function initResidualsChart(predictedData) {
   datasets.push({
     label: 'Linear Regression',
     data: ptsLR,
-    backgroundColor: 'rgba(136, 136, 136, 0.65)',
-    borderColor: '#888888',
+    backgroundColor: 'rgba(0, 102, 204, 0.65)',
+    borderColor: '#0066CC',
     pointRadius: 4,
     showLine: false
   });
@@ -1478,8 +1485,8 @@ function initResidualsChart(predictedData) {
   datasets.push({
     label: 'Random Forest',
     data: ptsRF,
-    backgroundColor: 'rgba(208, 208, 208, 0.65)',
-    borderColor: '#D0D0D0',
+    backgroundColor: 'rgba(255, 184, 0, 0.65)',
+    borderColor: '#FFB800',
     pointRadius: 4,
     showLine: false
   });
@@ -1745,7 +1752,7 @@ function renderTimeSeriesCompareChart(periodVal) {
   datasets.push({
     label: 'Prediksi Random Forest',
     data: predsRF,
-    borderColor: '#D0D0D0',
+    borderColor: '#FFB800',
     borderWidth: 2,
     pointRadius: 0,
     borderDash: [5, 3],
@@ -1755,7 +1762,7 @@ function renderTimeSeriesCompareChart(periodVal) {
   datasets.push({
     label: 'Prediksi Linear Regression',
     data: predsLR,
-    borderColor: '#888888',
+    borderColor: '#0066CC',
     borderWidth: 2,
     pointRadius: 0,
     borderDash: [2, 4],
@@ -2296,7 +2303,7 @@ function resetUpload() {
   if (forecastSection) forecastSection.classList.remove('visible');
 
   // Sembunyikan kembali menu navigasi
-  ['nav-overview', 'nav-data', 'nav-models'].forEach(id => {
+  ['nav-overview', 'nav-data', 'nav-models', 'nav-forecast'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
