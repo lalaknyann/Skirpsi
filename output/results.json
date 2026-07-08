@@ -1,78 +1,125 @@
 {
-  "regresi": {
+  "views_only": {
     "Linear Regression": {
       "model": "Linear Regression",
-      "MAE": 0.2059,
-      "RMSE": 0.2828,
-      "R2": 0.842,
-      "R2_pct": 84.2
+      "MAE": 0.9436,
+      "RMSE": 1.0979,
+      "R2": -0.0726,
+      "R2_pct": -7.26
     },
     "Random Forest": {
       "model": "Random Forest",
-      "MAE": 0.1138,
-      "RMSE": 0.2637,
-      "R2": 0.8626,
-      "R2_pct": 86.26
+      "MAE": 0.951,
+      "RMSE": 1.124,
+      "R2": -0.1243,
+      "R2_pct": -12.43
     },
     "XGBoost": {
       "model": "XGBoost",
-      "MAE": 0.1373,
-      "RMSE": 0.26,
-      "R2": 0.8665,
-      "R2_pct": 86.65
+      "MAE": 0.9588,
+      "RMSE": 1.1478,
+      "R2": -0.1722,
+      "R2_pct": -17.22
+    }
+  },
+  "full_features": {
+    "Linear Regression": {
+      "model": "Linear Regression",
+      "MAE": 0.9418,
+      "RMSE": 1.1044,
+      "R2": -0.0854,
+      "R2_pct": -8.54
+    },
+    "Random Forest": {
+      "model": "Random Forest",
+      "MAE": 0.947,
+      "RMSE": 1.1187,
+      "R2": -0.1137,
+      "R2_pct": -11.37
+    },
+    "XGBoost": {
+      "model": "XGBoost",
+      "MAE": 0.9543,
+      "RMSE": 1.1511,
+      "R2": -0.179,
+      "R2_pct": -17.9
+    }
+  },
+  "regresi": {
+    "Linear Regression": {
+      "model": "Linear Regression",
+      "MAE": 0.9436,
+      "RMSE": 1.0979,
+      "R2": -0.0726,
+      "R2_pct": -7.26
+    },
+    "Random Forest": {
+      "model": "Random Forest",
+      "MAE": 0.951,
+      "RMSE": 1.124,
+      "R2": -0.1243,
+      "R2_pct": -12.43
+    },
+    "XGBoost": {
+      "model": "XGBoost",
+      "MAE": 0.9588,
+      "RMSE": 1.1478,
+      "R2": -0.1722,
+      "R2_pct": -17.22
     }
   },
   "dengan_sentimen": {
     "Linear Regression": {
       "model": "Linear Regression",
-      "MAE": 0.2059,
-      "RMSE": 0.2828,
-      "R2": 0.842,
-      "R2_pct": 84.2
+      "MAE": 0.9436,
+      "RMSE": 1.0979,
+      "R2": -0.0726,
+      "R2_pct": -7.26
     },
     "Random Forest": {
       "model": "Random Forest",
-      "MAE": 0.1138,
-      "RMSE": 0.2637,
-      "R2": 0.8626,
-      "R2_pct": 86.26
+      "MAE": 0.951,
+      "RMSE": 1.124,
+      "R2": -0.1243,
+      "R2_pct": -12.43
     },
     "XGBoost": {
       "model": "XGBoost",
-      "MAE": 0.1373,
-      "RMSE": 0.26,
-      "R2": 0.8665,
-      "R2_pct": 86.65
+      "MAE": 0.9588,
+      "RMSE": 1.1478,
+      "R2": -0.1722,
+      "R2_pct": -17.22
     }
   },
   "tanpa_sentimen": {
     "Linear Regression": {
       "model": "Linear Regression",
-      "MAE": 0.2059,
-      "RMSE": 0.2827,
-      "R2": 0.8421,
-      "R2_pct": 84.21
+      "MAE": 0.9418,
+      "RMSE": 1.1044,
+      "R2": -0.0854,
+      "R2_pct": -8.54
     },
     "Random Forest": {
       "model": "Random Forest",
-      "MAE": 0.1215,
-      "RMSE": 0.2788,
-      "R2": 0.8465,
-      "R2_pct": 84.65
+      "MAE": 0.947,
+      "RMSE": 1.1187,
+      "R2": -0.1137,
+      "R2_pct": -11.37
     },
     "XGBoost": {
       "model": "XGBoost",
-      "MAE": 0.141,
-      "RMSE": 0.2586,
-      "R2": 0.8679,
-      "R2_pct": 86.79
+      "MAE": 0.9543,
+      "RMSE": 1.1511,
+      "R2": -0.179,
+      "R2_pct": -17.9
     }
   },
   "dataset_info": {
     "total_rows": 717,
     "train_size": 573,
     "test_size": 144,
-    "n_features": 59,
+    "n_features_views_only": 46,
+    "n_features_full": 57,
     "date_range": "2024-01-15 sd 2025-12-31",
     "platforms": [
       "Facebook",
@@ -80,37 +127,37 @@
       "TikTok"
     ],
     "target": "Penjualan (Regresi, 0-3)",
-    "approach": "Regression (Derived from total views)",
+    "approach": "Dual Approach: Views-Only and Full Features",
     "tune_hyperparams": true
   },
   "monthly_stats": {
     "('Penjualan', 'sum')": {
-      "1": 10,
-      "2": 114,
-      "3": 113,
-      "4": 89,
-      "5": 63,
-      "6": 112,
-      "7": 119,
-      "8": 68,
-      "9": 109,
-      "10": 182,
-      "11": 177,
-      "12": 124
+      "1": 69,
+      "2": 77,
+      "3": 78,
+      "4": 107,
+      "5": 95,
+      "6": 94,
+      "7": 98,
+      "8": 92,
+      "9": 100,
+      "10": 90,
+      "11": 91,
+      "12": 99
     },
     "('Penjualan', 'mean')": {
-      "1": 0.21,
-      "2": 2.0,
-      "3": 1.82,
-      "4": 1.48,
-      "5": 1.02,
-      "6": 1.87,
-      "7": 1.92,
-      "8": 1.1,
-      "9": 1.82,
-      "10": 2.94,
-      "11": 2.95,
-      "12": 2.0
+      "1": 1.44,
+      "2": 1.35,
+      "3": 1.26,
+      "4": 1.78,
+      "5": 1.53,
+      "6": 1.57,
+      "7": 1.58,
+      "8": 1.48,
+      "9": 1.67,
+      "10": 1.45,
+      "11": 1.52,
+      "12": 1.6
     },
     "('Facebook', 'mean')": {
       "1": 2959.04,
@@ -156,76 +203,74 @@
     }
   },
   "correlation": {
-    "Facebook": 0.8287,
-    "Instagram": 0.6089,
-    "TikTok": -0.3416,
-    "total_views": 0.9048,
-    "log_engagement": 0.8375,
-    "sentiment_score": 0.8089
+    "Facebook": -0.0126,
+    "Instagram": 0.0146,
+    "TikTok": 0.0319,
+    "total_views": -0.0047
   },
   "feature_importance": {
     "Random Forest": {
-      "total_views": 0.2158,
-      "log_total_views": 0.2025,
-      "log_facebook": 0.1897,
-      "Facebook": 0.1766,
-      "log_views_x_q4": 0.0333,
-      "log_engagement": 0.0195,
-      "ratio_tt_total": 0.0154,
-      "log_instagram": 0.0137,
-      "Instagram": 0.0089,
-      "tt_lag3": 0.0083,
-      "sentiment_score": 0.0072,
-      "views_trend": 0.0052,
-      "day_of_year": 0.0051,
-      "tt_lag7": 0.005,
-      "penjualan_lag1": 0.0047
+      "ig_lag7": 0.0341,
+      "views_trend": 0.034,
+      "fb_lag3": 0.0326,
+      "fb_lag7": 0.0315,
+      "views_roll7_mean": 0.031,
+      "tt_lag3": 0.0305,
+      "tt_lag1": 0.0294,
+      "ratio_fb_total": 0.0294,
+      "log_tiktok": 0.0285,
+      "views_roll7_std": 0.0284,
+      "ratio_ig_total": 0.0278,
+      "day_of_year": 0.0277,
+      "tiktok_growth": 0.0261,
+      "TikTok": 0.026,
+      "tt_lag7": 0.0259
     },
     "XGBoost": {
-      "log_facebook": 0.20069999992847443,
-      "Facebook": 0.1606999933719635,
-      "log_views_x_q4": 0.12189999967813492,
-      "log_total_views": 0.09179999679327011,
-      "total_views": 0.09149999916553497,
-      "penjualan_lag1": 0.02539999969303608,
-      "Instagram": 0.01759999990463257,
-      "log_instagram": 0.01600000075995922,
-      "log_engagement": 0.012500000186264515,
-      "day_of_year": 0.01209999993443489,
-      "tt_lag3": 0.011699999682605267,
-      "week_of_year": 0.011099999770522118,
-      "ratio_tt_total": 0.010099999606609344,
-      "TikTok": 0.008999999612569809,
-      "log_tiktok": 0.008799999952316284
+      "ratio_ig_total": 0.02889999933540821,
+      "log_total_views": 0.026000000536441803,
+      "bulan": 0.026000000536441803,
+      "quarter": 0.024000000208616257,
+      "log_views_x_weekend": 0.023900000378489494,
+      "views_roll7_mean": 0.02329999953508377,
+      "log_views_x_q4": 0.023000000044703484,
+      "fb_lag7": 0.02290000021457672,
+      "fb_lag3": 0.022700000554323196,
+      "tt_lag3": 0.022600000724196434,
+      "sales_trend": 0.02250000089406967,
+      "week_of_year": 0.022299999371170998,
+      "views_roll14_mean": 0.021900000050663948,
+      "views_trend": 0.021400000900030136,
+      "tt_lag7": 0.021199999377131462
     }
   },
   "binary_classifier": {
     "Linear Regression": {
-      "MAE": 0.2059,
-      "RMSE": 0.2828,
-      "R2": 0.842,
-      "R2_pct": 84.2,
-      "Accuracy": 0.842,
-      "Accuracy_bin": 84.2,
-      "Accuracy_pct": 84.2
+      "MAE": 0.9436,
+      "RMSE": 1.0979,
+      "R2": -0.0726,
+      "R2_pct": -7.26,
+      "Accuracy": -0.0726,
+      "Accuracy_bin": -7.26,
+      "Accuracy_pct": -7.26
     },
     "Random Forest": {
-      "MAE": 0.1138,
-      "RMSE": 0.2637,
-      "R2": 0.8626,
-      "R2_pct": 86.26,
-      "Accuracy": 0.8626,
-      "Accuracy_bin": 86.26,
-      "Accuracy_pct": 86.26
+      "MAE": 0.951,
+      "RMSE": 1.124,
+      "R2": -0.1243,
+      "R2_pct": -12.43,
+      "Accuracy": -0.1243,
+      "Accuracy_bin": -12.43,
+      "Accuracy_pct": -12.43
     },
     "XGBoost": {
-      "MAE": 0.1373,
-      "RMSE": 0.26,
-      "R2": 0.8665,
-      "R2_pct": 86.65,
-      "Accuracy": 0.8665,
-      "Accuracy_bin": 86.65,
-      "Accuracy_pct": 86.65
+      "MAE": 0.9588,
+      "RMSE": 1.1478,
+      "R2": -0.1722,
+      "R2_pct": -17.22,
+      "Accuracy": -0.1722,
+      "Accuracy_bin": -17.22,
+      "Accuracy_pct": -17.22
     }
   }
 }

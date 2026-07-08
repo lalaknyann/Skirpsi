@@ -126,26 +126,7 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     df['log_views_x_peakmon']   = df['log_total_views'] * df['is_peak_month']
     df['log_views_x_q4']        = df['log_total_views'] * df['is_q4']
 
-    # ==== 10. Engagement Simulasi ====
-    np.random.seed(42)
-    n = len(df)
-    df['likes_ig']     = (df['Instagram'] * np.random.uniform(0.03, 0.06, n)).astype(int)
-    df['likes_fb']     = (df['Facebook']  * np.random.uniform(0.02, 0.04, n)).astype(int)
-    df['likes_tt']     = (df['TikTok']    * np.random.uniform(0.05, 0.10, n)).astype(int)
-    df['total_engagement'] = df['likes_ig'] + df['likes_fb'] + df['likes_tt']
-    df['log_engagement']   = np.log1p(df['total_engagement'])
-
-    # ==== 11. Sentimen Score ====
-    norm_views = (df['total_views'] - df['total_views'].min()) / \
-                 (df['total_views'].max() - df['total_views'].min() + 1)
-    norm_sales = (df['sales_roll7_mean'] - df['sales_roll7_mean'].min()) / \
-                 (df['sales_roll7_mean'].max() - df['sales_roll7_mean'].min() + 1)
-    df['sentiment_score'] = (
-        0.4 + norm_views * 0.25 + norm_sales * 0.25 +
-        np.random.normal(0, 0.04, n)
-    ).clip(0, 1).round(3)
-
-    # ==== 12. Target Klasifikasi: Binary (tinggi vs rendah) ====
+    # ==== 10. Target Klasifikasi: Binary (tinggi vs rendah) ====
     # 0-1 = rendah (0), 2-3 = tinggi (1)
     df['penjualan_binary'] = (df['Penjualan'] >= 2).astype(int)
 
@@ -155,8 +136,8 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def get_feature_columns():
-    """Daftar kolom fitur yang digunakan untuk training."""
+def get_views_only_feature_columns():
+    """Daftar fitur views + temporal (TANPA lag/rolling penjualan)."""
     return [
         # Raw views
         'Facebook', 'Instagram', 'TikTok',
@@ -171,39 +152,51 @@ def get_feature_columns():
         'quarter', 'day_of_year', 'week_of_year',
         'bulan_sin', 'bulan_cos', 'dow_sin', 'dow_cos',
         'is_peak_month', 'is_mid_year', 'is_q4',
-        # Lag penjualan
-        'penjualan_lag1', 'penjualan_lag2', 'penjualan_lag3',
-        'penjualan_lag7', 'penjualan_lag14',
         # Lag views
         'fb_lag1', 'fb_lag3', 'fb_lag7',
         'ig_lag1', 'ig_lag3', 'ig_lag7',
         'tt_lag1', 'tt_lag3', 'tt_lag7',
-        # Rolling penjualan
-        'sales_roll3_mean', 'sales_roll7_mean', 'sales_roll14_mean',
-        'sales_roll7_std', 'sales_roll7_max',
         # Rolling views
         'views_roll7_mean', 'views_roll14_mean', 'views_roll7_std',
-        # Trend
-        'sales_trend', 'views_trend',
+        # Trend views
+        'views_trend',
         # Interaction
         'log_views_x_weekend', 'log_views_x_peakmon', 'log_views_x_q4',
-        # Engagement & sentimen
-        'log_engagement', 'sentiment_score',
     ]
 
 
+def get_full_feature_columns():
+    """Daftar fitur lengkap (views + temporal + lag/rolling penjualan)."""
+    return get_views_only_feature_columns() + [
+        # Lag penjualan
+        'penjualan_lag1', 'penjualan_lag2', 'penjualan_lag3',
+        'penjualan_lag7', 'penjualan_lag14',
+        # Rolling penjualan
+        'sales_roll3_mean', 'sales_roll7_mean', 'sales_roll14_mean',
+        'sales_roll7_std', 'sales_roll7_max',
+        # Trend penjualan
+        'sales_trend',
+    ]
+
+
+def get_feature_columns():
+    """Daftar kolom fitur default (full features)."""
+    return get_full_feature_columns()
+
+
 def get_feature_columns_no_sentiment():
-    """Fitur tanpa sentimen (untuk analisis Q4)."""
-    cols = get_feature_columns()
-    return [c for c in cols if c != 'sentiment_score']
+    """Fitur tanpa sentimen (karena sudah dihapus, return get_full_feature_columns)."""
+    return get_full_feature_columns()
 
 
-def prepare_data(df: pd.DataFrame, test_size: float = 0.2, scale: bool = True):
+
+def prepare_data(df: pd.DataFrame, feature_cols: list = None, test_size: float = 0.2, scale: bool = True):
     """
     Split data time-based untuk REGRESI.
     Returns: X_train, X_test, y_train, y_test, scaler, feature_cols
     """
-    feature_cols = get_feature_columns()
+    if feature_cols is None:
+        feature_cols = get_feature_columns()
     feature_cols = [c for c in feature_cols if c in df.columns]
 
     X = df[feature_cols].values

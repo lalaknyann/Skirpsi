@@ -59,8 +59,7 @@ def plot_q1_views_correlation(df, output_dir: str):
 
     # --- Subplot 1: Heatmap Korelasi ---
     ax1 = fig.add_subplot(gs[0])
-    cols = ['Facebook', 'Instagram', 'TikTok', 'total_views',
-            'total_engagement', 'sentiment_score', 'Penjualan']
+    cols = ['Facebook', 'Instagram', 'TikTok', 'total_views', 'Penjualan']
     corr_matrix = df[cols].corr()
     mask = np.zeros_like(corr_matrix, dtype=bool)
     mask[np.triu_indices_from(mask, k=1)] = True
@@ -111,47 +110,19 @@ def plot_q2_engagement_effect(df, output_dir: str):
         fontsize=14, fontweight='bold', color=TEXT_COLOR
     )
 
-    # --- Subplot 1: Bar Korelasi ---
     ax1 = axes[0]
-    # Gunakan hanya kolom yang tersedia di dataframe
-    all_engagement_cols = ['likes_ig', 'likes_fb', 'likes_tt', 'comments_ig', 'comments_fb',
-                           'total_engagement', 'log_engagement', 'sentiment_score']
-    engagement_cols = [c for c in all_engagement_cols if c in df.columns]
-    corr_vals = [df[col].corr(df['Penjualan']) for col in engagement_cols]
-    labels_map = {
-        'likes_ig': 'Likes IG', 'likes_fb': 'Likes FB', 'likes_tt': 'Likes TikTok',
-        'comments_ig': 'Comments IG', 'comments_fb': 'Comments FB',
-        'total_engagement': 'Total Engagement', 'log_engagement': 'Log Engagement',
-        'sentiment_score': 'Sentiment Score'
-    }
-    labels = [labels_map.get(c, c) for c in engagement_cols]
-    colors_bar = [ACCENT1 if v >= 0 else ACCENT3 for v in corr_vals]
+    ax1.text(0.5, 0.5, "Data Engagement & Sentimen\nTidak Tersedia\n(Menunggu data scraping nyata)", 
+             ha='center', va='center', fontsize=12, color=TEXT_COLOR)
+    ax1.set_facecolor(CARD_COLOR)
+    ax1.get_xaxis().set_visible(False)
+    ax1.get_yaxis().set_visible(False)
 
-    bars = ax1.barh(labels, corr_vals, color=colors_bar, edgecolor=GRID_COLOR, height=0.6)
-    ax1.axvline(0, color=TEXT_COLOR, linewidth=0.8, linestyle='--')
-    for bar, val in zip(bars, corr_vals):
-        ax1.text(val + (0.005 if val >= 0 else -0.005),
-                 bar.get_y() + bar.get_height() / 2,
-                 f'{val:.3f}', va='center', fontsize=9,
-                 ha='left' if val >= 0 else 'right', color=TEXT_COLOR)
-    ax1.set_xlabel('Korelasi Pearson dengan Penjualan', color=TEXT_COLOR)
-    ax1.set_title('Korelasi Engagement vs Penjualan', color=TEXT_COLOR)
-    ax1.grid(axis='x', linestyle='--', alpha=0.3)
-
-    # --- Subplot 2: Total Engagement vs Penjualan Scatter ---
     ax2 = axes[1]
-    sc = ax2.scatter(df['total_engagement'] / 1000, df['Penjualan'],
-                     c=df['sentiment_score'], cmap='plasma',
-                     alpha=0.5, s=20, edgecolors='none')
-    cbar = plt.colorbar(sc, ax=ax2)
-    cbar.set_label('Sentiment Score', color=TEXT_COLOR)
-    cbar.ax.yaxis.set_tick_params(color=TEXT_COLOR)
-    plt.setp(cbar.ax.yaxis.get_ticklabels(), color=TEXT_COLOR)
-
-    ax2.set_xlabel('Total Engagement (ribuan)', color=TEXT_COLOR)
-    ax2.set_ylabel('Penjualan (unit)', color=TEXT_COLOR)
-    ax2.set_title('Total Engagement + Sentimen vs Penjualan', color=TEXT_COLOR)
-    ax2.grid(True, linestyle='--', alpha=0.3)
+    ax2.text(0.5, 0.5, "Analisis ditangguhkan\nsampai data sentimen nyata diintegrasikan", 
+             ha='center', va='center', fontsize=12, color=TEXT_COLOR)
+    ax2.set_facecolor(CARD_COLOR)
+    ax2.get_xaxis().set_visible(False)
+    ax2.get_yaxis().set_visible(False)
 
     plt.tight_layout()
     path = os.path.join(output_dir, 'q2_engagement_effect.png')
@@ -244,69 +215,69 @@ def plot_q3_model_comparison(results: dict, output_dir: str):
 #  Q4: Pengaruh Sentimen terhadap Model Prediksi
 #  → Bandingkan R² & MAE model dengan/tanpa fitur sentimen
 # ─────────────────────────────────────────────────────────
-def plot_q4_sentiment_impact(results_with: dict, results_without: dict, output_dir: str):
+def plot_q4_sentiment_impact(results_full: dict, results_views: dict, output_dir: str):
     set_dark_style()
     fig, axes = plt.subplots(1, 2, figsize=(14, 6), facecolor=BG_COLOR)
     fig.suptitle(
-        'Q4: Dampak Sentimen Pelanggan terhadap Akurasi Model Prediksi',
+        'Q4: Perbandingan Kinerja Varian Model Prediksi (Views-Only vs Full Features)',
         fontsize=14, fontweight='bold', color=TEXT_COLOR
     )
 
-    model_names = list(results_with.keys())
+    model_names = list(results_full.keys())
     x = np.arange(len(model_names))
     width = 0.35
 
     # Deteksi klasifikasi vs regresi
-    sample_w = list(results_with.values())[0]
+    sample_w = list(results_full.values())[0]
     is_clf   = 'Accuracy_pct' in sample_w
     r2_label = 'Akurasi (%)' if is_clf else 'R² Score'
     r2_key   = 'Accuracy_pct' if is_clf else 'R2_pct'
 
     # --- Accuracy / R² comparison ---
     ax1 = axes[0]
-    r2_with    = [results_with[m][r2_key]    for m in model_names]
-    r2_without = [results_without[m][r2_key] for m in model_names]
+    r2_full    = [results_full[m][r2_key]    for m in model_names]
+    r2_views   = [results_views[m][r2_key]   for m in model_names]
 
-    b1 = ax1.bar(x - width / 2, r2_with,    width, label='Dengan Sentimen',  color=ACCENT2, alpha=0.85)
-    b2 = ax1.bar(x + width / 2, r2_without, width, label='Tanpa Sentimen',   color=ACCENT3, alpha=0.85)
+    b1 = ax1.bar(x - width / 2, r2_full,    width, label='Full Features (b)',  color=ACCENT2, alpha=0.85)
+    b2 = ax1.bar(x + width / 2, r2_views,   width, label='Views-Only (a)',   color=ACCENT3, alpha=0.85)
     ax1.set_xticks(x)
     ax1.set_xticklabels(model_names, rotation=10, fontsize=9)
     ax1.set_ylabel(r2_label, color=TEXT_COLOR)
-    ax1.set_title(f'{r2_label}: Dengan vs Tanpa Fitur Sentimen', color=TEXT_COLOR)
+    ax1.set_title(f'{r2_label}: Views-Only vs Full Features', color=TEXT_COLOR)
     ax1.legend()
     ax1.grid(axis='y', linestyle='--', alpha=0.3)
-    all_r2 = r2_with + r2_without
+    all_r2 = r2_full + r2_views
     ax1.set_ylim(0, max(max(all_r2) * 1.3, 1.0))
 
-    for bar, val in zip(b1, r2_with):
+    for bar, val in zip(b1, r2_full):
         ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
                  f'{val:.2f}%' if is_clf else f'{val:.3f}',
                  ha='center', va='bottom', fontsize=8, color=TEXT_COLOR)
-    for bar, val in zip(b2, r2_without):
+    for bar, val in zip(b2, r2_views):
         ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
                  f'{val:.2f}%' if is_clf else f'{val:.3f}',
                  ha='center', va='bottom', fontsize=8, color=TEXT_COLOR)
 
     # --- MAE comparison ---
     ax2 = axes[1]
-    mae_with    = [results_with[m]['MAE']    for m in model_names]
-    mae_without = [results_without[m]['MAE'] for m in model_names]
+    mae_full    = [results_full[m]['MAE']    for m in model_names]
+    mae_views   = [results_views[m]['MAE']   for m in model_names]
 
-    b3 = ax2.bar(x - width / 2, mae_with,    width, label='Dengan Sentimen',  color=ACCENT2, alpha=0.85)
-    b4 = ax2.bar(x + width / 2, mae_without, width, label='Tanpa Sentimen',   color=ACCENT3, alpha=0.85)
+    b3 = ax2.bar(x - width / 2, mae_full,    width, label='Full Features (b)',  color=ACCENT2, alpha=0.85)
+    b4 = ax2.bar(x + width / 2, mae_views,   width, label='Views-Only (a)',   color=ACCENT3, alpha=0.85)
     ax2.set_xticks(x)
     ax2.set_xticklabels(model_names, rotation=10, fontsize=9)
     ax2.set_ylabel('MAE', color=TEXT_COLOR)
-    ax2.set_title('MAE: Dengan vs Tanpa Fitur Sentimen (↓ Lebih Baik)', color=TEXT_COLOR)
+    ax2.set_title('MAE: Views-Only vs Full Features (↓ Lebih Baik)', color=TEXT_COLOR)
     ax2.legend()
     ax2.grid(axis='y', linestyle='--', alpha=0.3)
-    all_mae = mae_with + mae_without
+    all_mae = mae_full + mae_views
     ax2.set_ylim(0, max(all_mae) * 1.3)
 
-    for bar, val in zip(b3, mae_with):
+    for bar, val in zip(b3, mae_full):
         ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + (max(all_mae) * 0.02),
                  f'{val:.3f}', ha='center', va='bottom', fontsize=8, color=TEXT_COLOR)
-    for bar, val in zip(b4, mae_without):
+    for bar, val in zip(b4, mae_views):
         ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + (max(all_mae) * 0.02),
                  f'{val:.3f}', ha='center', va='bottom', fontsize=8, color=TEXT_COLOR)
 
