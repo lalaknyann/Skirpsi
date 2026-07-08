@@ -194,7 +194,7 @@ def serve_protected_csv(filename):
 
 @app.route("/api/predict", methods=["POST"])
 def predict_single():
-    if 'user' not in session or not is_authenticated():
+    if not is_authenticated():
         return jsonify({"error": "Unauthorized"}), 401
     try:
         data = request.get_json()
@@ -320,7 +320,7 @@ def predict_single():
 
 @app.route("/api/predict-batch", methods=["POST"])
 def predict_batch():
-    if 'user' not in session or not is_authenticated():
+    if not is_authenticated():
         return jsonify({"error": "Unauthorized"}), 401
     try:
         data = request.get_json()
