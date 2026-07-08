@@ -2581,6 +2581,56 @@ function parseTanggalString(tglStr) {
   return new Date();
 }
 
+function calculateSeasonalityFactors(data, fbFactor, igFactor, ttFactor, mFBFactor, mIGFactor, mTTFactor) {
+  const dowCounts = Array(7).fill(0);
+  const dowFB = Array(7).fill(0);
+  const dowIG = Array(7).fill(0);
+  const dowTT = Array(7).fill(0);
+
+  const monthCounts = Array(12).fill(0);
+  const monthFB = Array(12).fill(0);
+  const monthIG = Array(12).fill(0);
+  const monthTT = Array(12).fill(0);
+
+  const fbValues = data.map(r => parseFloat(r.fb || r.Facebook || 0)).filter(v => !isNaN(v));
+  const igValues = data.map(r => parseFloat(r.ig || r.Instagram || 0)).filter(v => !isNaN(v));
+  const ttValues = data.map(r => parseFloat(r.tt || r.TikTok || 0)).filter(v => !isNaN(v));
+
+  const avgFB = fbValues.reduce((s, v) => s + v, 0) / (fbValues.length || 1);
+  const avgIG = igValues.reduce((s, v) => s + v, 0) / (igValues.length || 1);
+  const avgTT = ttValues.reduce((s, v) => s + v, 0) / (ttValues.length || 1);
+
+  data.forEach(row => {
+    const date = parseTanggalString(row.tanggal || row.Tanggal);
+    const day = date.getDay(); 
+    const month = date.getMonth(); 
+
+    // Day of week seasonality
+    dowCounts[day]++;
+    dowFB[day] += parseFloat(row.fb || row.Facebook || 0);
+    dowIG[day] += parseFloat(row.ig || row.Instagram || 0);
+    dowTT[day] += parseFloat(row.tt || row.TikTok || 0);
+
+    // Monthly seasonality
+    monthCounts[month]++;
+    monthFB[month] += parseFloat(row.fb || row.Facebook || 0);
+    monthIG[month] += parseFloat(row.ig || row.Instagram || 0);
+    monthTT[month] += parseFloat(row.tt || row.TikTok || 0);
+  });
+
+  for (let i = 0; i < 7; i++) {
+    fbFactor[i] = dowCounts[i] ? (dowFB[i] / dowCounts[i]) / (avgFB || 1) : 1.0;
+    igFactor[i] = dowCounts[i] ? (dowIG[i] / dowCounts[i]) / (avgIG || 1) : 1.0;
+    ttFactor[i] = dowCounts[i] ? (dowTT[i] / dowCounts[i]) / (avgTT || 1) : 1.0;
+  }
+
+  for (let i = 0; i < 12; i++) {
+    mFBFactor[i] = monthCounts[i] ? (monthFB[i] / monthCounts[i]) / (avgFB || 1) : 1.0;
+    mIGFactor[i] = monthCounts[i] ? (monthIG[i] / monthCounts[i]) / (avgIG || 1) : 1.0;
+    mTTFactor[i] = monthCounts[i] ? (monthTT[i] / monthCounts[i]) / (avgTT || 1) : 1.0;
+  }
+}
+
 async function run3MonthForecast() {
   if (!uploadedData.length) return;
 
@@ -2642,9 +2692,9 @@ async function run3MonthForecast() {
       const tIG = 1 + trendIG * i;
       const tTT = 1 + trendTT * i;
 
-      let fb = Math.round(avgFB * fbFactor[dayOfWeek] * mFBFactor[month] * tFB);
-      let ig = Math.round(avgIG * igFactor[dayOfWeek] * mIGFactor[month] * tIG);
-      let tt = Math.round(avgTT * ttFactor[dayOfWeek] * mTTFactor[month] * tTT);
+      let fb = Math.round(avgFB * fbFactor[day] * mFBFactor[month] * tFB);
+      let ig = Math.round(avgIG * igFactor[day] * mIGFactor[month] * tIG);
+      let tt = Math.round(avgTT * ttFactor[day] * mTTFactor[month] * tTT);
 
       fb = Math.max(0, fb);
       ig = Math.max(0, ig);
@@ -2652,18 +2702,37 @@ async function run3MonthForecast() {
 
       const dateStr = `${String(fDate.getDate()).padStart(2, '0')} ${monthNamesID[month]} ${fDate.getFullYear()}`;
       
-      // Prediksi menggunakan model Machine Learning (predictOne)
-      const result = predictOne({ fb, ig, tt, bulan: month + 1, hariPekan: dayOfWeek, sentiment: 0.65 });
-
-      forecastResults.push({
+      rowsToPredict.push({
         id: i,
         tanggal: dateStr,
-        fb,
-        ig,
-        tt,
-        result
+        Facebook: fb,
+        Instagram: ig,
+        TikTok: tt
       });
     }
+
+    const response = await fetch('/api/predict-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows: rowsToPredict })
+    });
+
+    if (!response.ok) throw new Error("Gagal mengambil proyeksi forecast dari server");
+    const data = await response.json();
+
+    forecastResults = data.map(item => ({
+      id: item.id,
+      tanggal: item.tanggal,
+      fb: item.Facebook,
+      ig: item.Instagram,
+      tt: item.TikTok,
+      result: {
+        lr: item.lr,
+        rf: item.rf,
+        xgb: item.xgb,
+        avg: item.avg
+      }
+    }));
 
     logToTerminal(`[Forecast] Sukses memproyeksikan ${forecastResults.length} hari ke depan untuk tahun 2026.`);
     renderForecastTable(forecastResults);
@@ -2753,109 +2822,213 @@ function renderForecastSummary(results) {
 }
 
 let forecastChartInstance = null;
+let forecastViewsChartInstance = null;
+
 function initForecastChart(results) {
   const ctx = document.getElementById('chartForecast2026');
+  const viewsCtx = document.getElementById('chartForecastViews2026');
   if (!ctx) return;
 
   if (forecastChartInstance) {
     forecastChartInstance.destroy();
   }
+  if (forecastViewsChartInstance) {
+    forecastViewsChartInstance.destroy();
+  }
 
-  const fbData = results.map(r => r.fb);
-  const igData = results.map(r => r.ig);
-  const ttData = results.map(r => r.tt);
-  const salesLR  = results.map(r => r.result.lr.value);
-  const salesRF  = results.map(r => r.result.rf.value);
-  const salesXGB = results.map(r => r.result.xgb.value);
+  // 1. Get best model from results.json
+  const metrics = globalMetrics ? globalMetrics[activeMetricsVariant] : null;
+  let bestModelKey = 'Random Forest';
+  let bestModelShort = 'rf';
+  let bestRMSE = 0.15;
 
+  if (metrics) {
+    let bestR2 = -999;
+    Object.entries(metrics).forEach(([key, val]) => {
+      if (val.R2 > bestR2) {
+        bestR2 = val.R2;
+        bestModelKey = key;
+      }
+    });
+    bestRMSE = metrics[bestModelKey].RMSE || 0.15;
+    bestModelShort = {
+      'Linear Regression': 'lr',
+      'Random Forest': 'rf',
+      'XGBoost': 'xgb'
+    }[bestModelKey] || 'rf';
+  }
+
+  // 2. Prepare historical sales from uploadedData
+  const historyLabels = uploadedData.map(r => r.tanggal);
+  const historySales = uploadedData.map(r => parseFloat(r.Penjualan || r.penjualan || 0));
+
+  const forecastDates = results.map(r => r.tanggal);
+  const forecastSalesValues = results.map(r => r.result[bestModelShort].value);
+
+  // Combine X-axis labels
+  const allLabels = [...historyLabels, ...forecastDates];
+
+  // Align historical line (nulls for forecast part)
+  const historyPoints = [...historySales, ...new Array(forecastDates.length).fill(null)];
+
+  // Align forecast line (nulls for historical part, connecting at last historical point)
+  const lastHistoricalSalesVal = historySales.length > 0 ? historySales[historySales.length - 1] : 0;
+  const forecastSalesPoints = [...new Array(historySales.length - 1).fill(null), lastHistoricalSalesVal, ...forecastSalesValues];
+
+  // Align uncertainty band points
+  const upperBandPoints = [
+    ...new Array(historySales.length - 1).fill(null),
+    lastHistoricalSalesVal,
+    ...results.map(r => Math.min(3.0, r.result[bestModelShort].value + bestRMSE))
+  ];
+  const lowerBandPoints = [
+    ...new Array(historySales.length - 1).fill(null),
+    lastHistoricalSalesVal,
+    ...results.map(r => Math.max(0.0, r.result[bestModelShort].value - bestRMSE))
+  ];
+
+  // Custom vertical split line annotation plugin
+  const verticalLinePlugin = {
+    id: 'verticalLineSplit',
+    afterDraw: (chart) => {
+      if (chart.scales.x && historySales.length > 0) {
+        const xVal = chart.scales.x.getPixelForValue(historySales.length - 1);
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(xVal, chart.chartArea.top);
+        ctx.lineTo(xVal, chart.chartArea.bottom);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('Batas Proyeksi ', xVal, chart.chartArea.top + 15);
+        ctx.restore();
+      }
+    }
+  };
+
+  // Build primary Sales Forecast Chart
   forecastChartInstance = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: results.map(r => r.tanggal.split(' ')[0] + ' ' + r.tanggal.split(' ')[1]),
+      labels: allLabels.map(lbl => lbl.split(' ')[0] + ' ' + lbl.split(' ')[1]),
       datasets: [
         {
-          label: 'FB Views (Kiri)',
-          data: fbData,
-          borderColor: 'rgba(24,119,242,0.4)',
+          label: 'Histori Penjualan',
+          data: historyPoints,
+          borderColor: '#CC0000', // Telkom Red Accent
           backgroundColor: 'transparent',
-          borderWidth: 1.5,
-          yAxisID: 'yViews',
+          borderWidth: 2.5,
           pointRadius: 0
         },
         {
-          label: 'IG Views (Kiri)',
-          data: igData,
-          borderColor: 'rgba(225,48,108,0.4)',
+          label: `Forecast Penjualan (${bestModelKey})`,
+          data: forecastSalesPoints,
+          borderColor: '#CC0000', // Telkom Red Accent
           backgroundColor: 'transparent',
-          borderWidth: 1.5,
-          yAxisID: 'yViews',
+          borderWidth: 2.5,
+          borderDash: [5, 5],
           pointRadius: 0
         },
         {
-          label: 'TikTok Views (Kiri)',
-          data: ttData,
-          borderColor: 'rgba(255,0,80,0.4)',
+          label: 'Uncertainty (Upper)',
+          data: upperBandPoints,
+          borderColor: 'transparent',
           backgroundColor: 'transparent',
-          borderWidth: 1.5,
-          yAxisID: 'yViews',
-          pointRadius: 0
+          pointRadius: 0,
+          showLine: true
         },
         {
-          label: 'Prediksi Penjualan (LR - Kanan)',
-          data: salesLR,
-          borderColor: '#0066CC',
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          borderDash: [2, 4],
-          yAxisID: 'ySales',
-          pointRadius: 0
-        },
-        {
-          label: 'Prediksi Penjualan (RF - Kanan)',
-          data: salesRF,
-          borderColor: '#FFB800',
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          borderDash: [5, 3],
-          yAxisID: 'ySales',
-          pointRadius: 0
-        },
-        {
-          label: 'Prediksi Penjualan (XGB - Kanan)',
-          data: salesXGB,
-          borderColor: '#FF4444',
-          backgroundColor: 'rgba(204,0,0,0.03)',
-          borderWidth: 3,
-          fill: true,
-          yAxisID: 'ySales',
-          pointRadius: 1,
-          pointBackgroundColor: '#FF4444'
+          label: 'Rentang Ketidakpastian (1 Std Dev)',
+          data: lowerBandPoints,
+          borderColor: 'transparent',
+          backgroundColor: 'rgba(204, 0, 0, 0.08)',
+          fill: '-1',
+          pointRadius: 0,
+          showLine: true
         }
       ]
     },
-options: {
+    options: {
       ...CHART_DEFAULTS,
+      plugins: {
+        ...CHART_DEFAULTS.plugins,
+        tooltip: {
+          ...CHART_DEFAULTS.plugins?.tooltip,
+          filter: (item) => item.datasetIndex < 2
+        }
+      },
       scales: {
         x: CHART_DEFAULTS.scales.x,
-        yViews: {
+        y: {
           type: 'linear',
-          position: 'left',
-          ticks: { color: '#A0A0A0', callback: v => (v/1000).toFixed(0) + 'K' },
-          grid: { color: 'rgba(46,46,46,0.3)' },
-          title: { display: true, text: 'Views Proyeksi', color: '#A0A0A0' }
-        },
-        ySales: {
-          type: 'linear',
-          position: 'right',
           min: 0,
           max: 3.5,
-          ticks: { color: '#FF8888' },
-          grid: { drawOnChartArea: false },
-          title: { display: true, text: 'Prediksi Penjualan (unit)', color: '#FF8888' }
+          ticks: { color: '#A0A0A0' },
+          grid: { color: 'rgba(46,46,46,0.3)' },
+          title: { display: true, text: 'Penjualan (unit)', color: '#A0A0A0' }
         }
       }
-    }
+    },
+    plugins: [verticalLinePlugin]
   });
+
+  // Build secondary Views Projections Chart
+  if (viewsCtx) {
+    const fbData = results.map(r => r.fb);
+    const igData = results.map(r => r.ig);
+    const ttData = results.map(r => r.tt);
+
+    forecastViewsChartInstance = new Chart(viewsCtx, {
+      type: 'line',
+      data: {
+        labels: forecastDates.map(lbl => lbl.split(' ')[0] + ' ' + lbl.split(' ')[1]),
+        datasets: [
+          {
+            label: 'FB Views (Proyeksi)',
+            data: fbData,
+            borderColor: '#D0D0D0', // Light Gray
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            pointRadius: 0
+          },
+          {
+            label: 'IG Views (Proyeksi)',
+            data: igData,
+            borderColor: '#888888', // Medium Gray
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            pointRadius: 0
+          },
+          {
+            label: 'TikTok Views (Proyeksi)',
+            data: ttData,
+            borderColor: '#CC0000', // Telkom Red Accent
+            backgroundColor: 'transparent',
+            borderWidth: 2.0,
+            pointRadius: 0
+          }
+        ]
+      },
+      options: {
+        ...CHART_DEFAULTS,
+        scales: {
+          x: CHART_DEFAULTS.scales.x,
+          y: {
+            type: 'linear',
+            ticks: { color: '#A0A0A0', callback: v => (v/1000).toFixed(0) + 'K' },
+            grid: { color: 'rgba(46,46,46,0.3)' },
+            title: { display: true, text: 'Views Harian', color: '#A0A0A0' }
+          }
+        }
+      }
+    });
+  }
 }
 
 function downloadForecastCSV() {
