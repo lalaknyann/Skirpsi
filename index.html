@@ -171,7 +171,7 @@
               <span class="card-tag">MAE + RMSE + R&sup2; Score</span>
             </div>
             <div>
-              <select id="metricsModelVariant" onchange="switchMetricsVariant(this.value)" style="background:#1A1A2E; color:#E0E0E0; border:1px solid #2A2A4A; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer;">
+              <select id="metricsModelVariant" onchange="switchMetricsVariant(this.value)" class="model-select">
                 <option value="views_only">Varian A: Views-Only (Riset Pengaruh)</option>
                 <option value="full_features">Varian B: Full Features (Prediksi Praktis)</option>
               </select>
@@ -565,11 +565,19 @@
             <!-- Forecast Summary Stats -->
             <div class="results-summary" id="forecastSummary"></div>
 
-            <div class="divider" style="margin:20px 0;height:1px;background:var(--border);"></div>
+            <div class="divider" style="margin:24px 0;height:1px;background:var(--border);"></div>
 
             <!-- Chart of Forecast -->
-            <div class="chart-container" style="min-height:300px;margin-bottom:20px;">
+            <div class="chart-container" style="min-height:300px;margin-bottom:24px;">
               <canvas id="chartForecast2026"></canvas>
+            </div>
+
+            <div class="divider" style="margin:24px 0;height:1px;background:var(--border);"></div>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;font-weight:600">
+              📊 Proyeksi Tren Harian Views Media Sosial (Facebook, Instagram, TikTok)
+            </p>
+            <div class="chart-container" style="min-height:220px;margin-bottom:24px;">
+              <canvas id="chartForecastViews2026"></canvas>
             </div>
 
             <!-- Forecast Table -->

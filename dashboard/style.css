@@ -35,10 +35,10 @@
   --accent-red2: #E8001D;
   --accent-gray: #4D4D4F;
   --accent-white: #FFFFFF;
-  --accent-gold: #D4960A;
-  --accent-green: #00A846;
-  --accent-blue: #1565C0;
-  --accent-orange: #E65100;
+  --accent-gold: var(--border);
+  --accent-green: var(--telkom-red);
+  --accent-blue: var(--text-secondary);
+  --accent-orange: var(--text-secondary);
 
   /* Text */
   --text-primary: #1A1A1A;
@@ -183,7 +183,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
 }
 
 .sidebar-logo-img {
@@ -235,14 +235,14 @@ body {
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-muted);
-  padding: 12px 10px 5px;
+  padding: 12px 12px 4px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: var(--transition);
@@ -269,7 +269,7 @@ body {
 }
 
 [data-theme="dark"] .nav-item.active {
-  color: #FF6666;
+  color: var(--text-red);
   background: rgba(204, 0, 0, 0.14);
 }
 
@@ -293,7 +293,7 @@ body {
 
 /* ── Sidebar Footer ── */
 .sidebar-footer {
-  padding: 14px 18px;
+  padding: 16px 16px;
   border-top: 1px solid var(--border);
   font-size: 11px;
   color: var(--text-muted);
@@ -360,7 +360,7 @@ body {
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -388,32 +388,32 @@ body {
 
 .badge-gray {
   background: rgba(77, 77, 79, 0.08);
-  color: #555555;
+  color: var(--text-secondary);
   border-color: rgba(77, 77, 79, 0.25);
 }
 
 .badge-gold {
-  background: rgba(180, 130, 0, 0.1);
-  color: #9A6F00;
-  border-color: rgba(180, 130, 0, 0.25);
+  background: rgba(204, 0, 0, 0.05);
+  color: var(--telkom-red);
+  border-color: rgba(204, 0, 0, 0.15);
 }
 
 .badge-green {
-  background: rgba(0, 150, 60, 0.08);
-  color: #007A30;
-  border-color: rgba(0, 150, 60, 0.22);
+  background: rgba(77, 77, 79, 0.05);
+  color: var(--text-secondary);
+  border-color: rgba(77, 77, 79, 0.15);
 }
 
 .badge-purple {
-  background: rgba(90, 70, 200, 0.08);
-  color: #5040A0;
-  border-color: rgba(90, 70, 200, 0.22);
+  background: rgba(77, 77, 79, 0.05);
+  color: var(--text-secondary);
+  border-color: rgba(77, 77, 79, 0.15);
 }
 
 .badge-orange {
-  background: rgba(200, 80, 0, 0.08);
-  color: #C05000;
-  border-color: rgba(200, 80, 0, 0.22);
+  background: rgba(77, 77, 79, 0.05);
+  color: var(--text-secondary);
+  border-color: rgba(77, 77, 79, 0.15);
 }
 
 /* ─── PAGE CONTENT ─── */
@@ -445,23 +445,23 @@ body {
 }
 
 .section-header {
-  margin-bottom: 26px;
+  margin-bottom: 24px;
 }
 
 .section-header h3 {
   font-family: 'Outfit', sans-serif;
   font-size: 22px;
   font-weight: 700;
-  color: #1A1A1A;
-  margin-bottom: 6px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .section-header p {
   font-size: 13px;
-  color: #555555;
+  color: var(--text-secondary);
 }
 
 /* ─── KPI CARDS ─── */
@@ -476,7 +476,7 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
-  padding: 22px 20px;
+  padding: 24px 24px;
   position: relative;
   overflow: hidden;
   transition: var(--transition), background 0.4s ease, border-color 0.4s ease;
@@ -504,19 +504,19 @@ body {
 }
 
 .kpi-card.gold::after {
-  background: #FFB800;
+  background: #6E6E70;
 }
 
 .kpi-card.green::after {
-  background: #00C853;
+  background: #6E6E70;
 }
 
 .kpi-card.purple::after {
-  background: #9B8BFF;
+  background: #6E6E70;
 }
 
 .kpi-card.orange::after {
-  background: #FF6D00;
+  background: #6E6E70;
 }
 
 .kpi-card:hover {
@@ -535,7 +535,7 @@ body {
   font-size: 28px;
   font-weight: 800;
   line-height: 1;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
 }
 
 .kpi-card.red .kpi-value {
@@ -543,23 +543,23 @@ body {
 }
 
 .kpi-card.gray .kpi-value {
-  color: #4D4D4F;
+  color: var(--text-secondary);
 }
 
 .kpi-card.gold .kpi-value {
-  color: #9A6F00;
+  color: var(--text-primary);
 }
 
 .kpi-card.green .kpi-value {
-  color: #007A30;
+  color: var(--text-primary);
 }
 
 .kpi-card.purple .kpi-value {
-  color: #5040A0;
+  color: var(--text-primary);
 }
 
 .kpi-card.orange .kpi-value {
-  color: #C05000;
+  color: var(--text-primary);
 }
 
 .kpi-label {
@@ -571,7 +571,7 @@ body {
 .kpi-sub {
   font-size: 11px;
   color: var(--text-secondary);
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 /* ─── CARDS ─── */
@@ -594,7 +594,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .card-title {
@@ -655,14 +655,14 @@ body {
   font-size: 11px;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  padding: 14px 18px;
+  padding: 16px 16px;
   text-align: left;
   border-bottom: 1px solid var(--border);
   transition: background 0.4s ease;
 }
 
 .metrics-table td {
-  padding: 14px 18px;
+  padding: 16px 16px;
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
   transition: color 0.4s ease;
@@ -683,7 +683,7 @@ body {
 .r2-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .r2-bar-track {
@@ -758,7 +758,7 @@ body {
 }
 
 .rq-answer strong {
-  color: var(--accent-green);
+  color: var(--telkom-red);
 }
 
 .rq-img {
@@ -793,7 +793,7 @@ body {
 /* ─── Interpretation Result Box ─── */
 .pred-interpretation-box {
   margin-top: 20px;
-  padding: 18px 20px;
+  padding: 16px 20px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-left: 4px solid var(--telkom-red);
@@ -805,12 +805,12 @@ body {
   font-size: 12px;
   font-weight: 700;
   color: var(--telkom-red);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .pred-interp-text {
@@ -823,7 +823,7 @@ body {
 .dashboard-page .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .dashboard-page .form-label {
@@ -834,14 +834,14 @@ body {
   letter-spacing: 0.6px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .dashboard-page .form-input {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 12px 14px;
+  padding: 12px 16px;
   color: var(--text-primary);
   font-size: 14px;
   font-family: 'Inter', sans-serif;
@@ -864,7 +864,7 @@ body {
   color: white;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 14px 32px;
+  padding: 16px 32px;
   font-size: 14px;
   font-weight: 700;
   font-family: 'Outfit', sans-serif;
@@ -889,7 +889,7 @@ body {
 .prediction-result {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 16px;
   margin-top: 20px;
 }
 
@@ -897,7 +897,7 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
-  padding: 22px;
+  padding: 24px;
   text-align: center;
   transition: var(--transition), background 0.4s ease;
   position: relative;
@@ -919,13 +919,13 @@ body {
 .pred-card.xgb::before {
   content: '🏆 TERBAIK';
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   font-size: 9px;
   font-weight: 700;
   background: rgba(204, 0, 0, 0.2);
   color: #FF4444;
-  padding: 3px 8px;
+  padding: 4px 8px;
   border-radius: 99px;
   border: 1px solid rgba(204, 0, 0, 0.3);
 }
@@ -960,15 +960,15 @@ body {
 }
 
 .pred-card.lr .pred-value {
-  color: #4D4D4F;
+  color: var(--text-secondary);
 }
 
 .pred-card.rf .pred-value {
-  color: #9A6F00;
+  color: var(--text-secondary);
 }
 
 .pred-card.xgb .pred-value {
-  color: #CC0000;
+  color: var(--telkom-red);
 }
 
 /* ─── Classification Badge ─── */
@@ -980,19 +980,19 @@ body {
   border-radius: 99px;
   font-size: 11px;
   font-weight: 700;
-  margin-top: 6px;
+  margin-top: 8px;
   letter-spacing: 0.4px;
 }
 
 .class-tinggi {
   background: rgba(204, 0, 0, 0.08);
-  color: #CC0000;
+  color: var(--telkom-red);
   border: 1px solid rgba(204, 0, 0, 0.22);
 }
 
 .class-rendah {
   background: rgba(77, 77, 79, 0.08);
-  color: #555555;
+  color: var(--text-secondary);
   border: 1px solid rgba(77, 77, 79, 0.22);
 }
 
@@ -1006,15 +1006,15 @@ body {
 }
 
 .dot-fb {
-  background: #1877F2;
+  background: #D0D0D0;
 }
 
 .dot-ig {
-  background: #E1306C;
+  background: #888888;
 }
 
 .dot-tt {
-  background: #FF0050;
+  background: #CC0000;
 }
 
 /* ═══════════════════════════════════════
@@ -1095,7 +1095,7 @@ body {
   color: var(--text-secondary);
   position: relative;
   z-index: 1;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .upload-zone small {
@@ -1118,12 +1118,12 @@ body {
   color: #FF4444;
   border: 1px solid rgba(204, 0, 0, 0.35);
   border-radius: var(--radius-sm);
-  padding: 10px 22px;
+  padding: 12px 24px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Outfit', sans-serif;
   position: relative;
   z-index: 1;
 }
@@ -1155,10 +1155,10 @@ body {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .format-box code {
@@ -1166,7 +1166,7 @@ body {
   font-size: 12px;
   color: #FF4444;
   background: rgba(204, 0, 0, 0.08);
-  padding: 2px 6px;
+  padding: 4px 8px;
   border-radius: 4px;
 }
 
@@ -1212,9 +1212,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .preview-header h4 {
@@ -1228,17 +1228,17 @@ body {
 .preview-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .file-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(0, 200, 83, 0.12);
-  border: 1px solid rgba(0, 200, 83, 0.28);
-  color: #00C853;
-  padding: 5px 12px;
+  gap: 8px;
+  background: rgba(204, 0, 0, 0.08);
+  border: 1px solid rgba(204, 0, 0, 0.22);
+  color: var(--telkom-red);
+  padding: 6px 12px;
   border-radius: 99px;
   font-size: 11px;
   font-weight: 600;
@@ -1282,7 +1282,7 @@ body {
   color: var(--text-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 12px 22px;
+  padding: 12px 24px;
   font-size: 13.5px;
   font-weight: 600;
   font-family: 'Outfit', sans-serif;
@@ -1318,7 +1318,7 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 14px 16px;
+  padding: 16px 16px;
   text-align: center;
   box-shadow: var(--shadow-card);
   transition: background 0.4s ease, border-color 0.4s ease;
@@ -1336,15 +1336,15 @@ body {
 }
 
 .sum-value.green {
-  color: #007A30;
+  color: var(--text-primary);
 }
 
 .sum-value.gold {
-  color: #9A6F00;
+  color: var(--text-primary);
 }
 
 .sum-value.gray {
-  color: #4D4D4F;
+  color: var(--text-secondary);
 }
 
 .sum-label {
@@ -1375,7 +1375,7 @@ body {
   font-size: 10.5px;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  padding: 12px 14px;
+  padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -1385,7 +1385,7 @@ body {
 }
 
 .results-table td {
-  padding: 11px 14px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
   transition: color 0.4s ease;
@@ -1403,7 +1403,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 99px;
   font-size: 10.5px;
   font-weight: 700;
@@ -1418,7 +1418,7 @@ body {
 
 .level-rendah {
   background: rgba(77, 77, 79, 0.08);
-  color: #555555;
+  color: var(--text-secondary);
   border: 1px solid rgba(77, 77, 79, 0.22);
 }
 
@@ -1527,7 +1527,7 @@ body {
 
 .loading-dots {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   margin-top: 8px;
 }
 
@@ -1608,7 +1608,7 @@ body {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1620,11 +1620,11 @@ body {
 }
 
 .corr-positive {
-  color: #007A30;
+  color: var(--text-primary);
 }
 
 .corr-negative {
-  color: #CC0000;
+  color: var(--telkom-red);
 }
 
 /* ─── Insight Boxes ─── */
@@ -1638,7 +1638,7 @@ body {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 18px;
+  padding: 16px;
   transition: background 0.4s ease;
 }
 
@@ -1647,10 +1647,10 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .insight-box-title.red {
@@ -1658,11 +1658,11 @@ body {
 }
 
 .insight-box-title.gold {
-  color: #9A6F00;
+  color: var(--text-secondary);
 }
 
 .insight-box-title.green {
-  color: #007A30;
+  color: var(--text-secondary);
 }
 
 .insight-box p {
@@ -1681,7 +1681,7 @@ body {
   background: linear-gradient(135deg, rgba(204, 0, 0, 0.04), rgba(204, 0, 0, 0.01));
   border: 1px solid rgba(204, 0, 0, 0.18);
   border-radius: var(--radius-card);
-  padding: 22px;
+  padding: 24px;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -1698,7 +1698,7 @@ body {
   font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   transition: color 0.4s ease;
 }
 
@@ -1734,11 +1734,11 @@ body {
 .theme-widget {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 99px;
-  padding: 5px 10px 5px 8px;
+  padding: 4px 8px;
   cursor: pointer;
   user-select: none;
   transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.2s ease;
@@ -1956,4 +1956,21 @@ body.login-page {
   align-items: center;
   min-height: 100vh;
   background: var(--bg-primary);
+}
+
+/* Theme-aware Select/Dropdown style */
+.model-select {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.model-select:focus, .model-select:hover {
+  border-color: var(--telkom-red);
 }

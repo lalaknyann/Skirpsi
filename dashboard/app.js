@@ -116,15 +116,15 @@ const MONTHLY_VIEWS = {
 
 // ─── Telkom-themed Colors ───
 const MODEL_COLORS = {
-  "Linear Regression": "#0066CC",
-  "Random Forest":     "#FFB800",
+  "Linear Regression": "#888888",
+  "Random Forest":     "#D0D0D0",
   "XGBoost":           "#CC0000"
 };
 
 const MODEL_BG = {
-  "Linear Regression": "rgba(0,102,204,0.2)",
-  "Random Forest":     "rgba(255,184,0,0.2)",
-  "XGBoost":           "rgba(204,0,0,0.2)"
+  "Linear Regression": "rgba(136,136,136,0.15)",
+  "Random Forest":     "rgba(208,208,208,0.15)",
+  "XGBoost":           "rgba(204,0,0,0.15)"
 };
 
 // ─── Chart defaults — Telkom Dark ───
@@ -266,7 +266,7 @@ function renderMetricsTable(tableBodyId, withBars = false) {
           <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${color};margin-right:8px;vertical-align:middle"></span>
           ${name}
         </td>
-        <td style="color:${res.MAE === bestMAE ? '#00C853' : 'inherit'}">${res.MAE.toFixed(4)}</td>
+        <td style="color:${res.MAE === bestMAE ? 'var(--text-red)' : 'inherit'};font-weight:${res.MAE === bestMAE ? '600' : 'normal'}">${res.MAE.toFixed(4)}</td>
         <td>${res.RMSE.toFixed(4)}</td>
         <td style="color:${color};font-weight:600">${r2Pct.toFixed(2)}%</td>
         <td style="min-width:160px">${r2Visual}</td>
@@ -278,7 +278,7 @@ function renderMetricsTable(tableBodyId, withBars = false) {
           <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${color};margin-right:8px;vertical-align:middle"></span>
           ${name}
         </td>
-        <td style="color:${res.MAE === bestMAE ? '#00C853' : 'inherit'}">${res.MAE.toFixed(4)}</td>
+        <td style="color:${res.MAE === bestMAE ? 'var(--text-red)' : 'inherit'};font-weight:${res.MAE === bestMAE ? '600' : 'normal'}">${res.MAE.toFixed(4)}</td>
         <td>${res.RMSE.toFixed(4)}</td>
         <td style="color:${color};font-weight:600">${r2Pct.toFixed(2)}%</td>
         <td><span class="badge badge-gray">Baik</span></td>
@@ -394,23 +394,23 @@ function initDataCharts(customFB = null, customIG = null, customTT = null, custo
           {
             label: 'Facebook',
             data: fbData,
-            borderColor: '#1877F2',
-            backgroundColor: 'rgba(24,119,242,0.07)',
-            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#1877F2'
+            borderColor: '#D0D0D0',
+            backgroundColor: 'rgba(208,208,208,0.07)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#D0D0D0'
           },
           {
             label: 'Instagram',
             data: igData,
-            borderColor: '#E1306C',
-            backgroundColor: 'rgba(225,48,108,0.07)',
-            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#E1306C'
+            borderColor: '#888888',
+            backgroundColor: 'rgba(136,136,136,0.07)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#888888'
           },
           {
             label: 'TikTok',
             data: ttData,
-            borderColor: '#FF0050',
-            backgroundColor: 'rgba(255,0,80,0.07)',
-            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#FF0050'
+            borderColor: '#CC0000',
+            backgroundColor: 'rgba(204,0,0,0.07)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#CC0000'
           }
         ]
       },
@@ -448,7 +448,7 @@ function initDataCharts(customFB = null, customIG = null, customTT = null, custo
         labels: ['Facebook', 'Instagram', 'TikTok'],
         datasets: [{
           data: [totalFB, totalIG, totalTT],
-          backgroundColor: ['rgba(24,119,242,0.8)', 'rgba(225,48,108,0.8)', 'rgba(255,0,80,0.8)'],
+          backgroundColor: ['rgba(208,208,208,0.8)', 'rgba(136,136,136,0.8)', 'rgba(204,0,0,0.8)'],
           borderColor: '#1A1A1A', borderWidth: 3
         }]
       },
@@ -483,10 +483,10 @@ function initDataCharts(customFB = null, customIG = null, customTT = null, custo
           label: 'Frekuensi Hari',
           data: sCounts,
           backgroundColor: [
-            'rgba(160,160,160,0.7)',
-            'rgba(255,184,0,0.7)',
-            'rgba(204,0,0,0.7)',
-            'rgba(255,68,68,0.7)'
+            'rgba(208,208,208,0.7)',
+            'rgba(136,136,136,0.7)',
+            'rgba(77,77,79,0.7)',
+            'rgba(204,0,0,0.7)'
           ],
           borderRadius: 8
         }]
@@ -504,17 +504,17 @@ function initDataCharts(customFB = null, customIG = null, customTT = null, custo
     Object.entries(CORRELATION).forEach(([key, val]) => {
       const isPos = val >= 0;
       let strength, strengthColor;
-      if (val >= 0.6)       { strength = 'Positif Kuat';   strengthColor = '#4CAF50'; }
-      else if (val >= 0.3)  { strength = 'Positif Sedang'; strengthColor = '#FFB800'; }
-      else if (val >= 0.1)  { strength = 'Positif Lemah';  strengthColor = '#A0A0A0'; }
-      else if (val >= -0.1) { strength = 'Sangat Lemah';   strengthColor = '#606060'; }
-      else if (val >= -0.3) { strength = 'Negatif Lemah';  strengthColor = '#FF8C00'; }
-      else                  { strength = 'Negatif Sedang'; strengthColor = '#FF4444'; }
+      if (val >= 0.6)       { strength = 'Positif Kuat';   strengthColor = '#CC0000'; }
+      else if (val >= 0.3)  { strength = 'Positif Sedang'; strengthColor = '#6E6E70'; }
+      else if (val >= 0.1)  { strength = 'Positif Lemah';  strengthColor = '#888888'; }
+      else if (val >= -0.1) { strength = 'Sangat Lemah';   strengthColor = '#888888'; }
+      else if (val >= -0.3) { strength = 'Negatif Lemah';  strengthColor = '#CC0000'; }
+      else                  { strength = 'Negatif Sedang'; strengthColor = '#CC0000'; }
       const negHint = val < -0.1
-        ? `<div style="font-size:9px;color:#FF8C00;margin-top:3px;line-height:1.3" title="Korelasi negatif: semakin tinggi views, penjualan cenderung menurun">⚠ views naik → penjualan turun</div>`
+        ? `<div style="font-size:9px;color:#CC0000;margin-top:3px;line-height:1.3" title="Korelasi negatif: semakin tinggi views, penjualan cenderung menurun">⚠ views naik → penjualan turun</div>`
         : '';
       corrGrid.innerHTML += `
-        <div class="corr-item" style="${val < -0.1 ? 'border-color:rgba(255,68,68,0.3);' : ''}">
+        <div class="corr-item" style="${val < -0.1 ? 'border-color:rgba(204,0,0,0.22);' : ''}">
           <div class="corr-platform">${key}</div>
           <div class="corr-value ${isPos ? 'corr-positive' : 'corr-negative'}">${val > 0 ? '+' : ''}${val.toFixed(4)}</div>
           <div style="font-size:10px;color:${strengthColor};margin-top:4px;font-weight:600">${strength}</div>
@@ -615,9 +615,9 @@ async function initSensitivityChart() {
       data: {
         labels: viewsRange.map(v => (v/1000).toFixed(0) + 'K'),
         datasets: [
-          { label: 'Linear Regression', data: predLR,  borderColor: '#0066CC', tension: 0.4, pointRadius: 4 },
-          { label: 'Random Forest',     data: predRF,  borderColor: '#FFB800', tension: 0.4, pointRadius: 4 },
-          { label: 'XGBoost',           data: predXGB, borderColor: '#CC0000', tension: 0.4, pointRadius: 4 }
+          { label: 'Linear Regression', data: predLR,  borderColor: MODEL_COLORS['Linear Regression'], tension: 0.4, pointRadius: 4 },
+          { label: 'Random Forest',     data: predRF,  borderColor: MODEL_COLORS['Random Forest'],     tension: 0.4, pointRadius: 4 },
+          { label: 'XGBoost',           data: predXGB, borderColor: MODEL_COLORS['XGBoost'],           tension: 0.4, pointRadius: 4 }
         ]
       },
       options: {
@@ -1249,14 +1249,14 @@ function renderMonthlyTrendChart(yearFilter) {
     data: {
       labels,
       datasets: [
-        { type:'line', label:'Facebook Views', data:fbAvg, borderColor:'#1877F2', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
-        { type:'line', label:'Instagram Views', data:igAvg, borderColor:'#E1306C', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
-        { type:'line', label:'TikTok Views', data:ttAvg, borderColor:'#FF0050', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
+        { type:'line', label:'Facebook Views', data:fbAvg, borderColor:'#D0D0D0', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
+        { type:'line', label:'Instagram Views', data:igAvg, borderColor:'#888888', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
+        { type:'line', label:'TikTok Views', data:ttAvg, borderColor:'#CC0000', tension:0.3, yAxisID:'yViews', pointRadius:2, spanGaps:true },
         {
           type:'bar', label: hasActual ? 'Total Penjualan' : 'Prediksi XGBoost',
           data: salesArr,
-          backgroundColor: hasActual ? 'rgba(255,68,68,0.25)' : 'rgba(255,184,0,0.25)',
-          borderColor: hasActual ? '#FF4444' : '#FFB800',
+          backgroundColor: 'rgba(204,0,0,0.2)',
+          borderColor: '#CC0000',
           borderWidth:1, yAxisID:'ySales', hidden: !hasActual
         }
       ]
@@ -1334,8 +1334,8 @@ function initActualVsPredictedChart(predictedData) {
   datasets.push({
     label: 'Linear Regression',
     data: ptsLR,
-    backgroundColor: 'rgba(0, 102, 204, 0.65)',
-    borderColor: '#0066CC',
+    backgroundColor: 'rgba(136, 136, 136, 0.65)',
+    borderColor: '#888888',
     pointRadius: 4,
     showLine: false
   });
@@ -1347,8 +1347,8 @@ function initActualVsPredictedChart(predictedData) {
   datasets.push({
     label: 'Random Forest',
     data: ptsRF,
-    backgroundColor: 'rgba(255, 184, 0, 0.65)',
-    borderColor: '#FFB800',
+    backgroundColor: 'rgba(208, 208, 208, 0.65)',
+    borderColor: '#D0D0D0',
     pointRadius: 4,
     showLine: false
   });
@@ -1360,8 +1360,8 @@ function initActualVsPredictedChart(predictedData) {
   datasets.push({
     label: 'XGBoost',
     data: ptsXGB,
-    backgroundColor: 'rgba(255, 68, 68, 0.65)',
-    borderColor: '#FF4444',
+    backgroundColor: 'rgba(204, 0, 0, 0.65)',
+    borderColor: '#CC0000',
     pointRadius: 4,
     showLine: false
   });
@@ -1464,8 +1464,8 @@ function initResidualsChart(predictedData) {
   datasets.push({
     label: 'Linear Regression',
     data: ptsLR,
-    backgroundColor: 'rgba(0, 102, 204, 0.65)',
-    borderColor: '#0066CC',
+    backgroundColor: 'rgba(136, 136, 136, 0.65)',
+    borderColor: '#888888',
     pointRadius: 4,
     showLine: false
   });
@@ -1478,8 +1478,8 @@ function initResidualsChart(predictedData) {
   datasets.push({
     label: 'Random Forest',
     data: ptsRF,
-    backgroundColor: 'rgba(255, 184, 0, 0.65)',
-    borderColor: '#FFB800',
+    backgroundColor: 'rgba(208, 208, 208, 0.65)',
+    borderColor: '#D0D0D0',
     pointRadius: 4,
     showLine: false
   });
@@ -1492,8 +1492,8 @@ function initResidualsChart(predictedData) {
   datasets.push({
     label: 'XGBoost',
     data: ptsXGB,
-    backgroundColor: 'rgba(255, 68, 68, 0.65)',
-    borderColor: '#FF4444',
+    backgroundColor: 'rgba(204, 0, 0, 0.65)',
+    borderColor: '#CC0000',
     pointRadius: 4,
     showLine: false
   });
@@ -1736,7 +1736,7 @@ function renderTimeSeriesCompareChart(periodVal) {
   datasets.push({
     label: hasActual ? 'Prediksi XGBoost' : 'Prediksi XGBoost (tanpa kolom Penjualan)',
     data: predsXGB,
-    borderColor: '#FF4444',
+    borderColor: '#CC0000',
     borderWidth: 2,
     pointRadius: 0,
     fill: false,
@@ -1745,7 +1745,7 @@ function renderTimeSeriesCompareChart(periodVal) {
   datasets.push({
     label: 'Prediksi Random Forest',
     data: predsRF,
-    borderColor: '#FFB800',
+    borderColor: '#D0D0D0',
     borderWidth: 2,
     pointRadius: 0,
     borderDash: [5, 3],
@@ -1755,7 +1755,7 @@ function renderTimeSeriesCompareChart(periodVal) {
   datasets.push({
     label: 'Prediksi Linear Regression',
     data: predsLR,
-    borderColor: '#0066CC',
+    borderColor: '#888888',
     borderWidth: 2,
     pointRadius: 0,
     borderDash: [2, 4],
@@ -1887,7 +1887,7 @@ function renderMetricsTableDynamic(results) {
             <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${color};margin-right:8px;vertical-align:middle"></span>
             ${name}
           </td>
-          <td style="color:${res.MAE === bestMAE ? '#00C853' : 'inherit'}">${res.MAE.toFixed(4)}</td>
+          <td style="color:${res.MAE === bestMAE ? 'var(--text-red)' : 'inherit'};font-weight:${res.MAE === bestMAE ? '600' : 'normal'}">${res.MAE.toFixed(4)}</td>
           <td>${res.RMSE.toFixed(4)}</td>
           <td style="color:${color};font-weight:600">${r2Visual}</td>
           <td><span class="badge badge-gray">Baik</span></td>
@@ -2060,7 +2060,7 @@ function updateDataChartsDynamic(rows) {
         labels: ['Facebook', 'Instagram', 'TikTok'],
         datasets: [{
           data: [totalFB, totalIG, totalTT],
-          backgroundColor: ['rgba(24,119,242,0.8)', 'rgba(225,48,108,0.8)', 'rgba(255,0,80,0.8)'],
+          backgroundColor: ['rgba(208,208,208,0.8)', 'rgba(136,136,136,0.8)', 'rgba(204,0,0,0.8)'],
           borderColor: '#1A1A1A', borderWidth: 3
         }]
       },
@@ -2094,10 +2094,10 @@ function updateDataChartsDynamic(rows) {
         datasets: [{
           data: salesCounts,
           backgroundColor: [
-            'rgba(160,160,160,0.7)',
-            'rgba(255,184,0,0.7)',
-            'rgba(204,0,0,0.7)',
-            'rgba(255,68,68,0.7)'
+            'rgba(208,208,208,0.7)',
+            'rgba(136,136,136,0.7)',
+            'rgba(77,77,79,0.7)',
+            'rgba(204,0,0,0.7)'
           ],
           borderRadius: 8
         }]
