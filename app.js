@@ -1285,9 +1285,9 @@ function renderMonthlyTrendChart(yearFilter) {
         },
         ySales: {
           position:'right', display: hasActual,
-          title:{ display: hasActual, text:'Total Penjualan (unit)', color:'#FF4444' },
+          title:{ display: hasActual, text:'Total Penjualan (unit)', color:'#CC0000' },
           grid:{ drawOnChartArea:false },
-          ticks:{ color:'#FF4444' }
+          ticks:{ color:'#CC0000' }
         }
       }
     }
@@ -2738,8 +2738,9 @@ async function run3MonthForecast() {
 
     if (!response.ok) throw new Error("Gagal mengambil proyeksi forecast dari server");
     const data = await response.json();
+    const predictions = data.predictions || [];
 
-    forecastResults = data.map(item => ({
+    forecastResults = predictions.map(item => ({
       id: item.id,
       tanggal: item.tanggal,
       fb: item.Facebook,
