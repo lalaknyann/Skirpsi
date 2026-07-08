@@ -805,6 +805,10 @@ function validateAndConvertParsedData(data) {
   const keyTgl = idxTgl >= 0 ? headers[idxTgl] : null;
   const keyId = headersLower.indexOf('id') >= 0 ? headers[headersLower.indexOf('id')] : null;
 
+  // Kolom Penjualan (opsional/aktual)
+  const idxPenjualan = headersLower.indexOf('penjualan');
+  const keyPenjualan = idxPenjualan >= 0 ? headers[idxPenjualan] : null;
+
   const rows = [];
   
   // Fungsi pembersihan ribuan
@@ -831,12 +835,19 @@ function validateAndConvertParsedData(data) {
     const tgl = keyTgl ? String(row[keyTgl] || '').trim() : `Baris ${i + 1}`;
     const rowId = keyId ? String(row[keyId] || '').trim() : i + 1;
     
-    // In-memory target redefinition (views-derived target with seeded noise)
-    const totalViews = fb + ig + tt;
-    const noiseVal = seededNormal(randFn, 0, 0.15);
-    const derivedSales = Math.max(0, Math.min(3, Math.round(totalViews / 15000 + noiseVal)));
+    let penjualan = null;
+    if (keyPenjualan && row[keyPenjualan] !== undefined && row[keyPenjualan] !== null && String(row[keyPenjualan]).trim() !== '') {
+      const pVal = parseFloat(row[keyPenjualan]);
+      if (!isNaN(pVal)) penjualan = pVal;
+    }
+    if (penjualan === null) {
+      // In-memory target redefinition (views-derived target with seeded noise) as fallback
+      const totalViews = fb + ig + tt;
+      const noiseVal = seededNormal(randFn, 0, 0.15);
+      penjualan = Math.max(0, Math.min(3, Math.round(totalViews / 15000 + noiseVal)));
+    }
     
-    rows.push({ id: rowId, tanggal: tgl, fb, ig, tt, penjualan: derivedSales });
+    rows.push({ id: rowId, tanggal: tgl, fb, ig, tt, penjualan: penjualan });
   }
 
   return { rows };
@@ -867,6 +878,7 @@ function parseCSVFallback(text) {
   const idxTT     = header.indexOf('tiktok');
   const idxTgl    = header.indexOf('tanggal');
   const idxId     = header.indexOf('id');
+  const idxPenjualan = header.indexOf('penjualan');
 
   const rows = [];
   
@@ -894,12 +906,19 @@ function parseCSVFallback(text) {
     const tgl = idxTgl >= 0 ? cols[idxTgl].trim().replace(/"/g, '') : `Baris ${i}`;
     const rowId = idxId >= 0 ? cols[idxId].trim().replace(/"/g, '') : i;
     
-    // In-memory target redefinition (views-derived target with seeded noise)
-    const totalViews = fb + ig + tt;
-    const noiseVal = seededNormal(randFn, 0, 0.15);
-    const derivedSales = Math.max(0, Math.min(3, Math.round(totalViews / 15000 + noiseVal)));
+    let penjualan = null;
+    if (idxPenjualan >= 0 && cols[idxPenjualan] !== undefined && cols[idxPenjualan] !== null && cols[idxPenjualan].trim() !== '') {
+      const pVal = parseFloat(cols[idxPenjualan]);
+      if (!isNaN(pVal)) penjualan = pVal;
+    }
+    if (penjualan === null) {
+      // In-memory target redefinition (views-derived target with seeded noise) as fallback
+      const totalViews = fb + ig + tt;
+      const noiseVal = seededNormal(randFn, 0, 0.15);
+      penjualan = Math.max(0, Math.min(3, Math.round(totalViews / 15000 + noiseVal)));
+    }
 
-    rows.push({ id: rowId, tanggal: tgl, fb, ig, tt, penjualan: derivedSales });
+    rows.push({ id: rowId, tanggal: tgl, fb, ig, tt, penjualan: penjualan });
   }
 
   if (rows.length === 0) return { error: 'Tidak ada data yang valid di file CSV.' };
