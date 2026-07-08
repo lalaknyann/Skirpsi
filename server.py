@@ -299,9 +299,9 @@ def predict_single():
         # Scale and predict
         if views_only_scaler is not None and views_only_models:
             X_scaled = views_only_scaler.transform([feat_vals])
-            lr_pred = float(np.clip(views_only_models["Linear Regression"].predict(X_scaled)[0], 0, 3))
-            rf_pred = float(np.clip(views_only_models["Random Forest"].predict(X_scaled)[0], 0, 3))
-            xgb_pred = float(np.clip(views_only_models["XGBoost"].predict(X_scaled)[0], 0, 3))
+            lr_pred = float(np.clip(views_only_models["Linear Regression"].predict(X_scaled)[0], 0, 4))
+            rf_pred = float(np.clip(views_only_models["Random Forest"].predict(X_scaled)[0], 0, 4))
+            xgb_pred = float(np.clip(views_only_models["XGBoost"].predict(X_scaled)[0], 0, 4))
             avg_pred = (lr_pred + rf_pred + xgb_pred) / 3.0
             
             classify = lambda val: 'Tinggi' if val >= 2 else 'Rendah'
@@ -446,9 +446,9 @@ def predict_batch():
         # Scale and predict
         if views_only_scaler is not None and views_only_models:
             X_scaled = views_only_scaler.transform(X_batch)
-            lr_preds = np.clip(views_only_models["Linear Regression"].predict(X_scaled), 0, 3)
-            rf_preds = np.clip(views_only_models["Random Forest"].predict(X_scaled), 0, 3)
-            xgb_preds = np.clip(views_only_models["XGBoost"].predict(X_scaled), 0, 3)
+            lr_preds = np.clip(views_only_models["Linear Regression"].predict(X_scaled), 0, 4)
+            rf_preds = np.clip(views_only_models["Random Forest"].predict(X_scaled), 0, 4)
+            xgb_preds = np.clip(views_only_models["XGBoost"].predict(X_scaled), 0, 4)
             avg_preds = (lr_preds + rf_preds + xgb_preds) / 3.0
             
             # Map predictions back

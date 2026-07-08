@@ -388,7 +388,7 @@ function initDataCharts(customFB = null, customIG = null, customTT = null, custo
   const fbData = customFB || MONTHLY_VIEWS.facebook;
   const igData = customIG || MONTHLY_VIEWS.instagram;
   const ttData = customTT || MONTHLY_VIEWS.tiktok;
-  const sCounts = customSalesCounts || [186, 183, 188, 174];
+  const sCounts = customSalesCounts || [139, 31, 313, 224, 24];
 
   const ctxViews = document.getElementById('chartViewsTrend');
   if (ctxViews) {
@@ -485,7 +485,7 @@ function initDataCharts(customFB = null, customIG = null, customTT = null, custo
     chartSalesDistInstance = new Chart(ctxSales, {
       type: 'bar',
       data: {
-        labels: [0, 1, 2, 3].map(v => `${v} unit`),
+        labels: [0, 1, 2, 3, 4].map(v => `${v} unit`),
         datasets: [{
           label: 'Frekuensi Hari',
           data: sCounts,
@@ -493,7 +493,8 @@ function initDataCharts(customFB = null, customIG = null, customTT = null, custo
             'rgba(160,160,160,0.7)',
             'rgba(255,184,0,0.7)',
             'rgba(204,0,0,0.7)',
-            'rgba(255,68,68,0.7)'
+            'rgba(255,68,68,0.7)',
+            'rgba(180,0,0,0.7)'
           ],
           borderRadius: 8
         }]
@@ -2061,10 +2062,10 @@ function updateDataChartsDynamic(rows) {
   }
 
   // Hitung distribusi penjualan jika ada kolom penjualan
-  const salesCounts = [0, 0, 0, 0];
+  const salesCounts = [0, 0, 0, 0, 0];
   let hasActualSales = false;
   rows.forEach(r => {
-    if (r.penjualan !== null && !isNaN(r.penjualan) && r.penjualan >= 0 && r.penjualan <= 3) {
+    if (r.penjualan !== null && !isNaN(r.penjualan) && r.penjualan >= 0 && r.penjualan <= 4) {
       salesCounts[Math.round(r.penjualan)]++;
       hasActualSales = true;
     }
@@ -2121,14 +2122,15 @@ function updateDataChartsDynamic(rows) {
     chartSalesDistInstance = new Chart(ctxSales, {
       type: 'bar',
       data: {
-        labels: ['Level 0', 'Level 1', 'Level 2', 'Level 3'],
+        labels: ['Level 0', 'Level 1', 'Level 2', 'Level 3', 'Level 4'],
         datasets: [{
           data: salesCounts,
           backgroundColor: [
             'rgba(160,160,160,0.7)',
             'rgba(255,184,0,0.7)',
             'rgba(204,0,0,0.7)',
-            'rgba(255,68,68,0.7)'
+            'rgba(255,68,68,0.7)',
+            'rgba(180,0,0,0.7)'
           ],
           borderRadius: 8
         }]
