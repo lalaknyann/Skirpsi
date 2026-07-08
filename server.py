@@ -5,10 +5,13 @@ import bcrypt
 import jwt
 import secrets
 from datetime import timedelta
-from flask import Flask, request, jsonify, send_from_directory, redirect, make_response, session
+from flask import Flask, request, jsonify, send_from_directory, redirect, make_response
 import joblib
 import numpy as np
 import pandas as pd
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__, static_folder=None) # Disable default static serving to prevent direct path bypass
 
@@ -25,19 +28,14 @@ try:
         "Random Forest": joblib.load(os.path.join(MODELS_DIR, "views_only_rf.joblib")),
         "XGBoost": joblib.load(os.path.join(MODELS_DIR, "views_only_xgb.joblib"))
     }
-    print("✅ Views-Only models and scaler loaded successfully!")
+    print("[OK] Views-Only models and scaler loaded successfully!")
 except Exception as e:
-    print(f"⚠️ Error loading Views-Only models: {e}")
+    print(f"[ERROR] Error loading Views-Only models: {e}")
 
-# B2. KEAMANAN SESSION FLASK
-app.secret_key = secrets.token_hex(32)
-app.config.update(
-    SESSION_COOKIE_HTTPONLY=True,  
-    SESSION_COOKIE_SAMESITE='Lax', 
-    PERMANENT_SESSION_LIFETIME=timedelta(hours=2)
-)
+# B2. KEAMANAN SESSION FLASK (Session redundancy removed, keeping app secret key only)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 
-SECRET_KEY = "indibiz-ml-secret-key-skripsi-2026"
+SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "fallback-secret-key-skripsi-2026")
 DASHBOARD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard")
 
 # B4. LIMIT PERCOBAAN LOGIN — ANTI BRUTE FORCE
@@ -59,9 +57,6 @@ def verify_token(token):
 
 # Middleware to check auth on routes
 def is_authenticated():
-    if 'user' not in session:
-        return False
-        
     token = request.cookies.get("auth_token")
     if not token:
         # Also check Authorization Header as fallback
@@ -117,30 +112,28 @@ def login():
                 attempts["last_attempt"] = now
         
         user_list = credentials.get("users", [])
+        # Dummy hash for timing attack protection
+        dummy_hash = b'$2b$12$L7Rz52L7h9i2S3C2k8Q4uey1NfP1Q9C2S2Q4L8L9L7L2S2Q4S2Q4e'
+        
+        user_list = credentials.get("users", [])
         user_data = None
         for u in user_list:
             if u["username"].lower() == username.lower():
                 user_data = u
                 break
                 
-        if not user_data:
-            record_failure()
-            count = login_attempts[ip]["count"]
-            if count >= 5:
-                return jsonify({"success": False, "message": "Terlalu banyak percobaan. Coba lagi dalam 5 menit."}), 429
-            return jsonify({"success": False, "message": "Username atau password salah"}), 401
+        if user_data:
+            hashed_password = user_data["password_hash"].encode('utf-8')
+            is_valid = bcrypt.checkpw(password.encode('utf-8'), hashed_password)
+        else:
+            bcrypt.checkpw(password.encode('utf-8'), dummy_hash)
+            is_valid = False
             
-        # Verify hash
-        hashed_password = user_data["password_hash"].encode('utf-8')
-        if bcrypt.checkpw(password.encode('utf-8'), hashed_password):
+        if is_valid:
             # Reset attempts on success
             if ip in login_attempts:
                 login_attempts.pop(ip)
                 
-            # Set Flask session
-            session['user'] = username
-            session.permanent = True
-            
             # Generate JWT Token (valid for 8 hours)
             expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
             token = jwt.encode(
@@ -149,10 +142,11 @@ def login():
                 algorithm="HS256"
             )
             
-            # Send response with HTTPOnly Cookie for security
-            resp = make_response(jsonify({"success": True, "token": token, "message": "Login berhasil"}))
+            # Send response with HTTPOnly Cookie for security, no token in JSON body
+            resp = make_response(jsonify({"success": True, "message": "Login berhasil"}))
             # Cookie expires in 8 hours (28800 seconds)
-            resp.set_cookie("auth_token", token, httponly=True, max_age=28800, samesite="Lax")
+            secure = request.is_secure or request.headers.get("X-Forwarded-Proto") == "https"
+            resp.set_cookie("auth_token", token, httponly=True, max_age=28800, samesite="Lax", secure=secure)
             return resp
         else:
             record_failure()
@@ -161,21 +155,17 @@ def login():
                 return jsonify({"success": False, "message": "Terlalu banyak percobaan. Coba lagi dalam 5 menit."}), 429
             return jsonify({"success": False, "message": "Username atau password salah"}), 401
             
-    except Exception as e:
-        return jsonify({"success": False, "message": f"Terjadi kesalahan server: {str(e)}"}), 500
+    except Exception:
+        return jsonify({"success": False, "message": "Terjadi kesalahan server internal"}), 500
 
 @app.route("/api/logout", methods=["POST"])
 def logout():
-    session.clear() # B2. Bersihkan Flask session
     resp = make_response(jsonify({"success": True, "message": "Logout berhasil"}))
     resp.set_cookie("auth_token", "", max_age=0, httponly=True, samesite="Lax", path="/")
     return resp
 
 @app.route("/api/verify", methods=["GET"])
 def verify():
-    if 'user' not in session or not is_authenticated():
-        return jsonify({"success": False, "message": "Session tidak valid atau expired"}), 401
-        
     token = request.cookies.get("auth_token")
     if not token:
         auth_header = request.headers.get("Authorization")
@@ -194,7 +184,7 @@ def verify():
 # B3. PROTEKSI FILE CSV LEWAT FLASK ROUTE TERPROTEKSI
 @app.route("/data/<path:filename>")
 def serve_protected_csv(filename):
-    if 'user' not in session or not is_authenticated():
+    if not is_authenticated():
         return jsonify({"error": "Unauthorized"}), 401
         
     safe_filename = os.path.basename(filename)
@@ -326,8 +316,8 @@ def predict_single():
         else:
             return jsonify({"error": "Model not loaded"}), 500
             
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        return jsonify({"error": "Terjadi kesalahan server internal"}), 500
 
 @app.route("/api/predict-batch", methods=["POST"])
 def predict_batch():
@@ -494,20 +484,20 @@ def predict_batch():
         else:
             return jsonify({"error": "Model not loaded"}), 500
             
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        return jsonify({"error": "Terjadi kesalahan server internal"}), 500
 
 @app.route("/api/model-metrics", methods=["GET"])
 def model_metrics():
-    if 'user' not in session or not is_authenticated():
+    if not is_authenticated():
         return jsonify({"error": "Unauthorized"}), 401
     try:
         results_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", "results.json")
         with open(results_path, "r", encoding="utf-8") as f:
             metrics = json.load(f)
         return jsonify(metrics)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        return jsonify({"error": "Terjadi kesalahan server internal"}), 500
 
 # ─── FRONTEND ROUTES & STATIC FILES SERVING ───
 

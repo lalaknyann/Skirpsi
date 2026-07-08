@@ -6,8 +6,8 @@
   <title>Indibiz ML Dashboard &ndash; Prediksi Penjualan via Media Sosial | Telkom Indonesia</title>
   <meta name="description" content="Dashboard Machine Learning Indibiz untuk prediksi penjualan paket internet berdasarkan views media sosial Instagram, TikTok, dan Facebook. Powered by XGBoost, Random Forest, dan Linear Regression." />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" integrity="sha384-D/t0ZMqQW31H3az8ktEiNb39wyKnS82iFY52QPACM+IjKW3jDUhyIgh2PApRqJZs" crossorigin="anonymous"></script>
 </head>
 <body class="dashboard-page">
 
@@ -143,9 +143,9 @@
           </div>
           <div class="kpi-card gold">
             <div class="kpi-icon">&#x1F3AF;</div>
-            <div class="kpi-value" id="kpi-acc-avg">0.38%</div>
-            <div class="kpi-label">MAPE Rerata</div>
-            <div class="kpi-sub">Mean Absolute Percentage Error</div>
+            <div class="kpi-value" id="kpi-acc-avg">1.0979</div>
+            <div class="kpi-label">RMSE Rerata</div>
+            <div class="kpi-sub">Root Mean Squared Error</div>
           </div>
           <div class="kpi-card gray">
             <div class="kpi-icon">&#x1F4CA;</div>
@@ -165,9 +165,17 @@
 
         <!-- Model Results Overview -->
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">&#x1F4CB; Hasil Evaluasi Semua Model</span>
-            <span class="card-tag">MAE + RMSE + R&sup2; Score</span>
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+              <span class="card-title">&#x1F4CB; Hasil Evaluasi Semua Model</span>
+              <span class="card-tag">MAE + RMSE + R&sup2; Score</span>
+            </div>
+            <div>
+              <select id="metricsModelVariant" onchange="switchMetricsVariant(this.value)" style="background:#1A1A2E; color:#E0E0E0; border:1px solid #2A2A4A; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer;">
+                <option value="views_only">Varian A: Views-Only (Riset Pengaruh)</option>
+                <option value="full_features">Varian B: Full Features (Prediksi Praktis)</option>
+              </select>
+            </div>
           </div>
           <div class="metrics-table-wrap">
             <table class="metrics-table" id="metricsTable">

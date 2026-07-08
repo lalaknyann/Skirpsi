@@ -22,16 +22,8 @@ function sanitize(str) {
 
 // ─── AUTH PROTECTION GUARD ───
 (async function initAuthCheck() {
-  if (window.location.hostname.includes('netlify.app') || window.location.hostname.includes('github.io')) {
-    console.log("[Auth] Bypassing auth check on static hosting (Netlify/GitHub Pages).");
-    return;
-  }
   try {
     const res = await fetch('/api/verify');
-    if (res.status === 404) {
-      console.log("[Auth] API verify returned 404 (local static server). Bypassing.");
-      return;
-    }
     const data = await res.json();
     if (!res.ok || !data.success) {
       window.location.href = '/login';
@@ -39,7 +31,8 @@ function sanitize(str) {
       console.log("[Auth] Authenticated successfully as:", data.username);
     }
   } catch (e) {
-    console.log("[Auth] Fetch verify failed, assuming static environment:", e);
+    console.error("[Auth] Fetch verify failed:", e);
+    window.location.href = '/login';
   }
 })();
 
@@ -48,10 +41,6 @@ function sanitize(str) {
 // ============================================
 
 async function handleLogout() {
-  if (window.location.hostname.includes('netlify.app') || window.location.hostname.includes('github.io')) {
-    alert("Logout tidak tersedia di demo hosting statis (Netlify).");
-    return;
-  }
   try {
     const res = await fetch('/api/logout', { method: 'POST' });
     const data = await res.json();
@@ -108,25 +97,13 @@ function toggleTheme() {
 // Target: Total Views (Facebook + Instagram + TikTok)
 // ═══════════════════════════════════════
 
-const ML_RESULTS = {
-  "Linear Regression": { MAE: 0.2059, RMSE: 0.2828, R2: 0.8420, R2_pct: 84.20 },
-  "Random Forest":     { MAE: 0.1138, RMSE: 0.2637, R2: 0.8626, R2_pct: 86.26 },
-  "XGBoost":           { MAE:  0.1373, RMSE:  0.2600, R2: 0.8665, R2_pct: 86.65 }
-};
-
-const ML_RESULTS_NO_SENT = {
-  "Linear Regression": { MAE: 0.2059, RMSE: 0.2827, R2: 0.8421, R2_pct: 84.21 },
-  "Random Forest":     { MAE: 0.1215, RMSE: 0.2788, R2: 0.8465, R2_pct: 84.65 },
-  "XGBoost":           { MAE:  0.1410, RMSE:  0.2586, R2: 0.8679, R2_pct: 86.79 }
-};
-
-const CORRELATION = {
-  "Facebook":         0.8287,
-  "Instagram":        0.6089,
-  "TikTok":          -0.3416,
-  "Total Views":      0.9048,
-  "Total Engagement": 0.8375,
-  "Sentiment Score":  0.8089
+let globalMetrics = null;
+let activeMetricsVariant = 'views_only';
+let CORRELATION = {
+  "Facebook":         -0.0126,
+  "Instagram":        0.0146,
+  "TikTok":          0.0319,
+  "total_views":      -0.0047
 };
 
 const MONTHLY_VIEWS = {
@@ -603,34 +580,59 @@ function initModelCharts(customResults = null) {
 // SENSITIVITY CHART
 // ═══════════════════════════════════════
 
-function initSensitivityChart() {
+let chartSensitivityInstance = null;
+async function initSensitivityChart() {
   const ctx = document.getElementById('chartSensitivity');
   if (!ctx) return;
 
   const viewsRange = [5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000];
-  const predLR  = viewsRange.map(v => Math.max(0, 0.5 + v * 0.00003).toFixed(2));
-  const predRF  = viewsRange.map(v => Math.max(0, 0.6 + v * 0.000025 + Math.sin(v/10000)*0.1).toFixed(2));
-  const predXGB = viewsRange.map(v => Math.max(0, 0.7 + v * 0.000028 + Math.sin(v/8000)*0.15).toFixed(2));
+  
+  try {
+    const promises = viewsRange.map(v => {
+      const fb = Math.round(v * 0.75);
+      const ig = Math.round(v * 0.23);
+      const tt = Math.round(v * 0.02);
+      
+      return fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fb, ig, tt, tanggal: "15 Jun 2024" })
+      }).then(res => {
+        if (!res.ok) throw new Error("Gagal mengambil prediksi sensitivitas");
+        return res.json();
+      });
+    });
 
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: viewsRange.map(v => (v/1000).toFixed(0) + 'K'),
-      datasets: [
-        { label: 'Linear Regression', data: predLR,  borderColor: '#A0A0A0', tension: 0.4, pointRadius: 4 },
-        { label: 'Random Forest',     data: predRF,  borderColor: '#FFB800', tension: 0.4, pointRadius: 4 },
-        { label: 'XGBoost',           data: predXGB, borderColor: '#CC0000', tension: 0.4, pointRadius: 4 }
-      ]
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      scales: {
-        ...CHART_DEFAULTS.scales,
-        x: { ...CHART_DEFAULTS.scales.x, title: { display: true, text: 'Total Views', color: '#A0A0A0' } },
-        y: { ...CHART_DEFAULTS.scales.y, title: { display: true, text: 'Estimasi Penjualan (unit)', color: '#A0A0A0' } }
+    const predictions = await Promise.all(promises);
+    
+    const predLR = predictions.map(p => p.lr.value.toFixed(4));
+    const predRF = predictions.map(p => p.rf.value.toFixed(4));
+    const predXGB = predictions.map(p => p.xgb.value.toFixed(4));
+
+    if (chartSensitivityInstance) chartSensitivityInstance.destroy();
+    chartSensitivityInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: viewsRange.map(v => (v/1000).toFixed(0) + 'K'),
+        datasets: [
+          { label: 'Linear Regression', data: predLR,  borderColor: '#0066CC', tension: 0.4, pointRadius: 4 },
+          { label: 'Random Forest',     data: predRF,  borderColor: '#FFB800', tension: 0.4, pointRadius: 4 },
+          { label: 'XGBoost',           data: predXGB, borderColor: '#CC0000', tension: 0.4, pointRadius: 4 }
+        ]
+      },
+      options: {
+        ...CHART_DEFAULTS,
+        scales: {
+          ...CHART_DEFAULTS.scales,
+          x: { ...CHART_DEFAULTS.scales.x, title: { display: true, text: 'Total Views (FB:75%, IG:23%, TT:2%)', color: '#A0A0A0' } },
+          y: { ...CHART_DEFAULTS.scales.y, title: { display: true, text: 'Estimasi Penjualan (unit)', color: '#A0A0A0' } }
+        }
       }
-    }
-  });
+    });
+
+  } catch (err) {
+    console.error("Gagal menginisialisasi grafik sensitivitas:", err);
+  }
 }
 
 // ═══════════════════════════════════════
@@ -649,55 +651,7 @@ const PEAK_MONTHS   = [3, 4, 12]; // Mar, Apr, Des — peak season
 // SECTION 4: MACHINE LEARNING & PREDIKSI
 // ============================================
 
-function predictOne({ fb = 0, ig = 0, tt = 0, bulan = 6 }) {
-  const totalViews = fb + ig + tt;
-  const logTotal = Math.log1p(totalViews);
-  const isPeak = [2, 3, 4, 9, 10, 11].includes(bulan) ? 1 : 0;
-  const isQ4 = [10, 11, 12].includes(bulan) ? 1 : 0;
-
-  // Scale parameters derived from Python get_ridge_coef.py
-  const means = [25724.6484, 10.0606, 18794.1135, 6454.7018, 475.8331, 0.4938, 0.2517];
-  const stds  = [9663.9581, 0.4846, 8144.9949, 3283.6262, 248.3816, 0.49996, 0.43399];
-  const coefs = [0.333647, 0.051316, 0.318029, 0.196155, -0.040606, 0.027766, -0.146786];
-  const intercept = 1.756498;
-
-  // Scale features
-  const scTotalViews = (totalViews - means[0]) / stds[0];
-  const scLogTotal   = (logTotal - means[1]) / stds[1];
-  const scFB         = (fb - means[2]) / stds[2];
-  const scIG         = (ig - means[3]) / stds[3];
-  const scTT         = (tt - means[4]) / stds[4];
-  const scIsPeak     = (isPeak - means[5]) / stds[5];
-  const scIsQ4       = (isQ4 - means[6]) / stds[6];
-
-  // Base Ridge prediction
-  const lrPred = intercept + 
-                 scTotalViews * coefs[0] + 
-                 scLogTotal * coefs[1] + 
-                 scFB * coefs[2] + 
-                 scIG * coefs[3] + 
-                 scTT * coefs[4] + 
-                 scIsPeak * coefs[5] + 
-                 scIsQ4 * coefs[6];
-
-  const lrClamped = Math.max(0, Math.min(3, lrPred));
-
-  // Simulate Random Forest and XGBoost predictions with slight variation
-  const rfPred = Math.max(0, Math.min(3, lrClamped * 0.98 + 0.03));
-  
-  const ratioFB = fb / (totalViews + 1);
-  const xgbPred = Math.max(0, Math.min(3, lrClamped * 0.99 + (ratioFB - 0.72) * 0.1));
-
-  // Binary classification: >= 2 = Tinggi, < 2 = Rendah
-  const classify = val => val >= 2 ? 'Tinggi' : 'Rendah';
-
-  return {
-    lr:  { value: lrClamped, rounded: Math.round(lrClamped), class: classify(lrClamped) },
-    rf:  { value: rfPred,    rounded: Math.round(rfPred),    class: classify(rfPred) },
-    xgb: { value: xgbPred,   rounded: Math.round(xgbPred),   class: classify(xgbPred) },
-    avg: (lrClamped + rfPred + xgbPred) / 3
-  };
-}
+// ML prediction definitions are handled via server APIs /api/predict and /api/predict-batch
 
 // (Manual Prediction dihapus)
 
@@ -708,9 +662,6 @@ function predictOne({ fb = 0, ig = 0, tt = 0, bulan = 6 }) {
 // ─── Drag & Drop / File Upload Events ───
 function logToTerminal(message) {
   console.log(message);
-  const cleanMsg = encodeURIComponent(message);
-  // Mengirimkan request GET pasif ke server python lokal untuk memicu pencetakan log di terminal
-  fetch(`/?log=${cleanMsg}`).catch(() => {});
 }
 
 // ============================================
@@ -995,41 +946,72 @@ function showPreviewSection(fileName, totalRows) {
 }
 
 /** Run batch prediction on all uploaded rows */
-function runBatchPrediction() {
+async function runBatchPrediction() {
   if (!uploadedData.length) return;
 
   const btn = document.getElementById('btnPredict');
   if (btn) { btn.textContent = '⏳ Memproses...'; btn.disabled = true; }
 
-  // Small delay to show loading feedback
-  setTimeout(() => {
-    predictionResults = uploadedData.map(row => {
-      // Estimate bulan from tanggal string
-      const bulan = estimateBulan(row.tanggal);
-      const result = predictOne({ fb: row.fb, ig: row.ig, tt: row.tt, bulan, hariPekan: 1, sentiment: 0.65 });
-      return { ...row, result, bulan };
+  try {
+    const rows = uploadedData.map(r => ({
+      id: r.id || r.Id || r.ID,
+      tanggal: r.tanggal || r.Tanggal,
+      Facebook: r.Facebook || r.facebook || r.fb || 0,
+      Instagram: r.Instagram || r.instagram || r.ig || 0,
+      TikTok: r.TikTok || r.tiktok || r.tt || 0,
+      Penjualan: r.Penjualan || r.penjualan || null
+    }));
+
+    const response = await fetch('/api/predict-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows })
     });
+
+    if (!response.ok) {
+      throw new Error(`Server returned status ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || "Gagal melakukan prediksi batch");
+    }
+
+    predictionResults = data.predictions.map(p => ({
+      id: p.id,
+      tanggal: p.tanggal,
+      fb: p.Facebook,
+      ig: p.Instagram,
+      tt: p.TikTok,
+      penjualan: p.Penjualan !== undefined ? p.Penjualan : null,
+      result: {
+        lr: p.lr,
+        rf: p.rf,
+        xgb: p.xgb,
+        avg: p.avg
+      }
+    }));
 
     renderResultsTable(predictionResults);
     renderResultsSummary(predictionResults);
 
-    // Jalankan proyeksi & prediksi 3 bulan ke depan (2026) secara otomatis
-    run3MonthForecast();
+    await run3MonthForecast();
 
-    // Perbarui seluruh halaman (Overview, Eksplorasi Data, Perbandingan Model) secara dinamis!
     updateDashboardChartsAndMetrics(uploadedData, predictionResults);
 
     const resultsSection = document.getElementById('resultsSection');
     if (resultsSection) resultsSection.classList.add('visible');
 
-    // Scroll to results
     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    if (btn) { btn.textContent = '🚀 Prediksi Semua Baris'; btn.disabled = false; }
-    
-    // Alihkan halaman aktif ke Overview secara otomatis agar seamless!
     showSection('overview');
-  }, 100);
+
+  } catch (err) {
+    alert(`Gagal memproses prediksi batch: ${err.message}`);
+    console.error(err);
+  } finally {
+    if (btn) { btn.textContent = '🚀 Prediksi Semua Baris'; btn.disabled = false; }
+  }
 }
 
 function calculateMetricsOnUploadedData(predictedData) {
@@ -1305,69 +1287,77 @@ function initActualVsPredictedChart(predictedData) {
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
   const hasActual = validRows.length > 0;
 
-  let datasets = [];
-
-  if (hasActual) {
-    // 1. Linear Regression
-    const ptsLR = validRows.map(r => ({
-      x: parseFloat(r.penjualan) + (Math.random() - 0.5) * 0.15,
-      y: r.result.lr.value
-    }));
-    datasets.push({
-      label: 'Linear Regression',
-      data: ptsLR,
-      backgroundColor: 'rgba(0, 102, 204, 0.65)',
-      borderColor: '#0066CC',
-      pointRadius: 4,
-      showLine: false
-    });
-
-    // 2. Random Forest
-    const ptsRF = validRows.map(r => ({
-      x: parseFloat(r.penjualan) + (Math.random() - 0.5) * 0.15,
-      y: r.result.rf.value
-    }));
-    datasets.push({
-      label: 'Random Forest',
-      data: ptsRF,
-      backgroundColor: 'rgba(255, 184, 0, 0.65)',
-      borderColor: '#FFB800',
-      pointRadius: 4,
-      showLine: false
-    });
-
-    // 3. XGBoost
-    const ptsXGB = validRows.map(r => ({
-      x: parseFloat(r.penjualan) + (Math.random() - 0.5) * 0.15,
-      y: r.result.xgb.value
-    }));
-    datasets.push({
-      label: 'XGBoost',
-      data: ptsXGB,
-      backgroundColor: 'rgba(255, 68, 68, 0.65)',
-      borderColor: '#FF4444',
-      pointRadius: 4,
-      showLine: false
-    });
-  } else {
-    // Baseline simulation when no Penjualan column in CSV
-    let points = [];
-    for (let i = 0; i < 150; i++) {
-      const act = Math.floor(Math.random() * 4);
-      const noise = (Math.random() - 0.5) * 0.9;
-      points.push({ x: act + (Math.random() - 0.5) * 0.15, y: Math.max(0, Math.min(3, act + noise)) });
+  if (!hasActual) {
+    const parent = ctx.parentElement;
+    if (parent) {
+      let msgDiv = parent.querySelector('.no-actual-data-msg');
+      if (!msgDiv) {
+        msgDiv = document.createElement('div');
+        msgDiv.className = 'no-actual-data-msg';
+        msgDiv.style.color = '#A0A0A0';
+        msgDiv.style.textAlign = 'center';
+        msgDiv.style.padding = '40px 20px';
+        msgDiv.style.fontSize = '13px';
+        msgDiv.innerHTML = '⚠️ Tidak ada data aktual penjualan untuk evaluasi model (kolom Penjualan tidak ada di file CSV).';
+        parent.appendChild(msgDiv);
+      }
+      ctx.style.display = 'none';
     }
-    datasets.push({
-      label: 'Simulasi Baseline (CSV tidak memiliki kolom Penjualan)',
-      data: points,
-      backgroundColor: 'rgba(150, 150, 150, 0.5)',
-      borderColor: '#9E9E9E',
-      pointRadius: 4,
-      showLine: false
-    });
+    if (chartActualVsPredictedInstance) {
+      chartActualVsPredictedInstance.destroy();
+      chartActualVsPredictedInstance = null;
+    }
+    return;
+  } else {
+    ctx.style.display = 'block';
+    const parent = ctx.parentElement;
+    if (parent) {
+      const msgDiv = parent.querySelector('.no-actual-data-msg');
+      if (msgDiv) parent.removeChild(msgDiv);
+    }
   }
 
-  // Add Garis Ideal
+  let datasets = [];
+
+  const ptsLR = validRows.map(r => ({
+    x: parseFloat(r.penjualan),
+    y: r.result.lr.value
+  }));
+  datasets.push({
+    label: 'Linear Regression',
+    data: ptsLR,
+    backgroundColor: 'rgba(0, 102, 204, 0.65)',
+    borderColor: '#0066CC',
+    pointRadius: 4,
+    showLine: false
+  });
+
+  const ptsRF = validRows.map(r => ({
+    x: parseFloat(r.penjualan),
+    y: r.result.rf.value
+  }));
+  datasets.push({
+    label: 'Random Forest',
+    data: ptsRF,
+    backgroundColor: 'rgba(255, 184, 0, 0.65)',
+    borderColor: '#FFB800',
+    pointRadius: 4,
+    showLine: false
+  });
+
+  const ptsXGB = validRows.map(r => ({
+    x: parseFloat(r.penjualan),
+    y: r.result.xgb.value
+  }));
+  datasets.push({
+    label: 'XGBoost',
+    data: ptsXGB,
+    backgroundColor: 'rgba(255, 68, 68, 0.65)',
+    borderColor: '#FF4444',
+    pointRadius: 4,
+    showLine: false
+  });
+
   datasets.push({
     label: 'Garis Ideal (y = x)',
     data: [{x: 0, y: 0}, {x: 3, y: 3}],
@@ -1426,70 +1416,79 @@ function initResidualsChart(predictedData) {
   const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
   const hasActual = validRows.length > 0;
 
+  if (!hasActual) {
+    const parent = ctx.parentElement;
+    if (parent) {
+      let msgDiv = parent.querySelector('.no-actual-data-msg');
+      if (!msgDiv) {
+        msgDiv = document.createElement('div');
+        msgDiv.className = 'no-actual-data-msg';
+        msgDiv.style.color = '#A0A0A0';
+        msgDiv.style.textAlign = 'center';
+        msgDiv.style.padding = '40px 20px';
+        msgDiv.style.fontSize = '13px';
+        msgDiv.innerHTML = '⚠️ Tidak ada data aktual penjualan untuk evaluasi model (kolom Penjualan tidak ada di file CSV).';
+        parent.appendChild(msgDiv);
+      }
+      ctx.style.display = 'none';
+    }
+    if (chartResidualsInstance) {
+      chartResidualsInstance.destroy();
+      chartResidualsInstance = null;
+    }
+    return;
+  } else {
+    ctx.style.display = 'block';
+    const parent = ctx.parentElement;
+    if (parent) {
+      const msgDiv = parent.querySelector('.no-actual-data-msg');
+      if (msgDiv) parent.removeChild(msgDiv);
+    }
+  }
+
   let datasets = [];
 
-  if (hasActual) {
-    // 1. Linear Regression
-    const ptsLR = validRows.map(r => {
-      const pred = r.result.lr.value;
-      const resid = parseFloat(r.penjualan) - pred;
-      return { x: pred, y: resid };
-    });
-    datasets.push({
-      label: 'Linear Regression',
-      data: ptsLR,
-      backgroundColor: 'rgba(0, 102, 204, 0.65)',
-      borderColor: '#0066CC',
-      pointRadius: 4,
-      showLine: false
-    });
+  const ptsLR = validRows.map(r => {
+    const pred = r.result.lr.value;
+    const resid = parseFloat(r.penjualan) - pred;
+    return { x: pred, y: resid };
+  });
+  datasets.push({
+    label: 'Linear Regression',
+    data: ptsLR,
+    backgroundColor: 'rgba(0, 102, 204, 0.65)',
+    borderColor: '#0066CC',
+    pointRadius: 4,
+    showLine: false
+  });
 
-    // 2. Random Forest
-    const ptsRF = validRows.map(r => {
-      const pred = r.result.rf.value;
-      const resid = parseFloat(r.penjualan) - pred;
-      return { x: pred, y: resid };
-    });
-    datasets.push({
-      label: 'Random Forest',
-      data: ptsRF,
-      backgroundColor: 'rgba(255, 184, 0, 0.65)',
-      borderColor: '#FFB800',
-      pointRadius: 4,
-      showLine: false
-    });
+  const ptsRF = validRows.map(r => {
+    const pred = r.result.rf.value;
+    const resid = parseFloat(r.penjualan) - pred;
+    return { x: pred, y: resid };
+  });
+  datasets.push({
+    label: 'Random Forest',
+    data: ptsRF,
+    backgroundColor: 'rgba(255, 184, 0, 0.65)',
+    borderColor: '#FFB800',
+    pointRadius: 4,
+    showLine: false
+  });
 
-    // 3. XGBoost
-    const ptsXGB = validRows.map(r => {
-      const pred = r.result.xgb.value;
-      const resid = parseFloat(r.penjualan) - pred;
-      return { x: pred, y: resid };
-    });
-    datasets.push({
-      label: 'XGBoost',
-      data: ptsXGB,
-      backgroundColor: 'rgba(255, 68, 68, 0.65)',
-      borderColor: '#FF4444',
-      pointRadius: 4,
-      showLine: false
-    });
-  } else {
-    // Baseline simulation when no Penjualan column in CSV
-    let points = [];
-    for (let i = 0; i < 150; i++) {
-      const pred = Math.random() * 3.2;
-      const resid = (Math.random() - 0.5) * 1.5;
-      points.push({ x: pred, y: resid });
-    }
-    datasets.push({
-      label: 'Simulasi Residuals (CSV tidak memiliki kolom Penjualan)',
-      data: points,
-      backgroundColor: 'rgba(150, 150, 150, 0.5)',
-      borderColor: '#9E9E9E',
-      pointRadius: 4,
-      showLine: false
-    });
-  }
+  const ptsXGB = validRows.map(r => {
+    const pred = r.result.xgb.value;
+    const resid = parseFloat(r.penjualan) - pred;
+    return { x: pred, y: resid };
+  });
+  datasets.push({
+    label: 'XGBoost',
+    data: ptsXGB,
+    backgroundColor: 'rgba(255, 68, 68, 0.65)',
+    borderColor: '#FF4444',
+    pointRadius: 4,
+    showLine: false
+  });
 
   // Add Garis Nol
   datasets.push({
@@ -2312,21 +2311,162 @@ function resetUpload() {
   if (elDateRange) elDateRange.textContent = 'Jan 2024 – Des 2025';
 
   const elR2Avg = document.getElementById('kpi-r2-avg');
-  if (elR2Avg) elR2Avg.textContent = '85.70%';
+async function initDashboard() {
+  await loadModelMetrics();
+  initDataCharts();
+  initSensitivityChart();
+}
 
-  const elAccAvg = document.getElementById('kpi-acc-avg');
-  if (elAccAvg) elAccAvg.textContent = '0.38%';
+let activeMetricsVariant = 'views_only';
+let globalMetrics = null;
+
+async function loadModelMetrics() {
+  try {
+    const res = await fetch('/api/model-metrics');
+    if (res.ok) {
+      globalMetrics = await res.json();
+      updateDashboardMetricsUI();
+    } else {
+      console.error("Gagal mengambil metrik model dari server");
+      useFallbackMetrics();
+    }
+  } catch (err) {
+    console.error("Kesalahan jaringan saat memuat metrik model:", err);
+    useFallbackMetrics();
+  }
+}
+
+function useFallbackMetrics() {
+  const fallback = {
+    "Linear Regression": { MAE: 0.9436, RMSE: 1.0979, R2: -0.0726, R2_pct: -7.26 },
+    "Random Forest":     { MAE: 0.9510, RMSE: 1.1240, R2: -0.1243, R2_pct: -12.43 },
+    "XGBoost":           { MAE: 0.9588, RMSE: 1.1478, R2: -0.1722, R2_pct: -17.22 }
+  };
+  renderMetricsTableDynamic(fallback);
+  initOverviewCharts(fallback);
+  initModelCharts(fallback);
+}
+
+function updateDashboardMetricsUI() {
+  if (!globalMetrics) return;
+  const metrics = globalMetrics[activeMetricsVariant];
+  if (!metrics) return;
+
+  const values = Object.values(metrics);
+  const r2Avg = values.reduce((s, m) => s + (m.R2_pct || 0), 0) / values.length;
+  const maeAvg = values.reduce((s, m) => s + m.MAE, 0) / values.length;
+  const rmseAvg = values.reduce((s, m) => s + m.RMSE, 0) / values.length;
+
+  const elR2Avg = document.getElementById('kpi-r2-avg');
+  if (elR2Avg) elR2Avg.textContent = `${r2Avg.toFixed(2)}%`;
 
   const elMaeAvg = document.getElementById('kpi-mae-avg');
-  if (elMaeAvg) elMaeAvg.textContent = '0.1523';
+  if (elMaeAvg) elMaeAvg.textContent = maeAvg.toFixed(4);
 
-  renderMetricsTableDynamic(ML_RESULTS);
-  initOverviewCharts(ML_RESULTS);
-  initDataCharts();
-  initModelCharts(ML_RESULTS);
+  const elAccAvg = document.getElementById('kpi-acc-avg');
+  if (elAccAvg) elAccAvg.textContent = rmseAvg.toFixed(4);
 
-  // Pindahkan kembali tampilan aktif ke section Upload
-  showSection('upload');
+  renderMetricsTableDynamic(metrics);
+  initOverviewCharts(metrics);
+  initModelCharts(metrics);
+
+  if (globalMetrics.feature_importance) {
+    updateFeatureImportanceChart(globalMetrics.feature_importance);
+  }
+  
+  if (globalMetrics.correlation) {
+    updateCorrelationUI(globalMetrics.correlation);
+  }
+}
+
+function updateCorrelationUI(corrData) {
+  const corrGrid = document.getElementById('corrGrid');
+  if (!corrGrid) return;
+  corrGrid.innerHTML = '';
+  
+  const labelMap = {
+    "Facebook": "Facebook Views",
+    "Instagram": "Instagram Views",
+    "TikTok": "TikTok Views",
+    "total_views": "Total Views"
+  };
+
+  Object.entries(corrData).forEach(([key, val]) => {
+    const isPos = val >= 0;
+    const label = labelMap[key] || key;
+    let strength, strengthColor;
+    if (Math.abs(val) >= 0.6)       { strength = isPos ? 'Positif Kuat' : 'Negatif Kuat';   strengthColor = isPos ? '#4CAF50' : '#FF4444'; }
+    else if (Math.abs(val) >= 0.3)  { strength = isPos ? 'Positif Sedang' : 'Negatif Sedang'; strengthColor = '#FFB800'; }
+    else if (Math.abs(val) >= 0.1)  { strength = isPos ? 'Positif Lemah' : 'Negatif Lemah';  strengthColor = '#A0A0A0'; }
+    else                            { strength = 'Sangat Lemah';   strengthColor = '#606060'; }
+    
+    const negHint = val < -0.1
+      ? `<div style="font-size:9px;color:#FF8C00;margin-top:3px;line-height:1.3" title="Korelasi negatif: semakin tinggi views, penjualan cenderung menurun">⚠ views naik → penjualan turun</div>`
+      : '';
+      
+    corrGrid.innerHTML += `
+      <div class="corr-item" style="${val < -0.1 ? 'border-color:rgba(255,68,68,0.3);' : ''}">
+        <div class="corr-platform">${label}</div>
+        <div class="corr-value ${isPos ? 'corr-positive' : 'corr-negative'}">${val > 0 ? '+' : ''}${val.toFixed(4)}</div>
+        <div style="font-size:10px;color:${strengthColor};margin-top:4px;font-weight:600">${strength}</div>
+        ${negHint}
+      </div>`;
+  });
+}
+
+function updateFeatureImportanceChart(featureImportanceData) {
+  const ctx = document.getElementById('chartFeatureImportance');
+  if (!ctx) return;
+
+  const xgbImportance = featureImportanceData["XGBoost"] || {};
+  const sortedFeatures = Object.entries(xgbImportance)
+    .map(([key, val]) => ({ label: key, val: val }))
+    .sort((a, b) => b.val - a.val)
+    .slice(0, 10);
+
+  if (chartFeatureImportanceInstance) chartFeatureImportanceInstance.destroy();
+  chartFeatureImportanceInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sortedFeatures.map(f => f.label),
+      datasets: [{
+        label: 'Feature Importance (Model XGBoost)',
+        data: sortedFeatures.map(f => f.val),
+        backgroundColor: 'rgba(255, 68, 68, 0.75)',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Relative Importance', color: '#A0A0A0' },
+          min: 0,
+          ticks: { color: '#A0A0A0' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        },
+        y: {
+          ticks: { color: '#A0A0A0' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        }
+      }
+    }
+  });
+}
+
+function switchMetricsVariant(variant) {
+  activeMetricsVariant = variant;
+  updateDashboardMetricsUI();
+}
+window.switchMetricsVariant = switchMetricsVariant;
+
+// Call init function
+initDashboard();
 }
 
 function updateSidebarMetrics(rows) {
@@ -2433,105 +2573,61 @@ function parseTanggalString(tglStr) {
   return new Date();
 }
 
-function run3MonthForecast() {
+async function run3MonthForecast() {
   if (!uploadedData.length) return;
-  logToTerminal("[Forecast] Memulai perhitungan proyeksi 3 bulan ke depan (2026).");
 
   try {
-    // 1. Dapatkan tanggal terakhir dari data unggahan
-    let lastDate = new Date();
-    const dates = uploadedData.map(d => parseTanggalString(d.tanggal).getTime()).filter(t => !isNaN(t));
-    if (dates.length > 0) {
-      lastDate = new Date(Math.max(...dates));
+    const lastRow = uploadedData[uploadedData.length - 1];
+    const lastDate = parseTanggalString(lastRow.tanggal);
+    if (isNaN(lastDate.getTime())) {
+      throw new Error("Format tanggal pada baris terakhir tidak valid.");
     }
-    logToTerminal(`[Forecast] Tanggal akhir dataset: ${lastDate.toDateString()}`);
 
-    // 2. Hitung rata-rata dasar views FB, IG, dan TikTok
-    const totalFB = uploadedData.reduce((s, r) => s + r.fb, 0);
-    const totalIG = uploadedData.reduce((s, r) => s + r.ig, 0);
-    const totalTT = uploadedData.reduce((s, r) => s + r.tt, 0);
-    const count = uploadedData.length || 1;
-    
-    const avgFB = totalFB / count;
-    const avgIG = totalIG / count;
-    const avgTT = totalTT / count;
+    const fbValues = uploadedData.map(r => parseFloat(r.fb || r.Facebook || 0)).filter(v => !isNaN(v));
+    const igValues = uploadedData.map(r => parseFloat(r.ig || r.Instagram || 0)).filter(v => !isNaN(v));
+    const ttValues = uploadedData.map(r => parseFloat(r.tt || r.TikTok || 0)).filter(v => !isNaN(v));
 
-    // 3. Hitung faktor hari dalam pekan (Day of Week)
-    const dowCounts = Array(7).fill(0);
-    const dowFB = Array(7).fill(0);
-    const dowIG = Array(7).fill(0);
-    const dowTT = Array(7).fill(0);
+    const avgFB = fbValues.reduce((s, v) => s + v, 0) / (fbValues.length || 1);
+    const avgIG = igValues.reduce((s, v) => s + v, 0) / (igValues.length || 1);
+    const avgTT = ttValues.reduce((s, v) => s + v, 0) / (ttValues.length || 1);
 
-    uploadedData.forEach(row => {
-      const date = parseTanggalString(row.tanggal);
-      const day = date.getDay(); // 0 = Minggu, 1 = Senin, ...
-      const dayOfWeek = (day === 0) ? 6 : day - 1; // Konversi ke 0=Senin, 6=Minggu
-      
-      dowCounts[dayOfWeek]++;
-      dowFB[dayOfWeek] += row.fb;
-      dowIG[dayOfWeek] += row.ig;
-      dowTT[dayOfWeek] += row.tt;
-    });
+    const fbFactor = new Array(7).fill(1.0);
+    const igFactor = new Array(7).fill(1.0);
+    const ttFactor = new Array(7).fill(1.0);
+    const mFBFactor = new Array(12).fill(1.0);
+    const mIGFactor = new Array(12).fill(1.0);
+    const mTTFactor = new Array(12).fill(1.0);
 
-    const fbFactor = dowFB.map((v, i) => dowCounts[i] ? (v / dowCounts[i]) / (avgFB || 1) : 1.0);
-    const igFactor = dowIG.map((v, i) => dowCounts[i] ? (v / dowCounts[i]) / (avgIG || 1) : 1.0);
-    const ttFactor = dowTT.map((v, i) => dowCounts[i] ? (v / dowCounts[i]) / (avgTT || 1) : 1.0);
+    calculateSeasonalityFactors(uploadedData, fbFactor, igFactor, ttFactor, mFBFactor, mIGFactor, mTTFactor);
 
-    // 4. Hitung faktor musiman bulanan (Monthly Seasonality)
-    const monthCounts = Array(12).fill(0);
-    const monthFB = Array(12).fill(0);
-    const monthIG = Array(12).fill(0);
-    const monthTT = Array(12).fill(0);
-
-    uploadedData.forEach(row => {
-      const date = parseTanggalString(row.tanggal);
-      const month = date.getMonth(); // 0 = Jan, 11 = Des
-      
-      monthCounts[month]++;
-      monthFB[month] += row.fb;
-      monthIG[month] += row.ig;
-      monthTT[month] += row.tt;
-    });
-
-    const mFBFactor = monthFB.map((v, i) => monthCounts[i] ? (v / monthCounts[i]) / (avgFB || 1) : 1.0);
-    const mIGFactor = monthIG.map((v, i) => monthCounts[i] ? (v / monthCounts[i]) / (avgIG || 1) : 1.0);
-    const mTTFactor = monthTT.map((v, i) => monthCounts[i] ? (v / monthCounts[i]) / (avgTT || 1) : 1.0);
-
-    // 5. Hitung rata-rata pertumbuhan/tren jangka pendek (30 hari terakhir vs 30 hari pertama)
-    let trendFB = 0;
-    let trendIG = 0;
-    let trendTT = 0;
+    let trendFB = 0.0, trendIG = 0.0, trendTT = 0.0;
     if (uploadedData.length >= 60) {
       const first30 = uploadedData.slice(0, 30);
       const last30 = uploadedData.slice(-30);
-      
-      const f30FB = first30.reduce((s, r) => s + r.fb, 0) / 30;
-      const l30FB = last30.reduce((s, r) => s + r.fb, 0) / 30;
-      const f30IG = first30.reduce((s, r) => s + r.ig, 0) / 30;
-      const l30IG = last30.reduce((s, r) => s + r.ig, 0) / 30;
-      const f30TT = first30.reduce((s, r) => s + r.tt, 0) / 30;
-      const l30TT = last30.reduce((s, r) => s + r.tt, 0) / 30;
+      const f30FB = first30.reduce((s, r) => s + (r.fb || r.Facebook || 0), 0) / 30;
+      const l30FB = last30.reduce((s, r) => s + (r.fb || r.Facebook || 0), 0) / 30;
+      const f30IG = first30.reduce((s, r) => s + (r.ig || r.Instagram || 0), 0) / 30;
+      const l30IG = last30.reduce((s, r) => s + (r.ig || r.Instagram || 0), 0) / 30;
+      const f30TT = first30.reduce((s, r) => s + (r.tt || r.TikTok || 0), 0) / 30;
+      const l30TT = last30.reduce((s, r) => s + (r.tt || r.TikTok || 0), 0) / 30;
 
       const daysDiff = uploadedData.length - 30;
-      
       if (f30FB > 0) trendFB = (l30FB - f30FB) / f30FB / daysDiff;
       if (f30IG > 0) trendIG = (l30IG - f30IG) / f30IG / daysDiff;
       if (f30TT > 0) trendTT = (l30TT - f30TT) / f30TT / daysDiff;
     }
     
-    // Batasi trend pertumbuhan harian agar logis (+/- 0.08% per hari)
     trendFB = Math.max(-0.0008, Math.min(0.0008, trendFB));
     trendIG = Math.max(-0.0008, Math.min(0.0008, trendIG));
     trendTT = Math.max(-0.0008, Math.min(0.0008, trendTT));
 
-    // 6. Proyeksikan 90 hari ke depan
-    forecastResults = [];
     const monthNamesID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    forecastResults = [];
+    const rowsToPredict = [];
 
     for (let i = 1; i <= 90; i++) {
       const fDate = new Date(lastDate.getTime() + i * 24 * 60 * 60 * 1000);
       const day = fDate.getDay();
-      const dayOfWeek = (day === 0) ? 6 : day - 1; // 0=Senin, 6=Minggu
       const month = fDate.getMonth(); // 0 = Jan, 11 = Des
       
       const tFB = 1 + trendFB * i;

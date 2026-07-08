@@ -390,9 +390,6 @@
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Simpan token di sessionStorage
-        sessionStorage.setItem('app_session', data.token);
-        
         // Redirect ke dashboard utama
         window.location.href = '/';
       } else {
