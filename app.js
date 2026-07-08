@@ -2495,7 +2495,6 @@ window.switchMetricsVariant = switchMetricsVariant;
 
 // Call init function
 initDashboard();
-}
 
 function updateSidebarMetrics(rows) {
   if (!rows || rows.length === 0) return;
