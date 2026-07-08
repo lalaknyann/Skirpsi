@@ -595,22 +595,27 @@ async function initSensitivityChart() {
   const viewsRange = [5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000];
   
   try {
-    const promises = viewsRange.map(v => {
+    const rows = viewsRange.map((v, idx) => {
       const fb = Math.round(v * 0.75);
       const ig = Math.round(v * 0.23);
       const tt = Math.round(v * 0.02);
-      
-      return fetch('/api/predict', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fb, ig, tt, tanggal: "15 Jun 2024" })
-      }).then(res => {
-        if (!res.ok) throw new Error("Gagal mengambil prediksi sensitivitas");
-        return res.json();
-      });
+      return {
+        id: idx + 1,
+        Facebook: fb,
+        Instagram: ig,
+        TikTok: tt,
+        tanggal: "15 Jun 2024"
+      };
     });
 
-    const predictions = await Promise.all(promises);
+    const res = await fetch('/api/predict-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows })
+    });
+    if (!res.ok) throw new Error("Gagal mengambil prediksi sensitivitas");
+    const data = await res.json();
+    const predictions = data.predictions;
     
     const predLR = predictions.map(p => p.lr.value.toFixed(4));
     const predRF = predictions.map(p => p.rf.value.toFixed(4));
