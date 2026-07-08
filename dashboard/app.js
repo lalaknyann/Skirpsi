@@ -1977,23 +1977,23 @@ function renderViewsTrendChart(yearFilter) {
         {
           label: 'Facebook',
           data: fbAvg,
-          borderColor: '#1877F2',
-          backgroundColor: 'rgba(24,119,242,0.07)',
-          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#1877F2'
+          borderColor: '#D0D0D0',
+          backgroundColor: 'rgba(208,208,208,0.07)',
+          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#D0D0D0'
         },
         {
           label: 'Instagram',
           data: igAvg,
-          borderColor: '#E1306C',
-          backgroundColor: 'rgba(225,48,108,0.07)',
-          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#E1306C'
+          borderColor: '#888888',
+          backgroundColor: 'rgba(136,136,136,0.07)',
+          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#888888'
         },
         {
           label: 'TikTok',
           data: ttAvg,
-          borderColor: '#FF0050',
-          backgroundColor: 'rgba(255,0,80,0.07)',
-          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#FF0050'
+          borderColor: '#CC0000',
+          backgroundColor: 'rgba(204,0,0,0.07)',
+          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#CC0000'
         }
       ]
     },
@@ -2326,6 +2326,15 @@ function resetUpload() {
   if (elDateRange) elDateRange.textContent = 'Jan 2024 – Des 2025';
 
   const elR2Avg = document.getElementById('kpi-r2-avg');
+  if (elR2Avg) elR2Avg.textContent = '85.70%';
+
+  const elMaeAvg = document.getElementById('kpi-mae-avg');
+  if (elMaeAvg) elMaeAvg.textContent = '0.1523';
+
+  const elAccAvg = document.getElementById('kpi-acc-avg');
+  if (elAccAvg) elAccAvg.textContent = '1.0979';
+}
+
 async function initDashboard() {
   await loadModelMetrics();
   initDataCharts();
@@ -2410,17 +2419,17 @@ function updateCorrelationUI(corrData) {
     const isPos = val >= 0;
     const label = labelMap[key] || key;
     let strength, strengthColor;
-    if (Math.abs(val) >= 0.6)       { strength = isPos ? 'Positif Kuat' : 'Negatif Kuat';   strengthColor = isPos ? '#4CAF50' : '#FF4444'; }
-    else if (Math.abs(val) >= 0.3)  { strength = isPos ? 'Positif Sedang' : 'Negatif Sedang'; strengthColor = '#FFB800'; }
-    else if (Math.abs(val) >= 0.1)  { strength = isPos ? 'Positif Lemah' : 'Negatif Lemah';  strengthColor = '#A0A0A0'; }
-    else                            { strength = 'Sangat Lemah';   strengthColor = '#606060'; }
+    if (Math.abs(val) >= 0.6)       { strength = isPos ? 'Positif Kuat' : 'Negatif Kuat';   strengthColor = isPos ? '#CC0000' : '#CC0000'; }
+    else if (Math.abs(val) >= 0.3)  { strength = isPos ? 'Positif Sedang' : 'Negatif Sedang'; strengthColor = '#6E6E70'; }
+    else if (Math.abs(val) >= 0.1)  { strength = isPos ? 'Positif Lemah' : 'Negatif Lemah';  strengthColor = '#888888'; }
+    else                            { strength = 'Sangat Lemah';   strengthColor = '#888888'; }
     
     const negHint = val < -0.1
-      ? `<div style="font-size:9px;color:#FF8C00;margin-top:3px;line-height:1.3" title="Korelasi negatif: semakin tinggi views, penjualan cenderung menurun">⚠ views naik → penjualan turun</div>`
+      ? `<div style="font-size:9px;color:#CC0000;margin-top:3px;line-height:1.3" title="Korelasi negatif: semakin tinggi views, penjualan cenderung menurun">⚠ views naik → penjualan turun</div>`
       : '';
       
     corrGrid.innerHTML += `
-      <div class="corr-item" style="${val < -0.1 ? 'border-color:rgba(255,68,68,0.3);' : ''}">
+      <div class="corr-item" style="${val < -0.1 ? 'border-color:rgba(204,0,0,0.22);' : ''}">
         <div class="corr-platform">${label}</div>
         <div class="corr-value ${isPos ? 'corr-positive' : 'corr-negative'}">${val > 0 ? '+' : ''}${val.toFixed(4)}</div>
         <div style="font-size:10px;color:${strengthColor};margin-top:4px;font-weight:600">${strength}</div>
