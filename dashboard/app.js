@@ -2346,8 +2346,7 @@ async function initDashboard() {
   initSensitivityChart();
 }
 
-let activeMetricsVariant = 'views_only';
-let globalMetrics = null;
+// globalMetrics and activeMetricsVariant are already declared globally at the top of the file
 
 async function loadModelMetrics() {
   try {
