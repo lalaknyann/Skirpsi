@@ -2935,23 +2935,12 @@ function showUIFeedback(msg, type = "info") {
 // ═══════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Render metrics tables
-  renderMetricsTable('metricsTableBody', false);
-  renderMetricsTable('metricsTableDetail', true);
-
-  // Init charts
-  initOverviewCharts();
-  initDataCharts();
-  initModelCharts();
-
   // Set default active section to 'upload' (ini akan menyembunyikan section lainnya secara otomatis)
   showSection('upload');
 
-  // Hide loading overlay
-  setTimeout(() => {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) overlay.classList.add('hidden');
-  }, 1400);
+  // Hide loading overlay instantly on load
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) overlay.classList.add('hidden');
 
   // Demo mode: auto-load Data Harian.csv jika ?demo=1 ada di URL
   const urlParams = new URLSearchParams(window.location.search);
