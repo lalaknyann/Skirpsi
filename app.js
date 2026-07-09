@@ -1032,9 +1032,10 @@ async function runBatchPrediction() {
     updateDashboardChartsAndMetrics(uploadedData, predictionResults);
 
     const resultsSection = document.getElementById('resultsSection');
-    if (resultsSection) resultsSection.classList.add('visible');
-
-    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (resultsSection) {
+      resultsSection.classList.add('visible');
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 
     showSection('overview');
 
