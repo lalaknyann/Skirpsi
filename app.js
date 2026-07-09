@@ -1586,12 +1586,9 @@ function initFeatureImportanceChart(predictedData) {
   }
   console.log("[Chart Init] Canvas chartFeatureImportance found successfully:", ctx);
 
-  const validRows = predictedData.filter(r => r.penjualan !== null && !isNaN(r.penjualan));
-  const hasActual = validRows.length > 0;
-
-  // Use validRows for both features and actuals to align lengths perfectly and prevent NaN crash!
-  const dataToUse = hasActual ? validRows : predictedData;
-  const actuals = hasActual ? validRows.map(r => parseFloat(r.penjualan)) : predictedData.map(r => r.result.xgb.value);
+  // Always calculate feature importance correlation against predictions to show consistent model dependency
+  const dataToUse = predictedData;
+  const actuals = predictedData.map(r => r.result.xgb.value);
   const fbs = dataToUse.map(r => r.fb);
   const igs = dataToUse.map(r => r.ig);
   const tts = dataToUse.map(r => r.tt);
@@ -1627,7 +1624,7 @@ function initFeatureImportanceChart(predictedData) {
     data: {
       labels: importances.map(i => i.label),
       datasets: [{
-        label: hasActual ? 'Kekuatan Hubungan (Korelasi Absolut)' : 'Kekuatan Hubungan dengan Prediksi (Tanpa Kolom Penjualan)',
+        label: 'Kekuatan Hubungan dengan Estimasi Penjualan (Korelasi Absolut)',
         data: importances.map(i => i.val),
         backgroundColor: [
           'rgba(255, 68, 68, 0.75)',
