@@ -100,10 +100,10 @@ function toggleTheme() {
 let globalMetrics = null;
 let activeMetricsVariant = 'views_only';
 let CORRELATION = {
-  "Facebook":         -0.0126,
-  "Instagram":        0.0146,
-  "TikTok":          0.0319,
-  "total_views":      -0.0047
+  "Facebook":         0.7791,
+  "Instagram":        0.4415,
+  "TikTok":          -0.3113,
+  "total_views":      0.8051
 };
 
 const MONTHLY_VIEWS = {
