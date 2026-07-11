@@ -497,8 +497,10 @@ def predict_batch():
         else:
             return jsonify({"error": "Model not loaded"}), 500
             
-    except Exception:
-        return jsonify({"error": "Terjadi kesalahan server internal"}), 500
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Terjadi kesalahan server internal", "details": str(e)}), 500
 
 @app.route("/api/model-metrics", methods=["GET"])
 def model_metrics():

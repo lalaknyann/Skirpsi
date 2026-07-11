@@ -537,9 +537,33 @@
 
             <div class="divider" style="margin:24px 0;height:1px;background:var(--border);"></div>
 
-            <!-- Chart of Forecast -->
-            <div class="chart-container" style="min-height:300px;margin-bottom:24px;">
-              <canvas id="chartForecast2026"></canvas>
+            <!-- SECTION A: Data Historis Penjualan -->
+            <div class="forecast-section-title" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <span style="font-weight:600;font-size:15px;color:var(--text-primary);">📊 SECTION A: Data Historis Penjualan</span>
+              <div class="granularity-toggle" style="display:flex;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:20px;padding:3px;">
+                <button class="toggle-btn" id="btnGranularityWeek" onclick="setForecastHistoryGranularity('week')" style="background:transparent;border:none;color:var(--text-muted);padding:6px 16px;font-size:12px;font-weight:600;border-radius:15px;cursor:pointer;transition:all 0.2s;">Per Minggu</button>
+                <button class="toggle-btn active" id="btnGranularityMonth" onclick="setForecastHistoryGranularity('month')" style="background:var(--primary);border:none;color:white;padding:6px 16px;font-size:12px;font-weight:600;border-radius:15px;cursor:pointer;transition:all 0.2s;">Per Bulan</button>
+                <button class="toggle-btn" id="btnGranularityYear" onclick="setForecastHistoryGranularity('year')" style="background:transparent;border:none;color:var(--text-muted);padding:6px 16px;font-size:12px;font-weight:600;border-radius:15px;cursor:pointer;transition:all 0.2s;">Per Tahun</button>
+              </div>
+            </div>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+              Analisis historis total unit penjualan yang didapatkan dari data harian yang telah diunggah (Agregasi: Jumlah Penjualan).
+            </p>
+            <div class="chart-container" style="min-height:300px;margin-bottom:32px;">
+              <canvas id="chartForecastHistory"></canvas>
+            </div>
+
+            <div class="divider" style="margin:32px 0;height:1px;background:var(--border);"></div>
+
+            <!-- SECTION B: Data Prediksi (90 Hari) -->
+            <div class="forecast-section-title" style="margin-bottom:12px;">
+              <span style="font-weight:600;font-size:15px;color:var(--text-primary);">🔮 SECTION B: Data Prediksi (90 Hari Ke Depan)</span>
+            </div>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+              Prediksi penjualan harian Indibiz untuk 90 hari pertama tahun 2026 (Januari – Maret 2026) berdasarkan proyeksi tren media sosial dari masing-masing model Machine Learning.
+            </p>
+            <div class="chart-container" style="min-height:350px;margin-bottom:24px;">
+              <canvas id="chartForecastPreds2026"></canvas>
             </div>
 
             <div class="divider" style="margin:24px 0;height:1px;background:var(--border);"></div>

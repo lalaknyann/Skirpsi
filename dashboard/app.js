@@ -164,6 +164,7 @@ let uploadedData = [];
 let predictionResults = [];
 let uploadedFileName = '';
 let forecastResults = [];
+let currentHistoryGranularity = 'month'; // 'week' | 'month' | 'year'
 let currentMLResults = null; // Menyimpan hasil ML terbaru setelah upload CSV
 
 // ═══════════════════════════════════════
@@ -2465,6 +2466,66 @@ function updateFeatureImportanceChart(featureImportanceData) {
   const ctx = document.getElementById('chartFeatureImportance');
   if (!ctx) return;
 
+  const labelMap = {
+    "Facebook": "Facebook Views",
+    "Instagram": "Instagram Views",
+    "TikTok": "TikTok Views",
+    "log_facebook": "Log Facebook Views",
+    "log_instagram": "Log Instagram Views",
+    "log_tiktok": "Log TikTok Views",
+    "total_views": "Total Views",
+    "log_total_views": "Log Total Views",
+    "ratio_fb_total": "Rasio FB / Total Views",
+    "ratio_ig_total": "Rasio IG / Total Views",
+    "ratio_tt_total": "Rasio TT / Total Views",
+    "facebook_growth": "Pertumbuhan FB Views",
+    "instagram_growth": "Pertumbuhan IG Views",
+    "tiktok_growth": "Pertumbuhan TT Views",
+    "total_views_growth": "Pertumbuhan Total Views",
+    "hari": "Hari dalam Bulan",
+    "bulan": "Bulan dalam Tahun",
+    "tahun": "Tahun",
+    "hari_pekan": "Hari Pekan (Weekday)",
+    "is_weekend": "Hari Libur (Weekend)",
+    "quarter": "Kuartal (Quarter)",
+    "day_of_year": "Hari ke- dalam Tahun",
+    "week_of_year": "Minggu ke- dalam Tahun",
+    "bulan_sin": "Musiman Bulan (Sin)",
+    "bulan_cos": "Musiman Bulan (Cos)",
+    "dow_sin": "Musiman Hari (Sin)",
+    "dow_cos": "Musiman Hari (Cos)",
+    "is_peak_month": "Bulan Puncak (Maret/April/Desember)",
+    "is_mid_year": "Tengah Tahun (Juni/Juli)",
+    "is_q4": "Kuartal 4 (Q4)",
+    "fb_lag1": "FB Views (H-1)",
+    "fb_lag3": "FB Views (H-3)",
+    "fb_lag7": "FB Views (H-7)",
+    "ig_lag1": "IG Views (H-1)",
+    "ig_lag3": "IG Views (H-3)",
+    "ig_lag7": "IG Views (H-7)",
+    "tt_lag1": "TT Views (H-1)",
+    "tt_lag3": "TT Views (H-3)",
+    "tt_lag7": "TT Views (H-7)",
+    "views_roll7_mean": "Rata-rata Views (7 Hari)",
+    "views_roll14_mean": "Rata-rata Views (14 Hari)",
+    "views_roll7_std": "Deviasi Standar Views (7 Hari)",
+    "views_trend": "Tren Perubahan Views",
+    "log_views_x_weekend": "Interaksi Views x Weekend",
+    "log_views_x_peakmon": "Interaksi Views x Peak Month",
+    "log_views_x_q4": "Interaksi Views x Kuartal 4",
+    "penjualan_lag1": "Penjualan Aktual (H-1)",
+    "penjualan_lag2": "Penjualan Aktual (H-2)",
+    "penjualan_lag3": "Penjualan Aktual (H-3)",
+    "penjualan_lag7": "Penjualan Aktual (H-7)",
+    "penjualan_lag14": "Penjualan Aktual (H-14)",
+    "sales_roll3_mean": "Rata-rata Penjualan (3 Hari)",
+    "sales_roll7_mean": "Rata-rata Penjualan (7 Hari)",
+    "sales_roll14_mean": "Rata-rata Penjualan (14 Hari)",
+    "sales_roll7_std": "Deviasi Standar Penjualan (7 Hari)",
+    "sales_roll7_max": "Maksimum Penjualan (7 Hari)",
+    "sales_trend": "Tren Perubahan Penjualan"
+  };
+
   const xgbImportance = featureImportanceData["XGBoost"] || {};
   const sortedFeatures = Object.entries(xgbImportance)
     .map(([key, val]) => ({ label: key, val: val }))
@@ -2475,7 +2536,7 @@ function updateFeatureImportanceChart(featureImportanceData) {
   chartFeatureImportanceInstance = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: sortedFeatures.map(f => f.label),
+      labels: sortedFeatures.map(f => labelMap[f.label] || f.label),
       datasets: [{
         label: 'Feature Importance (Model XGBoost)',
         data: sortedFeatures.map(f => f.val),
@@ -2860,136 +2921,209 @@ function renderForecastSummary(results) {
   `;
 }
 
-let forecastChartInstance = null;
+let forecastHistoryChartInstance = null;
+let forecastPredsChartInstance = null;
 let forecastViewsChartInstance = null;
 
-function initForecastChart(results) {
-  const ctx = document.getElementById('chartForecast2026');
-  const viewsCtx = document.getElementById('chartForecastViews2026');
-  if (!ctx) return;
+function setForecastHistoryGranularity(granularity) {
+  currentHistoryGranularity = granularity;
+  
+  // Update toggle buttons active class
+  ['Week', 'Month', 'Year'].forEach(g => {
+    const btn = document.getElementById(`btnGranularity${g}`);
+    if (btn) {
+      if (g.toLowerCase() === granularity) {
+        btn.classList.add('active');
+        btn.style.background = 'var(--primary)';
+        btn.style.color = 'white';
+      } else {
+        btn.classList.remove('active');
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-muted)';
+      }
+    }
+  });
+  
+  // Re-render the forecast charts
+  initForecastChart(forecastResults);
+}
 
-  if (forecastChartInstance) {
-    forecastChartInstance.destroy();
+function getISOWeek(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
+}
+
+function aggregateHistoricalData(data, granularity) {
+  if (!data || data.length === 0) {
+    return { labels: [], values: [] };
+  }
+
+  const groups = {}; // { groupKey: { sum: 0, label: '' } }
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+  data.forEach(r => {
+    const val = parseFloat(r.penjualan !== undefined ? r.penjualan : (r.Penjualan || 0));
+    const dateObj = parseTanggalString(r.tanggal);
+    if (isNaN(dateObj.getTime())) return;
+
+    let key = '';
+    let label = '';
+
+    if (granularity === 'year') {
+      const yr = dateObj.getFullYear();
+      key = `${yr}`;
+      label = `${yr}`;
+    } else if (granularity === 'month') {
+      const yr = dateObj.getFullYear();
+      const m = dateObj.getMonth();
+      key = `${yr}-${String(m).padStart(2, '0')}`;
+      label = `${monthNames[m]} ${yr}`;
+    } else { // 'week'
+      const day = dateObj.getDay();
+      const diff = dateObj.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(dateObj.setDate(diff));
+      const yr = monday.getFullYear();
+      const m = monday.getMonth();
+      const d = monday.getDate();
+      key = `${yr}-W${String(getISOWeek(monday)).padStart(2, '0')}`;
+      label = `Minggu ${d} ${monthNames[m]} ${yr}`;
+    }
+
+    if (!groups[key]) {
+      groups[key] = { sum: 0, label: label };
+    }
+    groups[key].sum += val;
+  });
+
+  const sortedKeys = Object.keys(groups).sort();
+  const labels = sortedKeys.map(k => groups[k].label);
+  const values = sortedKeys.map(k => groups[k].sum);
+
+  return { labels, values };
+}
+
+function initForecastChart(results) {
+  const historyCtx = document.getElementById('chartForecastHistory');
+  const predsCtx = document.getElementById('chartForecastPreds2026');
+  const viewsCtx = document.getElementById('chartForecastViews2026');
+  
+  if (!historyCtx || !predsCtx) return;
+
+  if (forecastHistoryChartInstance) {
+    forecastHistoryChartInstance.destroy();
+  }
+  if (forecastPredsChartInstance) {
+    forecastPredsChartInstance.destroy();
   }
   if (forecastViewsChartInstance) {
     forecastViewsChartInstance.destroy();
   }
 
-  // 1. Get best model from results.json
-  const metrics = globalMetrics ? globalMetrics[activeMetricsVariant] : null;
-  let bestModelKey = 'Random Forest';
-  let bestModelShort = 'rf';
-  let bestRMSE = 0.15;
+  // ==========================================
+  // SECTION A: Data Historis Penjualan
+  // ==========================================
+  const aggregated = aggregateHistoricalData(uploadedData, currentHistoryGranularity);
+  
+  const historyCanvasCtx = historyCtx.getContext('2d');
+  const gradHistory = historyCanvasCtx.createLinearGradient(0, 0, 0, 260);
+  gradHistory.addColorStop(0, 'rgba(224, 36, 36, 0.85)'); // Telkom Red Accent
+  gradHistory.addColorStop(1, 'rgba(224, 36, 36, 0.15)');
 
-  if (metrics) {
-    let bestR2 = -999;
-    Object.entries(metrics).forEach(([key, val]) => {
-      if (val.R2 > bestR2) {
-        bestR2 = val.R2;
-        bestModelKey = key;
-      }
-    });
-    bestRMSE = metrics[bestModelKey].RMSE || 0.15;
-    bestModelShort = {
-      'Linear Regression': 'lr',
-      'Random Forest': 'rf',
-      'XGBoost': 'xgb'
-    }[bestModelKey] || 'rf';
-  }
-
-  // 2. Prepare historical sales from uploadedData
-  const historyLabels = uploadedData.map(r => r.tanggal);
-  const historySales = uploadedData.map(r => parseFloat(r.Penjualan || r.penjualan || 0));
-
-  const forecastDates = results.map(r => r.tanggal);
-  const forecastSalesValues = results.map(r => r.result[bestModelShort].value);
-
-  // Combine X-axis labels
-  const allLabels = [...historyLabels, ...forecastDates];
-
-  // Align historical line (nulls for forecast part)
-  const historyPoints = [...historySales, ...new Array(forecastDates.length).fill(null)];
-
-  // Align forecast line (nulls for historical part, connecting at last historical point)
-  const lastHistoricalSalesVal = historySales.length > 0 ? historySales[historySales.length - 1] : 0;
-  const forecastSalesPoints = [...new Array(historySales.length - 1).fill(null), lastHistoricalSalesVal, ...forecastSalesValues];
-
-  // Align uncertainty band points
-  const upperBandPoints = [
-    ...new Array(historySales.length - 1).fill(null),
-    lastHistoricalSalesVal,
-    ...results.map(r => Math.min(3.0, r.result[bestModelShort].value + bestRMSE))
-  ];
-  const lowerBandPoints = [
-    ...new Array(historySales.length - 1).fill(null),
-    lastHistoricalSalesVal,
-    ...results.map(r => Math.max(0.0, r.result[bestModelShort].value - bestRMSE))
-  ];
-
-  // Custom vertical split line annotation plugin
-  const verticalLinePlugin = {
-    id: 'verticalLineSplit',
-    afterDraw: (chart) => {
-      if (chart.scales.x && historySales.length > 0) {
-        const xVal = chart.scales.x.getPixelForValue(historySales.length - 1);
-        const ctx = chart.ctx;
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(xVal, chart.chartArea.top);
-        ctx.lineTo(xVal, chart.chartArea.bottom);
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.setLineDash([4, 4]);
-        ctx.stroke();
-
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.font = '11px sans-serif';
-        ctx.textAlign = 'right';
-        ctx.fillText('Batas Proyeksi ', xVal, chart.chartArea.top + 15);
-        ctx.restore();
+  forecastHistoryChartInstance = new Chart(historyCtx, {
+    type: 'bar',
+    data: {
+      labels: aggregated.labels,
+      datasets: [{
+        label: 'Total Penjualan (unit)',
+        data: aggregated.values,
+        backgroundColor: gradHistory,
+        borderColor: '#e02424',
+        borderWidth: 1.5,
+        borderRadius: 6,
+        barPercentage: aggregated.labels.length > 24 ? 0.8 : 0.5
+      }]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      plugins: {
+        ...CHART_DEFAULTS.plugins,
+        tooltip: {
+          ...CHART_DEFAULTS.plugins?.tooltip,
+          callbacks: {
+            label: function(context) {
+              return `Total Penjualan: ${context.parsed.y.toLocaleString('id-ID')} unit`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: CHART_DEFAULTS.scales.x,
+        y: {
+          type: 'linear',
+          beginAtZero: true,
+          ticks: { color: '#A0A0A0' },
+          grid: { color: 'rgba(46,46,46,0.3)' },
+          title: { display: true, text: 'Total Penjualan (unit)', color: '#A0A0A0' }
+        }
       }
     }
-  };
+  });
 
-  // Build primary Sales Forecast Chart
-  forecastChartInstance = new Chart(ctx, {
+  // ==========================================
+  // SECTION B: Data Prediksi (90 Hari)
+  // ==========================================
+  const forecastDates = results.map(r => r.tanggal);
+  const lrData = results.map(r => r.result.lr.value);
+  const rfData = results.map(r => r.result.rf.value);
+  const xgbData = results.map(r => r.result.xgb.value);
+
+  const actualData = new Array(results.length).fill(null);
+
+  forecastPredsChartInstance = new Chart(predsCtx, {
     type: 'line',
     data: {
-      labels: allLabels.map(lbl => lbl.split(' ')[0] + ' ' + lbl.split(' ')[1]),
+      labels: forecastDates.map(lbl => lbl.split(' ')[0] + ' ' + lbl.split(' ')[1]),
       datasets: [
         {
-          label: 'Histori Penjualan',
-          data: historyPoints,
-          borderColor: '#CC0000', // Telkom Red Accent
+          label: 'Prediksi XGBoost',
+          data: xgbData,
+          borderColor: '#FF4444',
           backgroundColor: 'transparent',
           borderWidth: 2.5,
-          pointRadius: 0
+          pointRadius: 1.5,
+          pointHoverRadius: 5
         },
         {
-          label: `Forecast Penjualan (${bestModelKey})`,
-          data: forecastSalesPoints,
-          borderColor: '#CC0000', // Telkom Red Accent
+          label: 'Prediksi Random Forest',
+          data: rfData,
+          borderColor: '#FF9F43',
           backgroundColor: 'transparent',
           borderWidth: 2.5,
           borderDash: [5, 5],
-          pointRadius: 0
+          pointRadius: 1.5,
+          pointHoverRadius: 5
         },
         {
-          label: 'Uncertainty (Upper)',
-          data: upperBandPoints,
-          borderColor: 'transparent',
+          label: 'Prediksi Linear Regression',
+          data: lrData,
+          borderColor: '#0ea5e9',
           backgroundColor: 'transparent',
-          pointRadius: 0,
-          showLine: true
+          borderWidth: 2.5,
+          borderDash: [2, 2],
+          pointRadius: 1.5,
+          pointHoverRadius: 5
         },
         {
-          label: 'Rentang Ketidakpastian (1 Std Dev)',
-          data: lowerBandPoints,
-          borderColor: 'transparent',
-          backgroundColor: 'rgba(204, 0, 0, 0.08)',
-          fill: '-1',
+          label: 'Aktual Penjualan',
+          data: actualData,
+          borderColor: '#888888',
+          backgroundColor: 'transparent',
+          borderWidth: 2.0,
           pointRadius: 0,
-          showLine: true
+          hidden: true
         }
       ]
     },
@@ -2998,8 +3132,26 @@ function initForecastChart(results) {
       plugins: {
         ...CHART_DEFAULTS.plugins,
         tooltip: {
-          ...CHART_DEFAULTS.plugins?.tooltip,
-          filter: (item) => item.datasetIndex < 2
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            title: function(context) {
+              const idx = context[0].dataIndex;
+              return results[idx].tanggal;
+            },
+            label: function(context) {
+              const label = context.dataset.label;
+              const val = context.parsed.y;
+              if (val === null || isNaN(val)) return null;
+              
+              let prefix = '⬜';
+              if (label.includes('XGBoost')) prefix = '🟥';
+              else if (label.includes('Random Forest')) prefix = '🟨';
+              else if (label.includes('Linear Regression')) prefix = '🟦';
+              
+              return `${prefix} ${label}: ${val.toFixed(3)}`;
+            }
+          }
         }
       },
       scales: {
@@ -3010,11 +3162,10 @@ function initForecastChart(results) {
           max: 3.5,
           ticks: { color: '#A0A0A0' },
           grid: { color: 'rgba(46,46,46,0.3)' },
-          title: { display: true, text: 'Penjualan (unit)', color: '#A0A0A0' }
+          title: { display: true, text: 'Prediksi Penjualan (unit)', color: '#A0A0A0' }
         }
       }
-    },
-    plugins: [verticalLinePlugin]
+    }
   });
 
   // Build secondary Views Projections Chart
