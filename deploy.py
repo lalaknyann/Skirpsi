@@ -56,7 +56,14 @@ def deploy():
         # Pull latest code from GitHub
         command = "cd ~/Skirpsi && git pull\n"
         res = requests.post(input_url, headers=headers, json={"input": command})
-        if res.status_code != 200:
+        if res.status_code == 412:
+            print("\n[TIPS] Error 412: Console baru belum diaktifkan oleh sistem PythonAnywhere.")
+            print("Silakan ikuti langkah mudah ini:")
+            print("1. Buka browser dan login ke https://www.pythonanywhere.com/")
+            print("2. Masuk ke tab 'Consoles' dan buka salah satu console 'Bash'.")
+            print("3. Setelah console terbuka di browser, jalankan kembali script deploy.py ini.")
+            return
+        elif res.status_code != 200:
             print(f"[FAILED] Gagal mengirim perintah pull: {res.status_code} - {res.text}")
             return
         
