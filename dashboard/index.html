@@ -370,10 +370,21 @@
         </div>
 
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">Feature Importance &rarr; Correlation Strength</span>
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <span class="card-title" id="featureImportanceTitle">Feature Importance (Model: XGBoost)</span>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <div class="importance-model-toggle" style="display:flex; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:15px; padding:2px;">
+                <button class="toggle-btn" id="btnImportanceLR" onclick="setImportanceModel('Linear Regression')" style="background:transparent; border:none; color:var(--text-muted); padding:4px 12px; font-size:11px; font-weight:600; border-radius:12px; cursor:pointer; transition:all 0.2s;">LR</button>
+                <button class="toggle-btn" id="btnImportanceRF" onclick="setImportanceModel('Random Forest')" style="background:transparent; border:none; color:var(--text-muted); padding:4px 12px; font-size:11px; font-weight:600; border-radius:12px; cursor:pointer; transition:all 0.2s;">RF</button>
+                <button class="toggle-btn active" id="btnImportanceXGB" onclick="setImportanceModel('XGBoost')" style="background:var(--primary); border:none; color:white; padding:4px 12px; font-size:11px; font-weight:600; border-radius:12px; cursor:pointer; transition:all 0.2s;">XGBoost</button>
+              </div>
+              <select id="selectImportanceType" onchange="changeImportanceType()" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text-primary); border-radius:6px; padding:4px 8px; font-size:12px; font-weight:600; cursor:pointer; outline:none;">
+                <option value="gini">Gini / Coefficient</option>
+                <option value="permutation">Permutation Importance</option>
+              </select>
+            </div>
           </div>
-          <div class="chart-container" style="height:280px">
+          <div class="chart-container" style="height:320px">
             <canvas id="chartFeatureImportance"></canvas>
           </div>
         </div>

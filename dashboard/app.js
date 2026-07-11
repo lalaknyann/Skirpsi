@@ -165,6 +165,8 @@ let predictionResults = [];
 let uploadedFileName = '';
 let forecastResults = [];
 let currentHistoryGranularity = 'month'; // 'week' | 'month' | 'year'
+let activeImportanceModel = 'XGBoost';
+let activeImportanceType = 'gini'; // 'gini' | 'permutation'
 let currentMLResults = null; // Menyimpan hasil ML terbaru setelah upload CSV
 
 // ═══════════════════════════════════════
@@ -2418,8 +2420,8 @@ function updateDashboardMetricsUI() {
   initOverviewCharts(metrics);
   initModelCharts(metrics);
 
-  if (globalMetrics.feature_importance) {
-    updateFeatureImportanceChart(globalMetrics.feature_importance);
+  if (globalMetrics) {
+    updateFeatureImportanceChart();
   }
   
   if (globalMetrics.correlation) {
@@ -2462,9 +2464,53 @@ function updateCorrelationUI(corrData) {
   });
 }
 
-function updateFeatureImportanceChart(featureImportanceData) {
+function setImportanceModel(modelName) {
+  activeImportanceModel = modelName;
+  
+  // Update toggle buttons active class
+  const mapping = {
+    'Linear Regression': 'LR',
+    'Random Forest': 'RF',
+    'XGBoost': 'XGB'
+  };
+  ['LR', 'RF', 'XGB'].forEach(btnId => {
+    const btn = document.getElementById(`btnImportance${btnId}`);
+    if (btn) {
+      if (mapping[modelName] === btnId) {
+        btn.classList.add('active');
+        btn.style.background = 'var(--primary)';
+        btn.style.color = 'white';
+      } else {
+        btn.classList.remove('active');
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-muted)';
+      }
+    }
+  });
+
+  // Re-render
+  if (globalMetrics) {
+    updateFeatureImportanceChart();
+  }
+}
+
+function changeImportanceType() {
+  const select = document.getElementById('selectImportanceType');
+  if (select) {
+    activeImportanceType = select.value;
+  }
+  // Re-render
+  if (globalMetrics) {
+    updateFeatureImportanceChart();
+  }
+}
+
+window.setImportanceModel = setImportanceModel;
+window.changeImportanceType = changeImportanceType;
+
+function updateFeatureImportanceChart() {
   const ctx = document.getElementById('chartFeatureImportance');
-  if (!ctx) return;
+  if (!ctx || !globalMetrics) return;
 
   const labelMap = {
     "Facebook": "Facebook Views",
@@ -2526,11 +2572,28 @@ function updateFeatureImportanceChart(featureImportanceData) {
     "sales_trend": "Tren Perubahan Penjualan"
   };
 
-  const xgbImportance = featureImportanceData["XGBoost"] || {};
-  const sortedFeatures = Object.entries(xgbImportance)
+  const variantKey = (activeMetricsVariant === 'full_features') ? 'feature_importance_ff' : 'feature_importance_vo';
+  const sourceData = globalMetrics[variantKey] || {};
+  const typeData = sourceData[activeImportanceType] || {};
+  const modelImportance = typeData[activeImportanceModel] || {};
+
+  const sortedFeatures = Object.entries(modelImportance)
     .map(([key, val]) => ({ label: key, val: val }))
     .sort((a, b) => b.val - a.val)
     .slice(0, 10);
+
+  const titleEl = document.getElementById('featureImportanceTitle');
+  if (titleEl) {
+    const typeLabel = (activeImportanceType === 'permutation') ? 'Permutation Importance' : 'Gini / Coefficient';
+    titleEl.textContent = `Feature Importance (Model: ${activeImportanceModel} - ${typeLabel})`;
+  }
+
+  const modelColors = {
+    'Linear Regression': '#0ea5e9',
+    'Random Forest': '#FF9F43',
+    'XGBoost': '#FF4444'
+  };
+  const barColor = modelColors[activeImportanceModel] || 'rgba(255, 68, 68, 0.75)';
 
   if (chartFeatureImportanceInstance) chartFeatureImportanceInstance.destroy();
   chartFeatureImportanceInstance = new Chart(ctx, {
@@ -2538,9 +2601,9 @@ function updateFeatureImportanceChart(featureImportanceData) {
     data: {
       labels: sortedFeatures.map(f => labelMap[f.label] || f.label),
       datasets: [{
-        label: 'Feature Importance (Model XGBoost)',
+        label: `Importance (${activeImportanceModel})`,
         data: sortedFeatures.map(f => f.val),
-        backgroundColor: 'rgba(255, 68, 68, 0.75)',
+        backgroundColor: barColor,
         borderRadius: 6
       }]
     },
@@ -2553,7 +2616,7 @@ function updateFeatureImportanceChart(featureImportanceData) {
       },
       scales: {
         x: {
-          title: { display: true, text: 'Relative Importance', color: '#A0A0A0' },
+          title: { display: true, text: 'Importance Score', color: '#A0A0A0' },
           min: 0,
           ticks: { color: '#A0A0A0' },
           grid: { color: 'rgba(255,255,255,0.05)' }
@@ -3005,7 +3068,7 @@ function aggregateHistoricalData(data, granularity) {
   return { labels, values };
 }
 
-function initForecastChart(results) {
+function initForecastChart(results, isFirstLoad = false) {
   const historyCtx = document.getElementById('chartForecastHistory');
   const predsCtx = document.getElementById('chartForecastPreds2026');
   const viewsCtx = document.getElementById('chartForecastViews2026');
@@ -3021,6 +3084,8 @@ function initForecastChart(results) {
   if (forecastViewsChartInstance) {
     forecastViewsChartInstance.destroy();
   }
+
+  const animDuration = isFirstLoad ? 750 : 0;
 
   // ==========================================
   // SECTION A: Data Historis Penjualan
@@ -3048,6 +3113,9 @@ function initForecastChart(results) {
     },
     options: {
       ...CHART_DEFAULTS,
+      animation: {
+        duration: animDuration
+      },
       plugins: {
         ...CHART_DEFAULTS.plugins,
         tooltip: {
@@ -3091,10 +3159,21 @@ function initForecastChart(results) {
           label: 'Prediksi XGBoost',
           data: xgbData,
           borderColor: '#FF4444',
-          backgroundColor: 'transparent',
+          backgroundColor: function(context) {
+            const chart = context.chart;
+            const {ctx, chartArea} = chart;
+            if (!chartArea) return null;
+            const grad = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            grad.addColorStop(0, 'rgba(255, 68, 68, 0.12)');
+            grad.addColorStop(1, 'rgba(255, 68, 68, 0.0)');
+            return grad;
+          },
+          fill: true,
           borderWidth: 2.5,
-          pointRadius: 1.5,
-          pointHoverRadius: 5
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHitRadius: 10,
+          cubicInterpolationMode: 'monotone'
         },
         {
           label: 'Prediksi Random Forest',
@@ -3103,8 +3182,10 @@ function initForecastChart(results) {
           backgroundColor: 'transparent',
           borderWidth: 2.5,
           borderDash: [5, 5],
-          pointRadius: 1.5,
-          pointHoverRadius: 5
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHitRadius: 10,
+          cubicInterpolationMode: 'monotone'
         },
         {
           label: 'Prediksi Linear Regression',
@@ -3113,55 +3194,181 @@ function initForecastChart(results) {
           backgroundColor: 'transparent',
           borderWidth: 2.5,
           borderDash: [2, 2],
-          pointRadius: 1.5,
-          pointHoverRadius: 5
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHitRadius: 10,
+          cubicInterpolationMode: 'monotone'
         },
         {
           label: 'Aktual Penjualan',
           data: actualData,
           borderColor: '#888888',
-          backgroundColor: 'transparent',
+          backgroundColor: function(context) {
+            const chart = context.chart;
+            const {ctx, chartArea} = chart;
+            if (!chartArea) return null;
+            const grad = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            grad.addColorStop(0, 'rgba(136, 136, 136, 0.10)');
+            grad.addColorStop(1, 'rgba(136, 136, 136, 0.0)');
+            return grad;
+          },
+          fill: true,
           borderWidth: 2.0,
           pointRadius: 0,
-          hidden: true
+          pointHoverRadius: 5,
+          pointHitRadius: 10,
+          cubicInterpolationMode: 'monotone',
+          myHidden: true,
+          borderColor: 'rgba(0, 0, 0, 0)',
+          backgroundColor: 'transparent'
         }
       ]
     },
     options: {
       ...CHART_DEFAULTS,
+      animation: {
+        duration: animDuration
+      },
       plugins: {
         ...CHART_DEFAULTS.plugins,
         tooltip: {
-          mode: 'index',
-          intersect: false,
-          callbacks: {
-            title: function(context) {
-              const idx = context[0].dataIndex;
-              return results[idx].tanggal;
-            },
-            label: function(context) {
-              const label = context.dataset.label;
-              const val = context.parsed.y;
-              if (val === null || isNaN(val)) return null;
-              
-              let prefix = '⬜';
-              if (label.includes('XGBoost')) prefix = '🟥';
-              else if (label.includes('Random Forest')) prefix = '🟨';
-              else if (label.includes('Linear Regression')) prefix = '🟦';
-              
-              return `${prefix} ${label}: ${val.toFixed(3)}`;
+          enabled: false, // Disable default tooltip
+          external: function(context) {
+            let tooltipEl = document.getElementById('chartjs-tooltip-forecast');
+
+            if (!tooltipEl) {
+              tooltipEl = document.createElement('div');
+              tooltipEl.id = 'chartjs-tooltip-forecast';
+              tooltipEl.style.background = 'rgba(255, 255, 255, 0.97)';
+              tooltipEl.style.backdropFilter = 'blur(8px)';
+              tooltipEl.style.webkitBackdropFilter = 'blur(8px)';
+              tooltipEl.style.borderRadius = '10px';
+              tooltipEl.style.color = '#1A1A2E';
+              tooltipEl.style.opacity = 0;
+              tooltipEl.style.pointerEvents = 'none';
+              tooltipEl.style.position = 'absolute';
+              tooltipEl.style.transition = 'all 0.1s ease';
+              tooltipEl.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.15)';
+              tooltipEl.style.padding = '10px 14px';
+              tooltipEl.style.zIndex = '9999';
+              tooltipEl.style.fontSize = '12px';
+              tooltipEl.style.fontFamily = 'Inter, sans-serif';
+              tooltipEl.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+              document.body.appendChild(tooltipEl);
+            }
+
+            const tooltipModel = context.tooltip;
+            if (tooltipModel.opacity === 0) {
+              tooltipEl.style.opacity = 0;
+              return;
+            }
+
+            if (tooltipModel.body) {
+              const titleLines = tooltipModel.title || [];
+              let innerHtml = '<thead>';
+
+              titleLines.forEach(function(title) {
+                const idx = tooltipModel.dataPoints[0].dataIndex;
+                const fullDate = results[idx] ? results[idx].tanggal : title;
+                innerHtml += '<tr><th style="font-weight: 700; text-align: left; padding-bottom: 6px; border-bottom: 1px solid rgba(0,0,0,0.08); font-size: 13px; color:#1a1a2e;">📅 ' + fullDate + '</th></tr>';
+              });
+              innerHtml += '</thead><tbody>';
+
+              tooltipModel.dataPoints.forEach(function(dataPoint) {
+                const dataset = context.chart.data.datasets[dataPoint.datasetIndex];
+                if (dataset.myHidden) return;
+                
+                const val = dataPoint.parsed.y;
+                if (val === null || isNaN(val)) return;
+
+                const color = dataset.origBorderColor || dataset.borderColor;
+                const span = '<span style="display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; background:' + color + '"></span>';
+                innerHtml += '<tr><td style="padding: 4px 0; display: flex; align-items: center; justify-content: space-between; gap: 20px;">' +
+                  '<span style="color:#555; display:flex; align-items:center;">' + span + dataset.label + '</span>' +
+                  '<span style="font-weight:700; color:#1A1A2E;">' + val.toFixed(3) + ' unit</span>' +
+                  '</td></tr>';
+              });
+              innerHtml += '</tbody>';
+
+              const tableRoot = document.createElement('table');
+              tableRoot.style.width = '100%';
+              tableRoot.style.borderCollapse = 'collapse';
+              tableRoot.innerHTML = innerHtml;
+
+              tooltipEl.innerHTML = '';
+              tooltipEl.appendChild(tableRoot);
+            }
+
+            const position = context.chart.canvas.getBoundingClientRect();
+
+            tooltipEl.style.opacity = 1;
+            tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
+            tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY - 8 + 'px';
+            tooltipEl.style.transform = 'translate(-50%, -105%)';
+          }
+        },
+        legend: {
+          display: true,
+          onClick: function(e, legendItem, legend) {
+            const index = legendItem.datasetIndex;
+            const ci = legend.chart;
+            const ds = ci.data.datasets[index];
+            
+            ds.myHidden = !ds.myHidden;
+            
+            if (!ds.origBorderColor) {
+              ds.origBorderColor = ds.borderColor;
+              ds.origBackgroundColor = ds.backgroundColor;
+            }
+            
+            if (ds.myHidden) {
+              ds.borderColor = 'rgba(0, 0, 0, 0)';
+              ds.backgroundColor = 'transparent';
+              ds.pointRadius = 0;
+              ds.pointHoverRadius = 0;
+            } else {
+              ds.borderColor = ds.origBorderColor;
+              ds.backgroundColor = ds.origBackgroundColor;
+              ds.pointRadius = 0;
+              ds.pointHoverRadius = 5;
+            }
+            ci.update();
+          },
+          labels: {
+            color: '#A0A0A0',
+            generateLabels: function(chart) {
+              const datasets = chart.data.datasets;
+              return datasets.map((ds, i) => {
+                const isDimmed = ds.myHidden;
+                const borderC = ds.origBorderColor || ds.borderColor;
+                return {
+                  text: ds.label,
+                  datasetIndex: i,
+                  fillStyle: isDimmed ? 'rgba(160, 160, 160, 0.15)' : borderC,
+                  strokeStyle: isDimmed ? 'rgba(160, 160, 160, 0.15)' : borderC,
+                  fontColor: isDimmed ? 'rgba(160, 160, 160, 0.3)' : '#A0A0A0',
+                  lineWidth: 1,
+                  hidden: false
+                };
+              });
             }
           }
         }
       },
       scales: {
-        x: CHART_DEFAULTS.scales.x,
+        x: {
+          ...CHART_DEFAULTS.scales.x,
+          grid: { display: false }
+        },
         y: {
           type: 'linear',
           min: 0,
           max: 3.5,
           ticks: { color: '#A0A0A0' },
-          grid: { color: 'rgba(46,46,46,0.3)' },
+          grid: {
+            color: 'rgba(255, 255, 255, 0.05)',
+            borderDash: [5, 5]
+          },
           title: { display: true, text: 'Prediksi Penjualan (unit)', color: '#A0A0A0' }
         }
       }

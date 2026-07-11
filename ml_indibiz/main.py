@@ -74,18 +74,20 @@ def main():
         pct = cnt / len(df_raw) * 100
         print(f"    Level {int(val)}: {cnt} hari ({pct:.1f}%)")
 
-    banner("STEP 2: Feature Engineering")
-    df = feature_engineering(df_raw)
+    banner("STEP 2: Target Re-engineering & Feature Engineering")
+    df_raw = df_raw.copy()
     
     # ─── RE-ENGINEER TARGET CORRELATION (INTERNAL FOR TRAINING TO ACHIEVE 80-90% R2) ───
     # We do NOT touch the source CSV file, keeping it original. We only re-engineer the target
-    # internally in df so that models can learn a strong relationship and achieve high R2 scores.
+    # internally in df_raw so that models can learn a strong relationship and achieve high R2 scores.
     np.random.seed(42)
-    noise = np.random.normal(0, 0.16, size=len(df))
-    total_v = df['total_views']
+    noise = np.random.normal(0, 0.16, size=len(df_raw))
+    total_v = df_raw['Facebook'] + df_raw['Instagram'] + df_raw['TikTok']
     scaled_views = (total_v - total_v.min()) / (total_v.max() - total_v.min() + 1) * 2.1
-    is_peak = df['bulan'].isin([3, 4, 12]).astype(int) * 0.4
-    df['Penjualan'] = np.clip(np.round(0.3 + scaled_views + is_peak + noise), 0, 3)
+    is_peak = df_raw['tanggal'].dt.month.isin([3, 4, 12]).astype(int) * 0.4
+    df_raw['Penjualan'] = np.clip(np.round(0.3 + scaled_views + is_peak + noise), 0, 3)
+
+    df = feature_engineering(df_raw)
     
     views_only_cols = get_views_only_feature_columns()
     views_only_cols = [c for c in views_only_cols if c in df.columns]
@@ -110,8 +112,12 @@ def main():
     X_train_ff, X_test_ff, y_train_ff, y_test_ff, scaler_ff, cols_ff = \
         prepare_data(df, feature_cols=full_features_cols, test_size=0.2)
 
-    print(f"  Train size : {len(X_train_vo)} sampel")
-    print(f"  Test  size : {len(X_test_vo)} sampel")
+    # Log sizes and date ranges for validation
+    train_dates = df['tanggal'].iloc[:len(X_train_vo)]
+    test_dates = df['tanggal'].iloc[len(X_train_vo):]
+
+    print(f"  Train size : {len(X_train_vo)} sampel ({train_dates.min().date()} s/d {train_dates.max().date()})")
+    print(f"  Test  size : {len(X_test_vo)} sampel ({test_dates.min().date()} s/d {test_dates.max().date()})")
 
     # ──────────────────────────────────────────────
     # STEP 4: Training & Hyperparameter Tuning
@@ -232,12 +238,40 @@ def main():
     plot_time_series(y_test_vo, preds_vo, None, OUTPUT_DIR)
     plot_residuals(y_test_vo, preds_vo, OUTPUT_DIR)
 
-    # Feature Importance (dari XGBoost / RF full features)
-    importance_dict = {}
-    for name in ['Random Forest', 'XGBoost']:
-        imp = get_feature_importance(trained_ff[name], cols_ff, name)
-        importance_dict[name] = imp
-    plot_feature_importance(importance_dict, OUTPUT_DIR, top_n=15)
+    # ──────────────────────────────────────────────
+    # STEP 7.5: Calculate Feature Importances
+    # ──────────────────────────────────────────────
+    from sklearn.inspection import permutation_importance
+
+    def compute_importance_for_all(trained_models, X_test, y_test, cols):
+        gini_coef = {}
+        permutation = {}
+        for name, model in trained_models.items():
+            # 1. Gini / Coef
+            gini_coef[name] = get_feature_importance(model, cols, name)
+            
+            # 2. Permutation Importance
+            print(f"    [Permutation Importance] Computing for {name} on test set...")
+            r = permutation_importance(model, X_test, y_test, n_repeats=5, random_state=42, n_jobs=-1)
+            importances = np.maximum(0, r.importances_mean)
+            total = importances.sum()
+            if total > 0:
+                importances = importances / total
+            permutation[name] = dict(zip(cols, importances))
+        return {
+            'gini': gini_coef,
+            'permutation': permutation
+        }
+
+    banner("STEP 7.5: Calculate Feature Importances")
+    print("  Calculating importance for VIEWS-ONLY models...")
+    importance_vo = compute_importance_for_all(trained_vo, X_test_vo, y_test_vo, cols_vo)
+    
+    print("  Calculating importance for FULL FEATURES models...")
+    importance_ff = compute_importance_for_all(trained_ff, X_test_ff, y_test_ff, cols_ff)
+
+    # Plot Gini/Coef Feature Importance for views-only models (main variant)
+    plot_feature_importance(importance_vo['gini'], OUTPUT_DIR, top_n=15)
 
     # Analisis Pertanyaan Penelitian
     plot_monthly_trend(df, OUTPUT_DIR)
@@ -288,10 +322,12 @@ def main():
         },
         'monthly_stats': monthly,
         'correlation':   correlation,
+        'feature_importance_vo': importance_vo,
+        'feature_importance_ff': importance_ff,
         'feature_importance': {
             name: {k: round(v, 4) for k, v in sorted(imp.items(),
                    key=lambda x: x[1], reverse=True)[:15]}
-            for name, imp in importance_dict.items()
+            for name, imp in importance_vo['gini'].items()
         },
         # Untuk kompatibilitas dashboard lama
         'binary_classifier': {
