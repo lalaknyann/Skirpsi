@@ -244,9 +244,20 @@
 
         <!-- Views trend chart -->
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">&#x1F4CA; Tren Views Bulanan per Platform</span>
-            <span class="card-tag">Time Series</span>
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="card-title">&#x1F4CA; Tren Views Bulanan per Platform</span>
+              <span class="card-tag">Time Series</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <label style="color:var(--text-muted); font-size:12px; font-weight:500;">Tahun:</label>
+              <select id="viewsYearSelect" onchange="updateViewsTrendFilter(this.value)"
+                style="background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border); border-radius:6px; padding:4px 10px; font-size:12px; font-weight:600; cursor:pointer; outline:none; transition:all 0.2s;">
+                <option value="all">Semua (2024–2025)</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+              </select>
+            </div>
           </div>
           <div class="chart-container" style="height:320px">
             <canvas id="chartViewsTrend"></canvas>

@@ -2045,21 +2045,10 @@ function updateDataChartsDynamic(rows) {
   if (!ctxViews) return;
   _viewsTrendRawRows = rows;
 
-  // Inject year filter dropdown if not already present
-  let filterDiv = document.getElementById('viewsYearFilter');
-  if (!filterDiv) {
-    filterDiv = document.createElement('div');
-    filterDiv.id = 'viewsYearFilter';
-    filterDiv.style.cssText = 'text-align:right;margin-bottom:8px;';
-    filterDiv.innerHTML = `
-      <label style="color:#A0A0A0;font-size:12px;margin-right:6px">Tahun:</label>
-      <select id="viewsYearSelect" onchange="updateViewsTrendFilter(this.value)"
-        style="background:#1A1A1A;color:#F5F5F5;border:1px solid #2E2E2E;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">
-        <option value="all">Semua (2024–2025)</option>
-        <option value="2024">2024</option>
-        <option value="2025">2025</option>
-      </select>`;
-    ctxViews.parentElement.insertBefore(filterDiv, ctxViews);
+  // Reset year filter dropdown if present
+  const yearSelect = document.getElementById('viewsYearSelect');
+  if (yearSelect) {
+    yearSelect.value = 'all';
   }
 
   // Hitung distribusi penjualan jika ada kolom penjualan
