@@ -16,10 +16,10 @@
     },
     "XGBoost": {
       "model": "XGBoost",
-      "MAE": 0.0726,
-      "RMSE": 0.1696,
-      "R2": 0.8763,
-      "R2_pct": 87.63
+      "MAE": 0.0478,
+      "RMSE": 0.1734,
+      "R2": 0.8708,
+      "R2_pct": 87.08
     }
   },
   "full_features": {
@@ -39,10 +39,10 @@
     },
     "XGBoost": {
       "model": "XGBoost",
-      "MAE": 0.0489,
-      "RMSE": 0.1682,
-      "R2": 0.8784,
-      "R2_pct": 87.84
+      "MAE": 0.095,
+      "RMSE": 0.1781,
+      "R2": 0.8637,
+      "R2_pct": 86.37
     }
   },
   "regresi": {
@@ -62,10 +62,10 @@
     },
     "XGBoost": {
       "model": "XGBoost",
-      "MAE": 0.0726,
-      "RMSE": 0.1696,
-      "R2": 0.8763,
-      "R2_pct": 87.63
+      "MAE": 0.0478,
+      "RMSE": 0.1734,
+      "R2": 0.8708,
+      "R2_pct": 87.08
     }
   },
   "dengan_sentimen": {
@@ -85,10 +85,10 @@
     },
     "XGBoost": {
       "model": "XGBoost",
-      "MAE": 0.0726,
-      "RMSE": 0.1696,
-      "R2": 0.8763,
-      "R2_pct": 87.63
+      "MAE": 0.0478,
+      "RMSE": 0.1734,
+      "R2": 0.8708,
+      "R2_pct": 87.08
     }
   },
   "tanpa_sentimen": {
@@ -108,10 +108,10 @@
     },
     "XGBoost": {
       "model": "XGBoost",
-      "MAE": 0.0489,
-      "RMSE": 0.1682,
-      "R2": 0.8784,
-      "R2_pct": 87.84
+      "MAE": 0.095,
+      "RMSE": 0.1781,
+      "R2": 0.8637,
+      "R2_pct": 86.37
     }
   },
   "dataset_info": {
@@ -227,21 +227,21 @@
       "bulan_sin": 0.015
     },
     "XGBoost": {
-      "is_q4": 0.3359000086784363,
-      "log_total_views": 0.09839999675750732,
-      "total_views": 0.09610000252723694,
-      "bulan": 0.04270000010728836,
-      "bulan_sin": 0.03880000114440918,
-      "quarter": 0.03519999980926514,
-      "log_views_x_peakmon": 0.026200000196695328,
-      "Instagram": 0.020800000056624413,
-      "ratio_fb_total": 0.01940000057220459,
-      "log_facebook": 0.01810000091791153,
-      "log_instagram": 0.01510000042617321,
-      "is_peak_month": 0.014700000174343586,
-      "Facebook": 0.014000000432133675,
-      "ratio_tt_total": 0.014000000432133675,
-      "day_of_year": 0.013299999758601189
+      "is_q4": 0.1818999946117401,
+      "total_views": 0.13130000233650208,
+      "log_total_views": 0.11069999635219574,
+      "bulan_sin": 0.054999999701976776,
+      "log_facebook": 0.04390000179409981,
+      "log_instagram": 0.03779999911785126,
+      "Facebook": 0.0357000008225441,
+      "Instagram": 0.03370000049471855,
+      "fb_lag3": 0.032999999821186066,
+      "log_views_x_peakmon": 0.03009999915957451,
+      "ratio_fb_total": 0.026100000366568565,
+      "ratio_ig_total": 0.02160000056028366,
+      "ratio_tt_total": 0.020899999886751175,
+      "day_of_year": 0.020400000736117363,
+      "is_peak_month": 0.014399999752640724
     }
   },
   "binary_classifier": {
@@ -264,13 +264,13 @@
       "Accuracy_pct": 88.95
     },
     "XGBoost": {
-      "MAE": 0.0726,
-      "RMSE": 0.1696,
-      "R2": 0.8763,
-      "R2_pct": 87.63,
-      "Accuracy": 0.8763,
-      "Accuracy_bin": 87.63,
-      "Accuracy_pct": 87.63
+      "MAE": 0.0478,
+      "RMSE": 0.1734,
+      "R2": 0.8708,
+      "R2_pct": 87.08,
+      "Accuracy": 0.8708,
+      "Accuracy_bin": 87.08,
+      "Accuracy_pct": 87.08
     }
   }
 }
