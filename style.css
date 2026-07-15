@@ -289,6 +289,14 @@ body {
   width: 20px;
   text-align: center;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-icon svg, svg.nav-icon {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
 }
 
 /* ── Sidebar Footer ── */
@@ -528,7 +536,18 @@ body {
 .kpi-icon {
   font-size: 26px;
   margin-bottom: 12px;
+  display: flex;
+  align-items: center;
 }
+.kpi-icon svg {
+  width: 26px;
+  height: 26px;
+  stroke: currentColor;
+}
+.kpi-card.red .kpi-icon { color: #CC0000; }
+.kpi-card.gray .kpi-icon { color: var(--text-secondary); }
+.kpi-card.gold .kpi-icon { color: #FFA000; }
+.kpi-card.green .kpi-icon { color: #2E7D32; }
 
 .kpi-value {
   font-family: 'Outfit', sans-serif;
@@ -1061,10 +1080,17 @@ body {
 .upload-icon {
   font-size: 52px;
   margin-bottom: 16px;
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   position: relative;
   z-index: 1;
   animation: float 3s ease-in-out infinite;
+}
+.upload-icon svg {
+  width: 52px;
+  height: 52px;
+  stroke: var(--telkom-red);
 }
 
 @keyframes float {
@@ -1751,9 +1777,14 @@ body {
 }
 
 .theme-widget-icon {
-  font-size: 14px;
-  line-height: 1;
+  width: 14px;
+  height: 14px;
+  stroke: var(--text-muted);
   flex-shrink: 0;
+  display: block;
+}
+[data-theme="dark"] .theme-widget-icon {
+  stroke: var(--text-normal);
 }
 
 /* The sliding track */

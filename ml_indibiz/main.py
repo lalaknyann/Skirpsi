@@ -64,11 +64,11 @@ def main():
     banner("STEP 1: Load Dataset")
     print(f"  Sumber data: {DATA_URL}")
     df_raw = load_and_parse(DATA_URL)
-    print(f"  ✅ Dataset berhasil dimuat: {len(df_raw)} baris")
+    print(f"  [OK] Dataset berhasil dimuat: {len(df_raw)} baris")
     print(f"  Rentang data: {df_raw['tanggal'].min().date()} -- {df_raw['tanggal'].max().date()}")
 
     penjualan_vals = sorted(df_raw['Penjualan'].unique())
-    print(f"  📊 Distribusi Penjualan Asli (0-3):")
+    print(f"  [INFO] Distribusi Penjualan Asli (0-3):")
     for val in penjualan_vals:
         cnt = (df_raw['Penjualan'] == val).sum()
         pct = cnt / len(df_raw) * 100
@@ -95,9 +95,9 @@ def main():
     full_features_cols = get_full_feature_columns()
     full_features_cols = [c for c in full_features_cols if c in df.columns]
     
-    print(f"  ✅ Dataset setelah FE: {len(df)} baris")
-    print(f"  ✅ Total fitur Views-Only: {len(views_only_cols)}")
-    print(f"  ✅ Total fitur Full-Features: {len(full_features_cols)}")
+    print(f"  [OK] Dataset setelah FE: {len(df)} baris")
+    print(f"  [OK] Total fitur Views-Only: {len(views_only_cols)}")
+    print(f"  [OK] Total fitur Full-Features: {len(full_features_cols)}")
 
     # ──────────────────────────────────────────────
     # STEP 3: Persiapan Data
@@ -210,13 +210,13 @@ def main():
     joblib.dump(lr_vo, os.path.join(MODELS_DIR, "views_only_ridge.joblib"))
     joblib.dump(rf_vo, os.path.join(MODELS_DIR, "views_only_rf.joblib"))
     joblib.dump(xgb_vo, os.path.join(MODELS_DIR, "views_only_xgb.joblib"))
-    print("  ✅ Model Views-Only berhasil disimpan ke models/")
+    print("  [OK] Model Views-Only berhasil disimpan ke models/")
 
     joblib.dump(scaler_ff, os.path.join(MODELS_DIR, "full_features_scaler.joblib"))
     joblib.dump(lr_ff, os.path.join(MODELS_DIR, "full_features_ridge.joblib"))
     joblib.dump(rf_ff, os.path.join(MODELS_DIR, "full_features_rf.joblib"))
     joblib.dump(xgb_ff, os.path.join(MODELS_DIR, "full_features_xgb.joblib"))
-    print("  ✅ Model Full-Features berhasil disimpan ke models/")
+    print("  [OK] Model Full-Features berhasil disimpan ke models/")
 
     # ──────────────────────────────────────────────
     # STEP 6: Evaluasi
@@ -360,11 +360,11 @@ def main():
 
     best_vo = max(results_vo, key=lambda m: results_vo[m]['R2'])
     best_ff = max(results_ff, key=lambda m: results_ff[m]['R2'])
-    print(f"\n  🏆 Model Terbaik Views-Only    : {best_vo} ({results_vo[best_vo]['R2_pct']:.2f}%)")
-    print(f"  🏆 Model Terbaik Full-Features : {best_ff} ({results_ff[best_ff]['R2_pct']:.2f}%)")
-    print(f"  📂 Grafik : output/figures/")
-    print(f"  📄 JSON   : output/results.json")
-    print(f"\n  ✅ Refactored Pipeline selesai!")
+    print(f"\n  [BEST] Model Terbaik Views-Only    : {best_vo} ({results_vo[best_vo]['R2_pct']:.2f}%)")
+    print(f"  [BEST] Model Terbaik Full-Features : {best_ff} ({results_ff[best_ff]['R2_pct']:.2f}%)")
+    print(f"  [OUT] Grafik : output/figures/")
+    print(f"  [OUT] JSON   : output/results.json")
+    print(f"\n  [OK] Refactored Pipeline selesai!")
 
 if __name__ == '__main__':
     main()

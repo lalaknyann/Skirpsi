@@ -713,7 +713,7 @@ function processCSVFile(file) {
 
     renderPreviewTable(uploadedData);
     showPreviewSection(file.name, uploadedData.length);
-    showUIFeedback(`✅ Berhasil mengunggah ${file.name} (${rows.length} baris data). Memproses prediksi otomatis...`, 'success');
+    showUIFeedback(`Berhasil mengunggah ${file.name} (${rows.length} baris data). Memproses prediksi otomatis...`, 'success');
     
     // Jalankan prediksi batch secara otomatis
     runBatchPrediction();
@@ -970,7 +970,7 @@ function showPreviewSection(fileName, totalRows) {
   if (section) section.classList.add('visible');
 
   const fileBadge = document.getElementById('fileBadge');
-  if (fileBadge) fileBadge.textContent = `✅ ${fileName}`;
+  if (fileBadge) fileBadge.textContent = `${fileName}`;
 
   const rowBadge = document.getElementById('rowCountBadge');
   if (rowBadge) rowBadge.textContent = `${totalRows} baris data ditemukan`;
@@ -985,7 +985,7 @@ async function runBatchPrediction() {
   if (!uploadedData.length) return;
 
   const btn = document.getElementById('btnPredict');
-  if (btn) { btn.textContent = '⏳ Memproses...'; btn.disabled = true; }
+  if (btn) { btn.textContent = 'Memproses...'; btn.disabled = true; }
 
   try {
     const rows = uploadedData.map(r => ({
@@ -1046,7 +1046,7 @@ async function runBatchPrediction() {
     alert(`Gagal memproses prediksi batch: ${err.message}`);
     console.error(err);
   } finally {
-    if (btn) { btn.textContent = '🚀 Prediksi Semua Baris'; btn.disabled = false; }
+    if (btn) { btn.textContent = 'Prediksi Semua Baris'; btn.disabled = false; }
   }
 }
 
@@ -1342,7 +1342,7 @@ function initActualVsPredictedChart(predictedData) {
         msgDiv.style.textAlign = 'center';
         msgDiv.style.padding = '40px 20px';
         msgDiv.style.fontSize = '13px';
-        msgDiv.innerHTML = '⚠️ Tidak ada data aktual penjualan untuk evaluasi model (kolom Penjualan tidak ada di file CSV).';
+        msgDiv.innerHTML = 'Tidak ada data aktual penjualan untuk evaluasi model (kolom Penjualan tidak ada di file CSV).';
         parent.appendChild(msgDiv);
       }
       ctx.style.display = 'none';
@@ -1471,7 +1471,7 @@ function initResidualsChart(predictedData) {
         msgDiv.style.textAlign = 'center';
         msgDiv.style.padding = '40px 20px';
         msgDiv.style.fontSize = '13px';
-        msgDiv.innerHTML = '⚠️ Tidak ada data aktual penjualan untuk evaluasi model (kolom Penjualan tidak ada di file CSV).';
+        msgDiv.innerHTML = 'Tidak ada data aktual penjualan untuk evaluasi model (kolom Penjualan tidak ada di file CSV).';
         parent.appendChild(msgDiv);
       }
       ctx.style.display = 'none';
@@ -3545,7 +3545,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (file && file.name.toLowerCase().endsWith('.csv')) {
         processCSVFile(file);
       } else {
-        showUIFeedback('⚠️ Harap upload file dengan format .csv', 'error');
+        showUIFeedback('Harap upload file dengan format .csv', 'error');
       }
     });
   }

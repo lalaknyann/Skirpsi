@@ -48,25 +48,25 @@
       <div class="nav-section">Menu Utama</div>
 
       <a class="nav-item" id="nav-overview" onclick="showSection('overview')" style="display: none;">
-        <span class="nav-icon">&#x1F3E0;</span> Overview
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Overview
       </a>
       <a class="nav-item" id="nav-data" onclick="showSection('data')" style="display: none;">
-        <span class="nav-icon">&#x1F4C8;</span> Eksplorasi Data
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> Eksplorasi Data
       </a>
       <a class="nav-item" id="nav-models" onclick="showSection('models')" style="display: none;">
-        <span class="nav-icon">&#x1F916;</span> Perbandingan Model
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 8h8M20 14h2M2 14h2"/></svg> Perbandingan Model
       </a>
       <a class="nav-item" id="nav-forecast" onclick="showSection('forecast')" style="display: none;">
-        <span class="nav-icon">&#x1F52E;</span> Proyeksi 3 Bulan
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> Proyeksi 3 Bulan
       </a>
       <a class="nav-item active" id="nav-upload" onclick="showSection('upload')">
-        <span class="nav-icon">&#x1F4C2;</span> Upload CSV
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Upload CSV
       </a>
 
       <div class="nav-section" style="margin-top:8px">Akun</div>
 
       <a class="nav-item" id="nav-logout" onclick="handleLogout()" style="color: #FF4444;">
-        <span class="nav-icon">&#x1F6AA;</span> Logout
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout
       </a>
     </nav>
 
@@ -103,11 +103,11 @@
         </div>
         <!-- Theme Toggle Widget -->
         <div class="theme-widget" id="themeWidget" onclick="toggleTheme()" title="Ganti Tema">
-          <span class="theme-widget-icon">&#x2600;&#xFE0F;</span>
+          <svg class="theme-widget-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
           <div class="theme-widget-track">
             <div class="theme-widget-thumb" id="themeThumb"></div>
           </div>
-          <span class="theme-widget-icon">&#x1F319;</span>
+          <svg class="theme-widget-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
           <span class="theme-widget-label" id="themeLabel">Light</span>
         </div>
       </div>
@@ -120,44 +120,44 @@
       &#x2600;&#xFE0F; -->
       <section class="section" id="section-overview">
         <div class="section-header">
-          <h3>&#x1F3E0; Overview Dashboard</h3>
+          <h3>Overview Dashboard</h3>
           <p>Ringkasan prediksi <strong>Total Views Media Sosial</strong> Indibiz menggunakan model ML &mdash; Linear Regression, Random Forest, dan XGBoost</p>
         </div>
 
         <!-- KPI Cards -->
         <div class="kpi-grid">
           <div class="kpi-card red">
-            <div class="kpi-icon">&#x1F4C5;</div>
+            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
             <div class="kpi-value" id="kpi-total-days">731</div>
             <div class="kpi-label">Total Data Harian</div>
             <div class="kpi-sub" id="kpi-date-range">Jan 2024 &ndash; Des 2025</div>
           </div>
           <div class="kpi-card gray">
-            <div class="kpi-icon">&#x1F916;</div>
+            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 8h8M20 14h2M2 14h2"/></svg></div>
             <div class="kpi-value">3</div>
             <div class="kpi-label">Model ML Diuji</div>
             <div class="kpi-sub">LR &middot; RF &middot; XGBoost</div>
           </div>
           <div class="kpi-card red">
-            <div class="kpi-icon">&#x1F4C8;</div>
+            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 6 13.5 15.5l-5-5L1 18"/><path d="M17 6h6v6"/></svg></div>
             <div class="kpi-value" id="kpi-r2-avg">85.70%</div>
             <div class="kpi-label">R&sup2; Rerata</div>
             <div class="kpi-sub">Koefisien Determinasi</div>
           </div>
           <div class="kpi-card gold">
-            <div class="kpi-icon">&#x1F3AF;</div>
+            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
             <div class="kpi-value" id="kpi-acc-avg">1.0979</div>
             <div class="kpi-label">RMSE Rerata</div>
             <div class="kpi-sub">Root Mean Squared Error</div>
           </div>
           <div class="kpi-card gray">
-            <div class="kpi-icon">&#x1F4CA;</div>
+            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
             <div class="kpi-value" id="kpi-mae-avg">0.1523</div>
             <div class="kpi-label">MAE Rerata</div>
             <div class="kpi-sub">Mean Absolute Error</div>
           </div>
           <div class="kpi-card green">
-            <div class="kpi-icon">&#x1F4F1;</div>
+            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
             <div class="kpi-value">3</div>
             <div class="kpi-label">Platform Sosial Media</div>
             <div class="kpi-sub">Facebook &middot; IG &middot; TikTok</div>
@@ -170,7 +170,7 @@
         <div class="card">
           <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <div>
-              <span class="card-title">&#x1F4CB; Hasil Evaluasi Semua Model</span>
+              <span class="card-title">Hasil Evaluasi Semua Model</span>
               <span class="card-tag">MAE + RMSE + R&sup2; Score</span>
             </div>
             <div>
@@ -202,7 +202,7 @@
         <div class="chart-row col-2">
           <div class="card">
             <div class="card-header">
-              <span class="card-title">&#x1F4CA; Perbandingan R&sup2; Score</span>
+              <span class="card-title">Perbandingan R&sup2; Score</span>
               <span class="card-tag">Lebih Tinggi Lebih Baik</span>
             </div>
             <div class="chart-container">
@@ -211,7 +211,7 @@
           </div>
           <div class="card">
             <div class="card-header">
-              <span class="card-title">&#x1F4C9; Perbandingan MAE</span>
+              <span class="card-title">Perbandingan MAE</span>
               <span class="card-tag">Error</span>
             </div>
             <div class="chart-container">
@@ -227,14 +227,14 @@
       &#x2600;&#xFE0F; -->
       <section class="section" id="section-data">
         <div class="section-header">
-          <h3>&#x1F4C8; Eksplorasi Dataset</h3>
+          <h3>Eksplorasi Dataset</h3>
           <p>Analisis distribusi dan tren views harian di Facebook, Instagram, dan TikTok</p>
         </div>
 
         <!-- Correlation Cards -->
         <div class="card" style="margin-bottom:20px">
           <div class="card-header">
-            <span class="card-title">&#x1F50D; Korelasi Views vs Penjualan (Pearson)</span>
+            <span class="card-title">Korelasi Views vs Penjualan (Pearson)</span>
             <span class="card-tag">Correlation</span>
           </div>
           <div class="corr-grid" id="corrGrid">
@@ -246,7 +246,7 @@
         <div class="card">
           <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <div style="display:flex; align-items:center; gap:8px;">
-              <span class="card-title">&#x1F4CA; Tren Views Bulanan per Platform</span>
+              <span class="card-title">Tren Views Bulanan per Platform</span>
               <span class="card-tag">Time Series</span>
             </div>
             <div style="display:flex; align-items:center; gap:6px;">
@@ -268,7 +268,7 @@
         <div class="chart-row col-2">
           <div class="card">
             <div class="card-header">
-              <span class="card-title">&#x1F4CA; Distribusi Views per Platform</span>
+              <span class="card-title">Distribusi Views per Platform</span>
             </div>
             <div class="chart-container">
               <canvas id="chartViewsDist"></canvas>
@@ -276,7 +276,7 @@
           </div>
           <div class="card">
             <div class="card-header">
-              <span class="card-title">&#x1F4CA; Distribusi Penjualan Harian</span>
+              <span class="card-title">Distribusi Penjualan Harian</span>
             </div>
             <div class="chart-container">
               <canvas id="chartSalesDist"></canvas>
@@ -287,7 +287,7 @@
         <!-- Images from Python -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">&#x1F4C8; Grafik Tren Bulanan &amp; Penjualan (Dinamis)</span>
+            <span class="card-title">Grafik Tren Bulanan &amp; Penjualan (Dinamis)</span>
             <span class="card-tag">Generated</span>
           </div>
           <div class="chart-container" style="height:300px">
@@ -301,14 +301,14 @@
       &#x2600;&#xFE0F; -->
       <section class="section" id="section-models">
         <div class="section-header">
-          <h3>&#x1F916; Perbandingan Model ML</h3>
+          <h3>Perbandingan Model ML</h3>
           <p>Evaluasi lengkap Linear Regression, Random Forest, dan XGBoost &mdash; Model Regresi</p>
         </div>
 
         <!-- Metrics Detail Table -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">&#x1F4CB; Tabel Evaluasi Lengkap</span>
+            <span class="card-title">Tabel Evaluasi Lengkap</span>
             <span class="card-tag">MAE &middot; RMSE &middot; R&sup2; Score</span>
           </div>
           <div class="metrics-table-wrap">
@@ -334,7 +334,7 @@
           <div class="card">
             <div class="card-header">
               <span class="card-title">R&sup2; Score</span>
-              <span class="card-tag">&#x2B06; Lebih Baik</span>
+              <span class="card-tag">Lebih Baik</span>
             </div>
             <div class="chart-container" style="min-height:220px">
               <canvas id="chartR2Compare"></canvas>
@@ -343,7 +343,7 @@
           <div class="card">
             <div class="card-header">
               <span class="card-title">MAE</span>
-              <span class="card-tag">&#x2B06; Lebih Baik</span>
+              <span class="card-tag">Lebih Baik</span>
             </div>
             <div class="chart-container" style="min-height:220px">
               <canvas id="chartMAECompare"></canvas>
@@ -352,7 +352,7 @@
           <div class="card">
             <div class="card-header">
               <span class="card-title">RMSE</span>
-              <span class="card-tag">&#x2B06; Lebih Baik</span>
+              <span class="card-tag">Lebih Baik</span>
             </div>
             <div class="chart-container" style="min-height:220px">
               <canvas id="chartRMSECompare"></canvas>
@@ -415,25 +415,25 @@
       &#x2600;&#xFE0F; -->
       <section class="section active" id="section-upload">
         <div class="section-header">
-          <h3>&#x1F4E4; Upload CSV &amp; Prediksi Batch</h3>
+          <h3>Upload CSV &amp; Prediksi Batch</h3>
           <p>Upload file CSV sesuai format dataset Indibiz, lalu dapatkan prediksi penjualan otomatis untuk setiap baris</p>
         </div>
 
         <!-- Drop Zone -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">&#x1F4C2; Upload File CSV</span>
+            <span class="card-title">Upload File CSV</span>
             <span class="card-tag">Drag &amp; Drop</span>
           </div>
 
           <div class="upload-zone" id="uploadZone" onclick="document.getElementById('csvFileInput').click()">
-            <span class="upload-icon">&#x2601;&#xFE0F;</span>
+            <span class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19A5.5 5.5 0 0 0 17 8H16A8 8 0 1 0 4 14.5a6 6 0 0 0 4 5.5"/><path d="M12 11v8M12 11l-3 3M12 11l3 3"/></svg></span>
             <h4>Drag &amp; Drop file CSV di sini</h4>
             <p>atau klik tombol di bawah untuk memilih file</p>
             <small>Format yang diterima: .csv | Kolom wajib: id, tanggal, Facebook, Instagram, TikTok</small>
             <br>
             <button class="btn-upload-browse" onclick="event.stopPropagation();document.getElementById('csvFileInput').click()">
-              &#x1F4C1; Pilih File CSV
+              Pilih File CSV
             </button>
           </div>
           <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileUpload(event)" />
@@ -441,7 +441,7 @@
           <!-- Format Info -->
           <div class="format-info">
             <div class="format-box">
-              <h5>&#x1F4CB; Format Kolom CSV</h5>
+              <h5>Format Kolom CSV</h5>
               <div class="col-list">
                 <div class="col-item">
                   <div class="col-dot"></div>
@@ -470,7 +470,7 @@
               </div>
             </div>
             <div class="format-box">
-              <h5>&#x1F4C4; Contoh Isi File CSV</h5>
+              <h5>Contoh Isi File CSV</h5>
               <pre style="font-size:11.5px;color:#A0A0A0;line-height:1.8;font-family:'Courier New',monospace;overflow-x:auto;white-space:pre">id,tanggal,Facebook,Instagram,TikTok,Penjualan
 1,01 Jan 2024,25000,7500,600,2
 2,02 Jan 2024,18000,6200,450,1
@@ -478,7 +478,7 @@
 4,04 Jan 2024,12000,5400,310,0</pre>
               <div style="margin-top:12px">
                 <button class="btn-secondary" onclick="downloadTemplateCSV()" style="font-size:12px;padding:8px 16px">
-                  &#x2B07;&#xFE0F; Download Template CSV
+                  Download Template CSV
                 </button>
               </div>
             </div>
@@ -489,9 +489,9 @@
         <div class="preview-section" id="previewSection">
           <div class="card">
             <div class="preview-header">
-              <h4>&#x1F441;&#xFE0F; Preview Data CSV</h4>
+              <h4>Preview Data CSV</h4>
               <div class="preview-info">
-                <span class="file-badge" id="fileBadge">&#x1F4C1; file.csv</span>
+                <span class="file-badge" id="fileBadge">file.csv</span>
                 <span id="rowCountBadge" style="font-size:12px;color:var(--text-muted)"></span>
               </div>
             </div>
@@ -517,10 +517,10 @@
 
             <div class="upload-actions">
               <button class="btn-primary" id="btnPredict" onclick="runBatchPrediction()">
-                &#x1F680; Prediksi Semua Baris
+                Prediksi Semua Baris
               </button>
               <button class="btn-secondary" onclick="resetUpload()">
-                &#x1F504; Upload Ulang
+                Upload Ulang
               </button>
             </div>
           </div>
@@ -536,16 +536,16 @@
       🔮🔮🔮 -->
       <section class="section" id="section-forecast">
         <div class="section-header">
-          <h3>🔮 Proyeksi &amp; Prediksi 3 Bulan Pertama 2026</h3>
+          <h3>Proyeksi &amp; Prediksi 3 Bulan Pertama 2026</h3>
           <p>Simulasi Proyeksi Penjualan &amp; Media Sosial Tahun 2026</p>
         </div>
         <div id="forecastSection" style="margin-top:24px;">
           <div class="card">
             <div class="card-header">
-              <span class="card-title">&#x1F52E; Proyeksi &amp; Prediksi 3 Bulan Pertama 2026 (Jan - Mar)</span>
+              <span class="card-title">Proyeksi &amp; Prediksi 3 Bulan Pertama 2026 (Jan - Mar)</span>
               <div style="display:flex;gap:10px">
                 <button class="btn-primary" onclick="downloadForecastCSV()" style="font-size:12px;padding:8px 16px">
-                  &#x2B07;&#xFE0F; Export Proyeksi CSV
+                  Export Proyeksi CSV
                 </button>
               </div>
             </div>
@@ -561,7 +561,7 @@
 
             <!-- SECTION A: Data Historis Penjualan -->
             <div class="forecast-section-title" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-              <span style="font-weight:600;font-size:15px;color:var(--text-primary);">📊 SECTION A: Data Historis Penjualan</span>
+              <span style="font-weight:600;font-size:15px;color:var(--text-primary);">SECTION A: Data Historis Penjualan</span>
               <div class="granularity-toggle" style="display:flex;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:20px;padding:3px;">
                 <button class="toggle-btn" id="btnGranularityWeek" onclick="setForecastHistoryGranularity('week')" style="background:transparent;border:none;color:var(--text-muted);padding:6px 16px;font-size:12px;font-weight:600;border-radius:15px;cursor:pointer;transition:all 0.2s;">Per Minggu</button>
                 <button class="toggle-btn active" id="btnGranularityMonth" onclick="setForecastHistoryGranularity('month')" style="background:var(--primary);border:none;color:white;padding:6px 16px;font-size:12px;font-weight:600;border-radius:15px;cursor:pointer;transition:all 0.2s;">Per Bulan</button>
@@ -579,7 +579,7 @@
 
             <!-- SECTION B: Data Prediksi (90 Hari) -->
             <div class="forecast-section-title" style="margin-bottom:12px;">
-              <span style="font-weight:600;font-size:15px;color:var(--text-primary);">🔮 SECTION B: Data Prediksi (90 Hari Ke Depan)</span>
+              <span style="font-weight:600;font-size:15px;color:var(--text-primary);">SECTION B: Data Prediksi (90 Hari Ke Depan)</span>
             </div>
             <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
               Prediksi penjualan harian Indibiz untuk 90 hari pertama tahun 2026 (Januari – Maret 2026) berdasarkan proyeksi tren media sosial dari masing-masing model Machine Learning.
@@ -590,7 +590,7 @@
 
             <div class="divider" style="margin:24px 0;height:1px;background:var(--border);"></div>
             <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;font-weight:600">
-              📊 Proyeksi Tren Harian Views Media Sosial (Facebook, Instagram, TikTok)
+              Proyeksi Tren Harian Views Media Sosial (Facebook, Instagram, TikTok)
             </p>
             <div class="chart-container" style="min-height:220px;margin-bottom:24px;">
               <canvas id="chartForecastViews2026"></canvas>
@@ -629,7 +629,7 @@
       &#x2600;&#xFE0F; -->
       <section class="section" id="section-rq">
         <div class="section-header">
-          <h3>&#x1F52C; Pertanyaan Penelitian</h3>
+          <h3>Pertanyaan Penelitian</h3>
           <p>Jawaban visual atas 4 pertanyaan penelitian skripsi menggunakan analisis data dan model ML</p>
         </div>
 
